@@ -39,6 +39,13 @@ Each service manages its own environment variables, scripts, and dependencies. S
 - Node.js 20+
 - Docker and Docker Compose
 
+### Setup
+
+Copy the environment template and fill in your values:
+```bash
+cp .env.example .env
+```
+
 ### Start all services
 
 ```bash

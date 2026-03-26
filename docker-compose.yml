@@ -13,6 +13,17 @@ services:
       postgres:
         condition: service_healthy
 
+  client:
+    build:
+      context: .
+      dockerfile: client/Dockerfile
+    ports:
+      - "5173:5173"
+    environment:
+      API_URL: http://api:3000
+    depends_on:
+      - api
+
   postgres:
     image: postgres:16-alpine
     restart: always

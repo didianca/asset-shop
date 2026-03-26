@@ -9,4 +9,3 @@ api/coverage
 .git
 .gitignore
 *.md
-client/

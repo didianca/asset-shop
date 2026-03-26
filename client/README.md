@@ -31,7 +31,7 @@ This avoids CORS issues without any backend configuration.
 ## File Structure
 
 ```
-frontend/
+client/
 ├── src/
 │   ├── components/
 │   │   └── HealthStatus.tsx    # Health check component

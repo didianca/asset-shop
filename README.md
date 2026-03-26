@@ -52,6 +52,21 @@ docker-compose up --build
 | Frontend | http://localhost:5173 |
 | PostgreSQL | localhost:5432 |
 
+## Adding Dependencies
+
+Always install from the **repo root** using the `-w` flag. This keeps the root `package-lock.json` as the single source of truth and avoids generating per-service lockfiles.
+
+```bash
+# Add a dependency to a specific service
+npm install <package> -w api
+npm install <package> -w client
+
+# Add a dev dependency
+npm install -D <package> -w api
+```
+
+> Never run `npm install` from inside a service directory — it will generate a local `package-lock.json` which should not exist in this monorepo.
+
 ## CI/CD
 
 GitHub Actions runs on every PR to `main`:

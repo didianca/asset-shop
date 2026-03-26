@@ -1,0 +1,12 @@
+node_modules
+api/node_modules
+client/node_modules
+dist
+api/dist
+client/dist
+coverage
+api/coverage
+.git
+.gitignore
+*.md
+client/

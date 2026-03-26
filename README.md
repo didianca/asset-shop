@@ -67,8 +67,3 @@ npm install -D <package> -w api
 
 > Never run `npm install` from inside a service directory — it will generate a local `package-lock.json` which should not exist in this monorepo.
 
-## CI/CD
-
-GitHub Actions runs on every PR to `main`:
-- Lint + test + coverage (95% threshold enforced)
-- Coverage uploaded to [Codecov](https://codecov.io/gh/didianca/asset-shop)

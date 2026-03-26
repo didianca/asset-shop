@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  test:
+  test-api:
     runs-on: ubuntu-latest
 
     steps:
@@ -24,12 +24,15 @@ jobs:
 
       - name: Run linter
         run: npm run lint
+        working-directory: api
 
       - name: Run tests with coverage
         run: npm run test:coverage
+        working-directory: api
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./coverage/lcov.info
+          files: ./api/coverage/lcov.info
+          flags: api

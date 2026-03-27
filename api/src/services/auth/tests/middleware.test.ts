@@ -2,9 +2,8 @@ import { describe, it, expect, vi } from "vitest";
 import type { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { authenticate, requireAdmin } from "../../../middleware/auth.js";
+import { authConfig } from "../auth.config.js";
 import type { JwtPayload } from "../auth.types.js";
-
-const JWT_SECRET = process.env["JWT_SECRET"] as string;
 
 function mockRes(): Response {
   const res = {
@@ -16,7 +15,7 @@ function mockRes(): Response {
 
 function validToken(overrides: Partial<JwtPayload> = {}): string {
   const payload: JwtPayload = { id: "uuid", role: "customer", status: "active", ...overrides };
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: "1h" });
+  return jwt.sign(payload, authConfig.jwtSecret, { expiresIn: "1h" });
 }
 
 describe("authenticate", () => {

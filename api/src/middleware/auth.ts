@@ -1,10 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import type { JwtPayload } from "../services/auth/auth.types.js";
-
-const JWT_SECRET = process.env["JWT_SECRET"];
-/* c8 ignore next */
-if (!JWT_SECRET) throw new Error("JWT_SECRET is not set");
+import { authConfig } from "../services/auth/auth.config.js";
 
 // Extend Express Request to carry the decoded JWT payload
 declare module "express-serve-static-core" {
@@ -35,7 +32,7 @@ export function authenticate(
   }
 
   try {
-    const payload = jwt.verify(token, JWT_SECRET as string) as JwtPayload;
+    const payload = jwt.verify(token, authConfig.jwtSecret) as JwtPayload;
 
     // Reject pending or deleted users even if they somehow have a token
     if (payload.status !== "active") {

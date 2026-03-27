@@ -3,14 +3,14 @@ import {
   SendEmailCommand,
   type SendEmailCommandInput,
 } from "@aws-sdk/client-ses";
+import { emailConfig } from "./email.config.js";
 
 // SESClient is initialised once and reused across the app.
-// Credentials are read from environment variables automatically by the AWS SDK.
 const sesClient = new SESClient({
-  region: process.env["AWS_REGION"] as string,
+  region: emailConfig.awsRegion,
   credentials: {
-    accessKeyId: process.env["AWS_SES_ACCESS_KEY"] as string,
-    secretAccessKey: process.env["AWS_SES_SECRET_ACCESS_KEY"] as string,
+    accessKeyId: emailConfig.awsSesAccessKey,
+    secretAccessKey: emailConfig.awsSesSecretAccessKey,
   },
 });
 
@@ -19,10 +19,10 @@ export async function sendVerificationEmail(
   toEmail: string,
   token: string
 ): Promise<void> {
-  const verificationUrl = `${process.env["API_URL"]}/auth/verify?token=${token}`;
+  const verificationUrl = `${emailConfig.apiUrl}/auth/verify?token=${token}`;
 
   const params: SendEmailCommandInput = {
-    Source: process.env["SES_FROM_EMAIL"] as string,
+    Source: emailConfig.sesFromEmail,
     Destination: {
       ToAddresses: [toEmail],
     },

@@ -3,10 +3,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import prisma from "../../../db.js";
 import type { LoginBody, JwtPayload } from "../auth.types.js";
-
-const JWT_SECRET = process.env["JWT_SECRET"];
-/* c8 ignore next */
-if (!JWT_SECRET) throw new Error("JWT_SECRET is not set");
+import { authConfig } from "../auth.config.js";
 
 const JWT_EXPIRES_IN = "12h";
 
@@ -79,7 +76,7 @@ export async function loginHandler(
     status: user.status,
   };
 
-  const token = jwt.sign(payload, JWT_SECRET as string, { expiresIn: JWT_EXPIRES_IN });
+  const token = jwt.sign(payload, authConfig.jwtSecret, { expiresIn: JWT_EXPIRES_IN });
 
   res.status(200).json({ token });
 }

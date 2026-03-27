@@ -13,7 +13,7 @@ beforeEach(() => {
 });
 
 describe("sendVerificationEmail", () => {
-  it("calls SES send with the recipient address", async () => {
+  it("calls SES send with the recipient address and configured from address", async () => {
     mockSend.mockResolvedValue({});
 
     await sendVerificationEmail("user@example.com", "abc123token");
@@ -21,6 +21,7 @@ describe("sendVerificationEmail", () => {
     expect(mockSend).toHaveBeenCalledOnce();
     const command = mockSend.mock.calls[0]?.[0];
     expect(command.Destination.ToAddresses).toContain("user@example.com");
+    expect(command.Source).toBe(process.env["SES_FROM_EMAIL"]);
   });
 
   it("includes the verification token in the email body", async () => {

@@ -10,6 +10,7 @@ E-commerce platform built as a monorepo with microservices.
 | React + Vite | Frontend |
 | TypeScript | Static typing across all packages |
 | PostgreSQL | Relational database |
+| Prisma | ORM — schema management, migrations, type-safe query client |
 | Docker + Docker Compose | Containerization and local orchestration |
 | Vitest + Supertest | Testing |
 | ESLint | Linting |

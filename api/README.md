@@ -11,6 +11,7 @@ REST API built with **Node.js**, **Express**, and **TypeScript**.
 | TypeScript | Static typing |
 | tsx | Dev server with hot reload |
 | PostgreSQL | Relational database |
+| Prisma | ORM — schema management, migrations, type-safe query client |
 | Docker | Containerization |
 | Vitest | Test runner |
 | Supertest | HTTP integration testing |
@@ -52,6 +53,10 @@ The API will be available at `http://localhost:3000`.
 | `npm run test:ui` | Opens the Vitest visual dashboard in the browser |
 | `npm run lint` | Runs ESLint across all source files |
 | `npm run lint:fix` | Runs ESLint and auto-fixes issues where possible |
+| `npx prisma migrate dev --name <name>` | Creates and applies a new migration locally |
+| `npx prisma migrate deploy` | Applies pending migrations (used in Docker/CI) |
+| `npx prisma generate` | Regenerates the Prisma client after schema changes |
+| `npx prisma studio` | Opens a visual DB browser at `http://localhost:5555` |
 
 ## Swagger
 
@@ -77,8 +82,14 @@ start coverage/index.html
 
 ```
 api/
+├── prisma/
+│   ├── schema.prisma       # Database schema — source of truth for all models
+│   └── migrations/         # Auto-generated SQL migration files (committed to git)
 ├── src/
+│   ├── generated/
+│   │   └── prisma/         # Auto-generated Prisma client (gitignored — run prisma generate)
 │   ├── app.ts              # Express app setup — middleware and routes
+│   ├── db.ts               # Prisma client singleton
 │   ├── swagger.ts          # Swagger/OpenAPI spec configuration
 │   └── index.ts            # Entry point — imports app and starts the server
 ├── tests/

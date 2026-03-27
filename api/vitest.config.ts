@@ -6,6 +6,7 @@ export default defineConfig({
     include: [
       "tests/**/*.test.ts",
       "src/lib/**/tests/**/*.test.ts",
+      "src/middleware/**/tests/**/*.test.ts",
       "src/services/**/tests/**/*.test.ts",
     ],
     setupFiles: [

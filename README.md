@@ -20,6 +20,8 @@ E-commerce platform built as a monorepo with microservices.
 | Node.js + Express | HTTP server and routing |
 | PostgreSQL | Relational database |
 | Prisma | ORM — schema management, migrations, type-safe query client |
+| Zod | Request body validation — schemas defined in `*.types.ts`, applied via `validate` middleware |
+| env-var | Environment variable validation — centralised in per-service `*.config.ts` files |
 | AWS SES | Transactional email (verification emails) |
 | Vitest + Supertest | Testing |
 | Swagger / OpenAPI | API documentation |

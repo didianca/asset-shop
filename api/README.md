@@ -98,16 +98,16 @@ When a new service is added, create a corresponding `<service>.config.ts` inside
 api/
 ├── prisma/                     # Schema and migrations
 ├── src/
-│   ├── lib/                    # Shared utilities (email, etc.) — each with its own *.config.ts
-│   ├── middleware/             # Express middleware (auth, etc.)
+│   ├── lib/                    # Shared utilities (email, etc.) — each with its own *.config.ts and tests/
+│   ├── middleware/             # Express middleware (auth, validate, etc.) — each with its own tests/
 │   ├── services/
 │   │   └── <service>/
-│   │       ├── .env            # Service env vars (gitignored)
-│   │       ├── .env.example    # Env template (committed)
+│   │       ├── .env                 # Service env vars (gitignored)
+│   │       ├── .env.example         # Env template (committed)
 │   │       ├── <service>.config.ts  # Centralised env var access for this service
-│   │       ├── <service>.types.ts   # Request/response types
-│   │       ├── routes/         # Route handlers
-│   │       └── tests/          # Integration tests + setup.ts
+│   │       ├── <service>.types.ts   # Zod schemas + inferred request/response types
+│   │       ├── routes/              # Route handlers — validation applied at router level via validate()
+│   │       └── tests/               # Integration tests + setup.ts
 │   ├── app.ts                  # Express app setup
 │   ├── db.ts                   # Prisma client singleton
 │   └── index.ts                # Entry point

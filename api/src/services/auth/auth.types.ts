@@ -1,18 +1,23 @@
 import type jwt from "jsonwebtoken";
+import { z } from "zod";
+
+export const RegisterSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(8),
+  firstName: z.string().min(1),
+  lastName: z.string().min(1),
+});
+
+export const LoginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(1),
+});
 
 // Request body for POST /auth/register
-export interface RegisterBody {
-  email: string;
-  password: string;
-  firstName: string;
-  lastName: string;
-}
+export type RegisterBody = z.infer<typeof RegisterSchema>;
 
 // Request body for POST /auth/login
-export interface LoginBody {
-  email: string;
-  password: string;
-}
+export type LoginBody = z.infer<typeof LoginSchema>;
 
 // Shape of the JWT payload — embedded in every token
 export interface JwtPayload extends jwt.JwtPayload {

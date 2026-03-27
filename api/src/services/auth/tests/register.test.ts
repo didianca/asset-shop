@@ -43,6 +43,18 @@ describe("POST /auth/register", () => {
     expect(user?.status).toBe("pending");
   });
 
+  it("returns 400 for invalid request body", async () => {
+    const res = await request(app).post("/auth/register").send({
+      email: "not-an-email",
+      password: "short",
+      firstName: "",
+      lastName: "User",
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body.errors).toBeDefined();
+  });
+
   it("returns 409 when email is already registered", async () => {
     const body = {
       email: `duplicate${TEST_EMAIL_DOMAIN}`,

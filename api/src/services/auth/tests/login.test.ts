@@ -56,6 +56,16 @@ describe("POST /auth/login", () => {
     expect(res.body.token).toBeDefined();
   });
 
+  it("returns 400 for invalid request body", async () => {
+    const res = await request(app).post("/auth/login").send({
+      email: "not-an-email",
+      password: "",
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body.errors).toBeDefined();
+  });
+
   it("returns 401 for wrong password", async () => {
     const res = await request(app).post("/auth/login").send({
       email: `active${TEST_EMAIL_DOMAIN}`,

@@ -8,7 +8,7 @@
 - React frontend with TypeScript + Vite
 - Swagger documentation
 - ESLint
-- Vitest integration tests with 95% coverage threshold
+- Vitest integration tests with 95% coverage thresholdS
 - GitHub Actions CI/CD pipeline (lint + test + coverage)
 - Codecov integration
 
@@ -19,7 +19,7 @@
 ### Backend
 
 - PostgreSQL setup + connection
-- Docker + docker-compose for local setup
+- Docker + docker-compose for local setup ✅
 - User Service — registration, login, JWT auth
 - Role-based access control (admin, customer)
 - Product Service — CRUD (name, description, price, category, tags, images)
@@ -102,9 +102,66 @@
 
 ---
 
+## Business Rules
+
+- This is an e-commerce platform — we do not restrict or check if a user has already purchased an item. Users can buy the same asset multiple times. Each purchase generates a new download link.
+
+---
+
 ## Notes
 
 - Start with monorepo structure, extract to true microservices as services grow
 - Use PostgreSQL as primary DB for Phase 1, evaluate MongoDB need in Phase 3
-- Mock payment gateway is sufficient — no real Stripe/PayPal integration needed
+- Payment gateway: Stripe (test mode — free, no real charges, swap test keys for live keys in production)
+  - Use Stripe test card `4242 4242 4242 4242` for demos
+  - Stripe Elements on frontend for secure card collection
+  - `payments.provider` = `'stripe'`
 
+---
+
+## Ideas & Future Decisions
+
+### Order Lifecycle & Statuses
+
+Digital asset orders follow this lifecycle:
+
+```
+pending → paid → fulfilled → refunded
+```
+
+
+| Status      | Meaning                                                         |
+| ----------- | --------------------------------------------------------------- |
+| `pending`   | Order created, payment not yet received, download link not sent |
+| `paid`      | Payment captured, triggers email delivery job                   |
+| `fulfilled` | Download link emailed to customer, `fulfilled_at` timestamp set |
+| `refunded`  | Customer refunded, asset access revoked                         |
+
+
+**Refund policy:** Refunds are only allowed within 30 days of `fulfilled_at`. Enforced in API business logic, not in the DB.
+
+**Delivery is asynchronous:** payment capture and email sending are separate steps, which is why `paid` and `fulfilled` are distinct statuses.
+
+---
+
+### Asset Preview Strategy
+
+Digital assets need a public preview (watermarked) and a private full-resolution file.
+
+**Proposed approach:**
+
+- **S3** — stores the original full-res asset (private, never publicly accessible)
+- **Cloudinary** — hosts the watermarked preview (public, used for storefront display)
+- **DB** stores two URLs per asset: `file_url` (S3) and `preview_url` (Cloudinary)
+
+**On purchase:** API generates a temporary signed S3 URL and emails it to the customer. URL expires after a set period (e.g. 24 hours).
+
+**Automation option (Phase 2+):**
+
+- S3 upload triggers a Lambda function via `s3:ObjectCreated` event
+- Lambda calls Cloudinary API to generate the watermarked preview
+- Cloudinary pulls directly from S3 (no double upload)
+- Lambda saves both URLs to the DB
+- Main API never touches image processing — just reads URLs from DB
+
+**For Phase 1 (MVP):** API handles Cloudinary upload directly on asset creation. Lambda automation can be added later.

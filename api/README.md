@@ -2,23 +2,6 @@
 
 REST API built with **Node.js**, **Express**, and **TypeScript**.
 
-## Stack
-
-| Technology | Purpose |
-|---|---|
-| Node.js | JavaScript runtime |
-| Express | HTTP server and routing |
-| TypeScript | Static typing |
-| tsx | Dev server with hot reload |
-| PostgreSQL | Relational database |
-| Prisma | ORM — schema management, migrations, type-safe query client |
-| Docker | Containerization |
-| Vitest | Test runner |
-| Supertest | HTTP integration testing |
-| ESLint | Linting and code quality |
-| swagger-jsdoc | Generates OpenAPI spec from JSDoc comments |
-| swagger-ui-express | Hosts Swagger UI at `/api-docs` |
-
 ## Local Development
 
 ### Prerequisites
@@ -77,6 +60,24 @@ To view the HTML coverage report locally after running `npm run test:coverage`:
 ```bash
 start coverage/index.html
 ```
+
+## Design Decisions
+
+These are intentional deviations from standard e-commerce patterns, made to fit the nature of a **digital art asset platform**.
+
+### No Order Cancellation
+Standard e-commerce supports cancelling orders between placement and fulfillment. For digital assets, payment capture and delivery happen near-instantaneously — there is no window in which a cancellation is meaningful. Instead, customers can request a **refund within 30 days** of fulfillment if they have a valid reason (e.g. broken or misrepresented asset).
+
+### Bundles and Tags Instead of Categories
+Standard e-commerce uses hierarchical product categories. For a digital art platform where all products are images, categories add no value. Instead:
+- **Tags** — handle discovery and filtering (e.g. `dark`, `minimalist`, `4K`, `portrait`)
+- **Bundles** — group related assets together with an optional discount, replacing the concept of a product collection
+
+### No Stock Quantity
+Physical products have inventory. Digital assets do not — selling the same file to 1000 customers costs nothing extra and depletes nothing. The `stock_quantity` field is omitted entirely.
+
+### No Shipping Addresses
+Digital assets are delivered via email (signed S3 download link). No physical address is needed at any point in the order flow.
 
 ## File Structure
 

@@ -2,15 +2,6 @@
 
 Single page application built with **React**, **TypeScript**, and **Vite**.
 
-## Stack
-
-| Technology | Purpose |
-|---|---|
-| React 18 | UI component library |
-| TypeScript | Static typing |
-| Vite | Dev server, bundler, and build tool |
-| React DOM | Mounts React into the browser DOM |
-
 ## Scripts
 
 | Command | Description |

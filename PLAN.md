@@ -85,6 +85,7 @@
 - Kubernetes setup (optional)
 - Cloud deployment (AWS, GCP, or Azure)
 - Prometheus + Grafana monitoring
+- Add `prisma migrate deploy` as a CD pipeline step before container deployment — runs pending migrations against the production DB before the new container starts
 
 ### Frontend
 

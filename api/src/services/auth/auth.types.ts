@@ -1,3 +1,5 @@
+import type jwt from "jsonwebtoken";
+
 // Request body for POST /auth/register
 export interface RegisterBody {
   email: string;
@@ -13,7 +15,7 @@ export interface LoginBody {
 }
 
 // Shape of the JWT payload — embedded in every token
-export interface JwtPayload {
+export interface JwtPayload extends jwt.JwtPayload {
   id: string;
   role: "admin" | "customer";
   status: "pending" | "active" | "deleted";

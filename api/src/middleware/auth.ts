@@ -17,7 +17,7 @@ export function authenticate(
   res: Response,
   next: NextFunction
 ): void {
-  const authHeader = req.headers["authorization"];
+  const authHeader = req.headers.authorization;
 
   if (!authHeader?.startsWith("Bearer ")) {
     res.status(401).json({ message: "Authentication required" });

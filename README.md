@@ -4,18 +4,32 @@ E-commerce platform built as a monorepo with microservices.
 
 ## Stack
 
+**Shared**
+
 | Technology | Purpose |
 |---|---|
-| Node.js + Express | Service runtimes |
-| React + Vite | Frontend |
 | TypeScript | Static typing across all packages |
+| Docker + Docker Compose | Containerization and local orchestration |
+| ESLint | Linting |
+| GitHub Actions | CI/CD |
+
+**API (`api/`)**
+
+| Technology | Purpose |
+|---|---|
+| Node.js + Express | HTTP server and routing |
 | PostgreSQL | Relational database |
 | Prisma | ORM — schema management, migrations, type-safe query client |
-| Docker + Docker Compose | Containerization and local orchestration |
 | Vitest + Supertest | Testing |
-| ESLint | Linting |
 | Swagger / OpenAPI | API documentation |
-| GitHub Actions | CI/CD |
+| tsx | Dev server with hot reload |
+
+**Client (`client/`)**
+
+| Technology | Purpose |
+|---|---|
+| React 18 | UI component library |
+| Vite | Dev server, bundler, and build tool |
 
 ## Structure
 

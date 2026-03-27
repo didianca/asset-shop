@@ -49,10 +49,12 @@ jobs:
         run: npm ci
 
       - name: Generate Prisma client
-        run: npx prisma generate --schema=api/prisma/schema.prisma
+        run: npx prisma generate
+        working-directory: api
 
       - name: Run migrations
-        run: npx prisma migrate deploy --schema=api/prisma/schema.prisma
+        run: npx prisma migrate deploy
+        working-directory: api
 
       - name: Run linter
         run: npm run lint

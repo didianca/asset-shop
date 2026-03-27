@@ -1,4 +1,3 @@
-// This is your Prisma schema file.
 // Prisma reads this file to generate the type-safe client and migration SQL.
 // Docs: https://pris.ly/d/prisma-schema
 
@@ -66,10 +65,12 @@ model User {
   passwordHash String     @map("password_hash")
   firstName    String     @map("first_name")
   lastName     String     @map("last_name")
-  role         UserRole   @default(customer)
-  status       UserStatus @default(pending)
-  createdAt    DateTime   @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt    DateTime   @updatedAt @map("updated_at") @db.Timestamptz()
+  role                        UserRole   @default(customer)
+  status                      UserStatus @default(pending)
+  verificationToken           String?    @unique @map("verification_token")
+  verificationTokenExpiresAt  DateTime?  @map("verification_token_expires_at") @db.Timestamptz()
+  createdAt                   DateTime   @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt                   DateTime   @updatedAt @map("updated_at") @db.Timestamptz()
 
   // Relations
   cart                 Cart?

@@ -20,6 +20,7 @@ E-commerce platform built as a monorepo with microservices.
 | Node.js + Express | HTTP server and routing |
 | PostgreSQL | Relational database |
 | Prisma | ORM — schema management, migrations, type-safe query client |
+| AWS SES | Transactional email (verification emails) |
 | Vitest + Supertest | Testing |
 | Swagger / OpenAPI | API documentation |
 | tsx | Dev server with hot reload |
@@ -56,9 +57,14 @@ Each service manages its own environment variables, scripts, and dependencies. S
 
 ### Setup
 
-Copy the environment template and fill in your values:
+Copy the Docker Compose environment template and fill in your values:
 ```bash
 cp .env.example .env
+```
+
+Each service also has its own environment file. Copy and fill in the template for each:
+```bash
+cp api/src/services/auth/.env.example api/src/services/auth/.env
 ```
 
 ### Start all services

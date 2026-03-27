@@ -5,9 +5,13 @@ services:
       dockerfile: api/Dockerfile
     ports:
       - "3000:3000"
+    env_file:
+      - .env
+      - api/src/services/auth/.env
     environment:
       NODE_ENV: development
       PORT: 3000
+      # Override DATABASE_URL from auth/.env — Docker uses service name, not localhost
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
     depends_on:
       postgres:

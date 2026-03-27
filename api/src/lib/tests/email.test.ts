@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { sendVerificationEmail } from "../../../lib/email.js";
+import { describe, it, expect, vi, beforeEach, beforeAll, afterAll } from "vitest";
+import { sendVerificationEmail } from "../email.js";
 
 const mockSend = vi.hoisted(() => vi.fn());
 
@@ -7,6 +7,16 @@ vi.mock("@aws-sdk/client-ses", () => ({
   SESClient: vi.fn().mockImplementation(() => ({ send: mockSend })),
   SendEmailCommand: vi.fn().mockImplementation((params) => params),
 }));
+
+const TEST_FROM_EMAIL = "test@example.com";
+
+beforeAll(() => {
+  process.env["SES_FROM_EMAIL"] = TEST_FROM_EMAIL;
+});
+
+afterAll(() => {
+  delete process.env["SES_FROM_EMAIL"];
+});
 
 beforeEach(() => {
   mockSend.mockReset();
@@ -21,7 +31,7 @@ describe("sendVerificationEmail", () => {
     expect(mockSend).toHaveBeenCalledOnce();
     const command = mockSend.mock.calls[0]?.[0];
     expect(command.Destination.ToAddresses).toContain("user@example.com");
-    expect(command.Source).toBe(process.env["SES_FROM_EMAIL"]);
+    expect(command.Source).toBe(TEST_FROM_EMAIL);
   });
 
   it("includes the verification token in the email body", async () => {

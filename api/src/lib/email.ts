@@ -14,8 +14,6 @@ const sesClient = new SESClient({
   },
 });
 
-const FROM_EMAIL = process.env["SES_FROM_EMAIL"] as string;
-
 // Sends a verification email with a link the user clicks to activate their account.
 export async function sendVerificationEmail(
   toEmail: string,
@@ -24,7 +22,7 @@ export async function sendVerificationEmail(
   const verificationUrl = `${process.env["API_URL"]}/auth/verify?token=${token}`;
 
   const params: SendEmailCommandInput = {
-    Source: FROM_EMAIL,
+    Source: process.env["SES_FROM_EMAIL"] as string,
     Destination: {
       ToAddresses: [toEmail],
     },

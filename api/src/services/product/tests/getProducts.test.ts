@@ -11,7 +11,7 @@ const ADMIN_EMAIL = "admin@getproducts.test";
 let adminId: string;
 let adminToken: string;
 
-const makeProduct = <T extends object>(overrides: T) => ({
+const makeProduct = <T extends object>(overrides: T): { price: number; previewUrl: string; assetUrl: string; createdBy: string } & T => ({
   price: 10,
   previewUrl: "https://cdn.example.com/gps-preview.jpg",
   assetUrl: "https://s3.example.com/gps-asset.zip",

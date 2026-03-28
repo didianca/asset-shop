@@ -5,6 +5,7 @@ import { authenticate } from "./middleware/auth.js";
 import authRouter from "./services/auth/routes/index.js";
 import productRouter from "./services/product/routes/index.js";
 import cartRouter from "./services/cart/routes/index.js";
+import orderRouter from "./services/order/routes/index.js";
 
 const app = express();
 
@@ -35,6 +36,7 @@ app.use(authenticate);
 
 app.use("/products", productRouter);
 app.use("/cart", cartRouter);
+app.use("/orders", orderRouter);
 
 // Handle malformed JSON bodies
 // TODO: move to util func

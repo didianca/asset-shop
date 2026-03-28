@@ -75,6 +75,21 @@ cp api/src/services/auth/.env.example api/src/services/auth/.env
 docker-compose up --build
 ```
 
+This starts Postgres, runs any pending database migrations, then starts the API and client. The `migrate` service runs once and exits — this is intentional.
+
+### Database migrations
+
+Migrations run automatically via the `migrate` service every time you do `docker-compose up`. You do not need to run them manually in Docker.
+
+For local development outside Docker, run migrations manually after creating or pulling a new migration:
+
+```bash
+npx prisma migrate dev --name <name> -w api   # create + apply a new migration
+npx prisma migrate deploy -w api              # apply pending migrations only
+```
+
+When adding a new migration, always commit the generated files in `api/prisma/migrations/` — they are the source of truth for the database schema.
+
 | Service | URL |
 |---|---|
 | API | http://localhost:3000 |

@@ -1,4 +1,5 @@
-import { from } from "env-var";
+import envVar from "env-var";
+const { from } = envVar;
 
 const env = from(process.env);
 

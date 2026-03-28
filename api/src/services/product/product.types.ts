@@ -130,6 +130,10 @@ import { z } from "zod";
  *       bearerFormat: JWT
  */
 
+export const UuidParamsSchema = z.object({
+  id: z.string().uuid(),
+});
+
 export const CreateProductSchema = z.object({
   name: z.string().min(1),
   slug: z.string().min(1),

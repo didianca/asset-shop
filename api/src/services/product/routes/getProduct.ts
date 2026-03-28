@@ -4,19 +4,20 @@ import { formatProduct } from "../utils.js";
 
 /**
  * @openapi
- * /products/{slug}:
+ * /products/{id}:
  *   get:
- *     summary: Get a product by slug
+ *     summary: Get a product by ID
  *     tags:
  *       - Products
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
- *         name: slug
+ *         name: id
  *         required: true
  *         schema:
  *           type: string
+ *           format: uuid
  *     responses:
  *       200:
  *         description: Product found
@@ -38,11 +39,11 @@ import { formatProduct } from "../utils.js";
  *               $ref: '#/components/schemas/MessageResponse'
  */
 export async function getProductHandler(
-  req: Request<{ slug: string }>,
+  req: Request<{ id: string }>,
   res: Response
 ): Promise<void> {
   const product = await prisma.product.findUnique({
-    where: { slug: req.params.slug },
+    where: { id: req.params.id },
     include: { tags: { include: { tag: true } } },
   });
 

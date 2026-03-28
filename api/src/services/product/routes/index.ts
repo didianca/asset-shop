@@ -1,21 +1,19 @@
 import { Router } from "express";
 import { requireAdmin } from "../../../middleware/auth.js";
-import { validate } from "../../../middleware/validate.js";
-import { CreateProductSchema, UpdateProductSchema } from "../product.types.js";
+import { validate, validateParams } from "../../../middleware/validate.js";
+import { CreateProductSchema, UpdateProductSchema, UuidParamsSchema } from "../product.types.js";
 import { createProductHandler } from "./createProduct.js";
 import { listProductsHandler } from "./getProducts.js";
 import { getProductHandler } from "./getProduct.js";
 import { updateProductHandler } from "./updateProduct.js";
-import { deleteProductHandler } from "./deleteProduct.js";
 import { listTagsHandler } from "./getTags.js";
 
 const router = Router();
 
 router.get("/", listProductsHandler);
 router.get("/tags", listTagsHandler);
-router.get("/:slug", getProductHandler);
+router.get("/:id", validateParams(UuidParamsSchema), getProductHandler);
 router.post("/", requireAdmin, validate(CreateProductSchema), createProductHandler);
-router.put("/:id", requireAdmin, validate(UpdateProductSchema), updateProductHandler);
-router.delete("/:id", requireAdmin, deleteProductHandler);
+router.put("/:id", requireAdmin, validateParams(UuidParamsSchema), validate(UpdateProductSchema), updateProductHandler);
 
 export default router;

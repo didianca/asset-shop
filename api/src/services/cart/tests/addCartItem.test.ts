@@ -180,6 +180,21 @@ describe("POST /cart/items", () => {
     expect(res.body.message).toBe("One or more products already in cart");
   });
 
+  it("returns 401 when user does not exist in the database", async () => {
+    const ghostToken = jwt.sign({ id: "11111111-1111-1111-1111-111111111111", role: "customer", status: "active" }, authConfig.jwtSecret, { expiresIn: "1h" });
+    const product = await prisma.product.create({
+      data: makeProduct({ name: "ACI Ghost", slug: `${SLUG_PREFIX}ghost` }),
+    });
+
+    const res = await request(app)
+      .post("/cart/items")
+      .set("Authorization", `Bearer ${ghostToken}`)
+      .send({ productIds: [product.id] });
+
+    expect(res.status).toBe(401);
+    expect(res.body.message).toBe("User not found");
+  });
+
   it("re-throws unexpected non-P2002 errors", async () => {
     const product = await prisma.product.create({
       data: makeProduct({ name: "ACI Error", slug: `${SLUG_PREFIX}error` }),

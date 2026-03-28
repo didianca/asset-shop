@@ -98,9 +98,15 @@ export async function addCartItemHandler(
 
     res.status(200).json(formatCart(cart!));
   } catch (e: unknown) {
-    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
-      res.status(409).json({ message: "One or more products already in cart" });
-      return;
+    if (e instanceof Prisma.PrismaClientKnownRequestError) {
+      if (e.code === "P2002") {
+        res.status(409).json({ message: "One or more products already in cart" });
+        return;
+      }
+      if (e.code === "P2003") {
+        res.status(401).json({ message: "User not found" });
+        return;
+      }
     }
     throw e;
   }

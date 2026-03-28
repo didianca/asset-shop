@@ -56,18 +56,28 @@ describe("GET /cart", () => {
     expect(res.status).toBe(401);
   });
 
-  it("creates and returns an empty cart for a new user", async () => {
+  it("returns 404 when user has no cart", async () => {
+    const res = await request(app)
+      .get("/cart")
+      .set("Authorization", `Bearer ${customerToken}`);
+    expect(res.status).toBe(404);
+    expect(res.body.message).toBe("Cart not found");
+  });
+
+  it("returns an existing empty cart", async () => {
+    const cart = await prisma.cart.create({ data: { userId: customerId } });
+
     const res = await request(app)
       .get("/cart")
       .set("Authorization", `Bearer ${customerToken}`);
 
     expect(res.status).toBe(200);
-    expect(res.body.id).toBeDefined();
+    expect(res.body.id).toBe(cart.id);
     expect(res.body.items).toEqual([]);
     expect(res.body.total).toBe(0);
   });
 
-  it("returns existing cart with items", async () => {
+  it("returns cart with items", async () => {
     const product = await prisma.product.create({
       data: makeProduct({ name: "GC Product", slug: `${SLUG_PREFIX}product`, price: 25 }),
     });
@@ -119,16 +129,5 @@ describe("GET /cart", () => {
     expect(res.body.items).toHaveLength(2);
     // 100 * 0.80 + 50 = 130
     expect(res.body.total).toBe(130);
-  });
-
-  it("returns the same cart on repeated calls (idempotent)", async () => {
-    const res1 = await request(app)
-      .get("/cart")
-      .set("Authorization", `Bearer ${customerToken}`);
-    const res2 = await request(app)
-      .get("/cart")
-      .set("Authorization", `Bearer ${customerToken}`);
-
-    expect(res1.body.id).toBe(res2.body.id);
   });
 });

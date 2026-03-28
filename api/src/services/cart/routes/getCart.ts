@@ -23,13 +23,19 @@ const cartInclude = {
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: Cart retrieved (created automatically if it didn't exist)
+ *         description: Cart retrieved
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/CartResponse'
  *       401:
  *         description: Authentication required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/MessageResponse'
+ *       404:
+ *         description: Cart not found
  *         content:
  *           application/json:
  *             schema:
@@ -41,12 +47,15 @@ export async function getCartHandler(
 ): Promise<void> {
   const userId = req.user!.id;
 
-  const cart = await prisma.cart.upsert({
+  const cart = await prisma.cart.findUnique({
     where: { userId },
-    create: { userId },
-    update: {},
     include: cartInclude,
   });
+
+  if (!cart) {
+    res.status(404).json({ message: "Cart not found" });
+    return;
+  }
 
   res.status(200).json(formatCart(cart));
 }

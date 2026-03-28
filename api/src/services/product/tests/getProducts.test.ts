@@ -1,0 +1,129 @@
+import { describe, it, expect, beforeAll, beforeEach, afterAll } from "vitest";
+import request from "supertest";
+import jwt from "jsonwebtoken";
+import app from "../../../app.js";
+import prisma from "../../../db.js";
+import { authConfig } from "../../auth/auth.config.js";
+
+const SLUG_PREFIX = "gps-test-";
+const ADMIN_EMAIL = "admin@getproducts.test";
+
+let adminId: string;
+let adminToken: string;
+
+beforeAll(async () => {
+  await prisma.user.deleteMany({ where: { email: ADMIN_EMAIL } });
+
+  const admin = await prisma.user.create({
+    data: { email: ADMIN_EMAIL, passwordHash: "x", firstName: "Admin", lastName: "Test", role: "admin", status: "active" },
+  });
+  adminId = admin.id;
+  adminToken = jwt.sign({ id: admin.id, role: "admin", status: "active" }, authConfig.jwtSecret, { expiresIn: "1h" });
+});
+
+beforeEach(async () => {
+  await prisma.product.deleteMany({ where: { slug: { startsWith: SLUG_PREFIX } } });
+});
+
+afterAll(async () => {
+  await prisma.product.deleteMany({ where: { slug: { startsWith: SLUG_PREFIX } } });
+  await prisma.user.deleteMany({ where: { email: ADMIN_EMAIL } });
+  await prisma.$disconnect();
+});
+
+describe("GET /products", () => {
+  it("returns 401 without a token", async () => {
+    const res = await request(app).get("/products");
+    expect(res.status).toBe(401);
+  });
+
+  it("returns 200 with an empty array when no products exist", async () => {
+    const res = await request(app)
+      .get("/products")
+      .set("Authorization", `Bearer ${adminToken}`);
+
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+  });
+
+  it("returns active products", async () => {
+    await prisma.product.create({
+      data: { name: "GPS Active Product", slug: `${SLUG_PREFIX}active`, price: 10, createdBy: adminId },
+    });
+
+    const res = await request(app)
+      .get("/products")
+      .set("Authorization", `Bearer ${adminToken}`);
+
+    expect(res.status).toBe(200);
+    const slugs = res.body.map((p: { slug: string }) => p.slug);
+    expect(slugs).toContain(`${SLUG_PREFIX}active`);
+  });
+
+  it("excludes inactive products", async () => {
+    await prisma.product.create({
+      data: { name: "GPS Inactive Product", slug: `${SLUG_PREFIX}inactive`, price: 10, isActive: false, createdBy: adminId },
+    });
+
+    const res = await request(app)
+      .get("/products")
+      .set("Authorization", `Bearer ${adminToken}`);
+
+    const slugs = res.body.map((p: { slug: string }) => p.slug);
+    expect(slugs).not.toContain(`${SLUG_PREFIX}inactive`);
+  });
+
+  it("excludes bundle products", async () => {
+    await prisma.product.create({
+      data: { name: "GPS Bundle Product", slug: `${SLUG_PREFIX}bundle`, price: 30, isBundle: true, createdBy: adminId },
+    });
+
+    const res = await request(app)
+      .get("/products")
+      .set("Authorization", `Bearer ${adminToken}`);
+
+    const slugs = res.body.map((p: { slug: string }) => p.slug);
+    expect(slugs).not.toContain(`${SLUG_PREFIX}bundle`);
+  });
+
+  it("returns products with tags and image included", async () => {
+    const product = await prisma.product.create({
+      data: { name: "GPS Rich Product", slug: `${SLUG_PREFIX}rich`, price: 25, createdBy: adminId },
+    });
+    const tag = await prisma.tag.upsert({ where: { slug: "gps-tag-one" }, update: {}, create: { name: "gps-tag-one", slug: "gps-tag-one" } });
+    await prisma.productTag.create({ data: { productId: product.id, tagId: tag.id } });
+    await prisma.productImage.create({
+      data: { productId: product.id, previewUrl: "https://cdn.example.com/gps-p.jpg", assetUrl: "https://s3.example.com/gps-a.zip" },
+    });
+
+    const res = await request(app)
+      .get("/products")
+      .set("Authorization", `Bearer ${adminToken}`);
+
+    const found = res.body.find((p: { slug: string }) => p.slug === `${SLUG_PREFIX}rich`);
+    expect(found.tags).toContain("gps-tag-one");
+    expect(found.previewUrl).toBe("https://cdn.example.com/gps-p.jpg");
+
+    await prisma.tag.delete({ where: { slug: "gps-tag-one" } });
+  });
+
+  it("returns products ordered by createdAt descending", async () => {
+    await prisma.product.create({
+      data: { name: "GPS First Product", slug: `${SLUG_PREFIX}first`, price: 10, createdBy: adminId },
+    });
+    await prisma.product.create({
+      data: { name: "GPS Second Product", slug: `${SLUG_PREFIX}second`, price: 10, createdBy: adminId },
+    });
+
+    const res = await request(app)
+      .get("/products")
+      .set("Authorization", `Bearer ${adminToken}`);
+
+    const slugs = res.body
+      .map((p: { slug: string }) => p.slug)
+      .filter((s: string) => s.startsWith(SLUG_PREFIX));
+
+    expect(slugs[0]).toBe(`${SLUG_PREFIX}second`);
+    expect(slugs[1]).toBe(`${SLUG_PREFIX}first`);
+  });
+});

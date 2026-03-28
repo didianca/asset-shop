@@ -2,6 +2,17 @@ import { describe, it, expect } from "vitest";
 import request from "supertest";
 import app from "../src/app";
 
+describe("Malformed JSON", () => {
+  it("returns 400 for invalid JSON body", async () => {
+    const res = await request(app)
+      .post("/auth/register")
+      .set("Content-Type", "application/json")
+      .send('{"name": "test",}');
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe("Invalid JSON in request body");
+  });
+});
+
 describe("GET /health", () => {
   it("returns 200", async () => {
     const res = await request(app).get("/health");

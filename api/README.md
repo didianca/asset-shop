@@ -9,9 +9,10 @@ REST API built with **Node.js**, **Express**, and **TypeScript**.
 
 ### Setup
 
-Each service has its own environment file. Copy the template and fill in your values — this only needs to be done once on first setup:
+Copy and fill in the environment files — this only needs to be done once on first setup:
 ```bash
-cp src/services/auth/.env.example src/services/auth/.env
+cp .env.example .env                                    # DATABASE_URL and other infrastructure vars
+cp src/services/auth/.env.example src/services/auth/.env  # Auth service vars
 ```
 
 Then start the dev server:
@@ -85,6 +86,7 @@ Each service owns a `<service>.config.ts` file that centralises all environment 
 
 | File | Variables |
 |---|---|
+| `.env` | `DATABASE_URL` |
 | `src/services/auth/auth.config.ts` | `JWT_SECRET` |
 | `src/lib/email.config.ts` | `AWS_REGION`, `AWS_SES_ACCESS_KEY`, `AWS_SES_SECRET_ACCESS_KEY`, `SES_FROM_EMAIL`, `API_URL` |
 

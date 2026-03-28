@@ -64,9 +64,10 @@ Copy the Docker Compose environment template and fill in your values:
 cp .env.example .env
 ```
 
-Each service also has its own environment file. Copy and fill in the template for each:
+Each service also has its own environment file. Copy and fill in the templates:
 ```bash
-cp api/src/services/auth/.env.example api/src/services/auth/.env
+cp api/.env.example api/.env                                        # DATABASE_URL
+cp api/src/services/auth/.env.example api/src/services/auth/.env   # Auth service vars
 ```
 
 ### Start all services

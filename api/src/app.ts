@@ -42,7 +42,7 @@ app.use(
     res: express.Response,
     next: express.NextFunction
   ) => {
-    if (err instanceof SyntaxError && err.status === 400 && "body" in err) {
+    if (err.status === 400 && "body" in err) {
       res.status(400).json({ message: "Invalid JSON in request body" });
       return;
     }

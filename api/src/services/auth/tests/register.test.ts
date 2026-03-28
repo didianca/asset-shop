@@ -55,9 +55,31 @@ describe("POST /auth/register", () => {
     expect(res.body.errors).toBeDefined();
   });
 
-  it("returns 409 when email is already registered", async () => {
+  it("returns 409 when email belongs to an active user", async () => {
+    await prisma.user.create({
+      data: {
+        email: `active${TEST_EMAIL_DOMAIN}`,
+        passwordHash: "irrelevant",
+        firstName: "Test",
+        lastName: "User",
+        status: "active",
+      },
+    });
+
+    const res = await request(app).post("/auth/register").send({
+      email: `active${TEST_EMAIL_DOMAIN}`,
+      password: "Password123!",
+      firstName: "Test",
+      lastName: "User",
+    });
+
+    expect(res.status).toBe(409);
+    expect(res.body.message).toBe("Email is already registered");
+  });
+
+  it("returns 201 and resends verification for a pending user", async () => {
     const body = {
-      email: `duplicate${TEST_EMAIL_DOMAIN}`,
+      email: `resend${TEST_EMAIL_DOMAIN}`,
       password: "Password123!",
       firstName: "Test",
       lastName: "User",
@@ -66,7 +88,23 @@ describe("POST /auth/register", () => {
     await request(app).post("/auth/register").send(body);
     const res = await request(app).post("/auth/register").send(body);
 
-    expect(res.status).toBe(409);
-    expect(res.body.message).toBe("Email is already registered");
+    expect(res.status).toBe(201);
+  });
+
+  it("generates a new verification token when resending for a pending user", async () => {
+    const body = {
+      email: `newtoken${TEST_EMAIL_DOMAIN}`,
+      password: "Password123!",
+      firstName: "Test",
+      lastName: "User",
+    };
+
+    await request(app).post("/auth/register").send(body);
+    const before = await prisma.user.findUnique({ where: { email: body.email } });
+
+    await request(app).post("/auth/register").send(body);
+    const after = await prisma.user.findUnique({ where: { email: body.email } });
+
+    expect(after?.verificationToken).not.toBe(before?.verificationToken);
   });
 });

@@ -23,7 +23,7 @@ const VERIFICATION_TOKEN_EXPIRES_HOURS = 12;
  *             $ref: '#/components/schemas/RegisterBody'
  *     responses:
  *       201:
- *         description: Registration successful — verification email sent
+ *         description: Registration successful — verification email sent (resent if account was pending)
  *         content:
  *           application/json:
  *             schema:
@@ -42,30 +42,35 @@ export async function registerHandler(
   const { email, password, firstName, lastName } = req.body;
 
   const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) {
+  if (existing && existing.status !== "pending") {
     res.status(409).json({ message: "Email is already registered" });
     return;
   }
 
-  const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
-
-  // Generate a secure random token for email verification
   const verificationToken = crypto.randomBytes(32).toString("hex");
   const verificationTokenExpiresAt = new Date(
     Date.now() + VERIFICATION_TOKEN_EXPIRES_HOURS * 60 * 60 * 1000
   );
 
-  // Create user with status = pending until email is verified
-  await prisma.user.create({
-    data: {
-      email,
-      passwordHash,
-      firstName,
-      lastName,
-      verificationToken,
-      verificationTokenExpiresAt,
-    },
-  });
+  if (existing && existing.status === "pending") {
+    await prisma.user.update({
+      where: { email },
+      data: { verificationToken, verificationTokenExpiresAt },
+    });
+  } else {
+    const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+
+    await prisma.user.create({
+      data: {
+        email,
+        passwordHash,
+        firstName,
+        lastName,
+        verificationToken,
+        verificationTokenExpiresAt,
+      },
+    });
+  }
 
   await sendVerificationEmail(email, verificationToken);
 

@@ -64,7 +64,7 @@ export async function updateProductHandler(
   res: Response
 ): Promise<void> {
   const { id } = req.params;
-  const { name, slug: newSlug, description, price, discountPercent, tags, previewUrl, assetUrl } = req.body;
+  const { name, slug: newSlug, description, price, discountPercent, isActive, tags, previewUrl, assetUrl } = req.body;
 
   const existing = await prisma.product.findUnique({ where: { id } });
   if (!existing || !existing.isActive) {
@@ -76,27 +76,17 @@ export async function updateProductHandler(
     const product = await prisma.$transaction(async (tx) => {
       await tx.product.update({
         where: { id },
-        data: {
-          ...(name !== undefined && { name }),
-          ...(newSlug !== undefined && { slug: newSlug }),
-          ...(description !== undefined && { description }),
-          ...(price !== undefined && { price }),
-          ...(discountPercent !== undefined && { discountPercent }),
-          ...(previewUrl !== undefined && { previewUrl }),
-          ...(assetUrl !== undefined && { assetUrl }),
-        },
+        data: { name, slug: newSlug, description, price, discountPercent, isActive, previewUrl, assetUrl },
       });
 
-      if (tags !== undefined) {
-        await tx.productTag.deleteMany({ where: { productId: existing.id } });
-        for (const tagName of tags) {
-          const tag = await tx.tag.upsert({
-            where: { slug: toTagSlug(tagName) },
-            update: {},
-            create: { name: tagName, slug: toTagSlug(tagName) },
-          });
-          await tx.productTag.create({ data: { productId: existing.id, tagId: tag.id } });
-        }
+      await tx.productTag.deleteMany({ where: { productId: existing.id } });
+      for (const tagName of tags) {
+        const tag = await tx.tag.upsert({
+          where: { slug: toTagSlug(tagName) },
+          update: {},
+          create: { name: tagName, slug: toTagSlug(tagName) },
+        });
+        await tx.productTag.create({ data: { productId: existing.id, tagId: tag.id } });
       }
 
       return tx.product.findUnique({

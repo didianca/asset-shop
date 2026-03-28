@@ -45,6 +45,16 @@ import { z } from "zod";
  *           example: https://s3.example.com/asset.zip
  *     UpdateProductBody:
  *       type: object
+ *       required:
+ *         - name
+ *         - slug
+ *         - description
+ *         - price
+ *         - discountPercent
+ *         - isActive
+ *         - tags
+ *         - previewUrl
+ *         - assetUrl
  *       properties:
  *         name:
  *           type: string
@@ -52,12 +62,16 @@ import { z } from "zod";
  *           type: string
  *         description:
  *           type: string
+ *           nullable: true
  *         price:
  *           type: number
  *         discountPercent:
  *           type: integer
  *           minimum: 0
  *           maximum: 100
+ *           nullable: true
+ *         isActive:
+ *           type: boolean
  *         tags:
  *           type: array
  *           items:
@@ -127,7 +141,17 @@ export const CreateProductSchema = z.object({
   assetUrl: z.string().url(),
 });
 
-export const UpdateProductSchema = CreateProductSchema.partial();
+export const UpdateProductSchema = z.object({
+  name: z.string().min(1),
+  slug: z.string().min(1),
+  description: z.string().nullable(),
+  price: z.number().positive(),
+  discountPercent: z.number().int().min(0).max(100).nullable(),
+  isActive: z.boolean(),
+  tags: z.array(z.string()),
+  previewUrl: z.string().url(),
+  assetUrl: z.string().url(),
+});
 
 export type CreateProductBody = z.infer<typeof CreateProductSchema>;
 export type UpdateProductBody = z.infer<typeof UpdateProductSchema>;

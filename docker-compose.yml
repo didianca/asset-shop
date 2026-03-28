@@ -19,8 +19,12 @@ services:
     build:
       context: .
       dockerfile: api/Dockerfile
+      target: dev
     ports:
       - "3000:3000"
+      - "9229:9229"
+    volumes:
+      - ./api/src:/app/api/src
     env_file:
       - .env
       - api/.env

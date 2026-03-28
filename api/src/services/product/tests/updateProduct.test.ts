@@ -24,6 +24,18 @@ const makeProduct = <T extends object>(overrides: T): { price: number; previewUr
   ...overrides,
 });
 
+const validUpdate = {
+  name: "UP Updated Name",
+  slug: `${SLUG_PREFIX}updated`,
+  description: null,
+  price: 20,
+  discountPercent: null,
+  isActive: true,
+  tags: [],
+  previewUrl: "https://cdn.example.com/up-updated-preview.jpg",
+  assetUrl: "https://s3.example.com/up-updated-asset.zip",
+};
+
 beforeAll(async () => {
   await prisma.user.deleteMany({ where: { email: { in: [ADMIN_EMAIL, CUSTOMER_EMAIL] } } });
 
@@ -53,7 +65,7 @@ afterAll(async () => {
 
 describe("PUT /products/:id", () => {
   it("returns 401 without a token", async () => {
-    const res = await request(app).put(`/products/${NONEXISTENT_ID}`).send({ price: 9.99 });
+    const res = await request(app).put(`/products/${NONEXISTENT_ID}`).send(validUpdate);
     expect(res.status).toBe(401);
   });
 
@@ -61,15 +73,24 @@ describe("PUT /products/:id", () => {
     const res = await request(app)
       .put(`/products/${NONEXISTENT_ID}`)
       .set("Authorization", `Bearer ${customerToken}`)
-      .send({ price: 9.99 });
+      .send(validUpdate);
     expect(res.status).toBe(403);
+  });
+
+  it("returns 400 for a missing required field", async () => {
+    const { price: _price, ...withoutPrice } = validUpdate; // eslint-disable-line @typescript-eslint/no-unused-vars
+    const res = await request(app)
+      .put(`/products/${NONEXISTENT_ID}`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send(withoutPrice);
+    expect(res.status).toBe(400);
   });
 
   it("returns 404 for a non-existent id", async () => {
     const res = await request(app)
       .put(`/products/${NONEXISTENT_ID}`)
       .set("Authorization", `Bearer ${adminToken}`)
-      .send({ price: 9.99 });
+      .send(validUpdate);
     expect(res.status).toBe(404);
   });
 
@@ -81,11 +102,11 @@ describe("PUT /products/:id", () => {
     const res = await request(app)
       .put(`/products/${product.id}`)
       .set("Authorization", `Bearer ${adminToken}`)
-      .send({ price: 5 });
+      .send(validUpdate);
     expect(res.status).toBe(404);
   });
 
-  it("returns 200 and updates product fields", async () => {
+  it("returns 200 and updates all product fields", async () => {
     const product = await prisma.product.create({
       data: makeProduct({ name: "UP Original", slug: `${SLUG_PREFIX}original` }),
     });
@@ -93,7 +114,7 @@ describe("PUT /products/:id", () => {
     const res = await request(app)
       .put(`/products/${product.id}`)
       .set("Authorization", `Bearer ${adminToken}`)
-      .send({ name: "UP Renamed", slug: `${SLUG_PREFIX}renamed`, price: 49.99, description: "Updated description", discountPercent: 10 });
+      .send({ ...validUpdate, name: "UP Renamed", slug: `${SLUG_PREFIX}renamed`, price: 49.99, description: "Updated description", discountPercent: 10 });
 
     expect(res.status).toBe(200);
     expect(res.body.name).toBe("UP Renamed");
@@ -102,7 +123,21 @@ describe("PUT /products/:id", () => {
     expect(res.body.discountPercent).toBe(10);
   });
 
-  it("replaces all tags when tags are provided", async () => {
+  it("sets isActive to false when isActive is false", async () => {
+    const product = await prisma.product.create({
+      data: makeProduct({ name: "UP Deactivate", slug: `${SLUG_PREFIX}deactivate` }),
+    });
+
+    const res = await request(app)
+      .put(`/products/${product.id}`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ ...validUpdate, isActive: false });
+
+    expect(res.status).toBe(200);
+    expect(res.body.isActive).toBe(false);
+  });
+
+  it("replaces tags with provided tags", async () => {
     const product = await prisma.product.create({
       data: makeProduct({ name: "UP Tagged", slug: `${SLUG_PREFIX}tagged` }),
     });
@@ -112,57 +147,27 @@ describe("PUT /products/:id", () => {
     const res = await request(app)
       .put(`/products/${product.id}`)
       .set("Authorization", `Bearer ${adminToken}`)
-      .send({ tags: [`${TAG_PREFIX}new`] });
+      .send({ ...validUpdate, tags: [`${TAG_PREFIX}new`] });
 
     expect(res.status).toBe(200);
     expect(res.body.tags).toEqual([`${TAG_PREFIX}new`]);
     expect(res.body.tags).not.toContain(`${TAG_PREFIX}old`);
   });
 
-  it("does not change tags when tags field is omitted", async () => {
+  it("clears tags when an empty tags array is provided", async () => {
     const product = await prisma.product.create({
-      data: makeProduct({ name: "UP Keep Tags", slug: `${SLUG_PREFIX}keeptags` }),
+      data: makeProduct({ name: "UP Clear Tags", slug: `${SLUG_PREFIX}cleartags` }),
     });
-    const tag = await prisma.tag.create({ data: { name: `${TAG_PREFIX}keep`, slug: `${TAG_PREFIX}keep` } });
+    const tag = await prisma.tag.create({ data: { name: `${TAG_PREFIX}clear`, slug: `${TAG_PREFIX}clear` } });
     await prisma.productTag.create({ data: { productId: product.id, tagId: tag.id } });
 
     const res = await request(app)
       .put(`/products/${product.id}`)
       .set("Authorization", `Bearer ${adminToken}`)
-      .send({ price: 15 });
+      .send({ ...validUpdate, tags: [] });
 
     expect(res.status).toBe(200);
-    expect(res.body.tags).toContain(`${TAG_PREFIX}keep`);
-  });
-
-  it("updates previewUrl and assetUrl when both are provided", async () => {
-    const product = await prisma.product.create({
-      data: makeProduct({ name: "UP Update URLs", slug: `${SLUG_PREFIX}updateurls` }),
-    });
-
-    const res = await request(app)
-      .put(`/products/${product.id}`)
-      .set("Authorization", `Bearer ${adminToken}`)
-      .send({ previewUrl: "https://cdn.example.com/up-new-preview.jpg", assetUrl: "https://s3.example.com/up-new-asset.zip" });
-
-    expect(res.status).toBe(200);
-    expect(res.body.previewUrl).toBe("https://cdn.example.com/up-new-preview.jpg");
-    expect(res.body.assetUrl).toBe("https://s3.example.com/up-new-asset.zip");
-  });
-
-  it("updates only previewUrl when only previewUrl is provided", async () => {
-    const product = await prisma.product.create({
-      data: makeProduct({ name: "UP Partial URL", slug: `${SLUG_PREFIX}partialurl` }),
-    });
-
-    const res = await request(app)
-      .put(`/products/${product.id}`)
-      .set("Authorization", `Bearer ${adminToken}`)
-      .send({ previewUrl: "https://cdn.example.com/up-updated-preview.jpg" });
-
-    expect(res.status).toBe(200);
-    expect(res.body.previewUrl).toBe("https://cdn.example.com/up-updated-preview.jpg");
-    expect(res.body.assetUrl).toBe("https://s3.example.com/up-asset.zip");
+    expect(res.body.tags).toEqual([]);
   });
 
   it("returns 409 when updating to a slug already taken", async () => {
@@ -176,7 +181,7 @@ describe("PUT /products/:id", () => {
     const res = await request(app)
       .put(`/products/${productA.id}`)
       .set("Authorization", `Bearer ${adminToken}`)
-      .send({ slug: `${SLUG_PREFIX}b` });
+      .send({ ...validUpdate, slug: `${SLUG_PREFIX}b` });
 
     expect(res.status).toBe(409);
   });
@@ -192,7 +197,7 @@ describe("PUT /products/:id", () => {
       request(app)
         .put(`/products/${product.id}`)
         .set("Authorization", `Bearer ${adminToken}`)
-        .send({ price: 99 })
+        .send(validUpdate)
     ).resolves.toMatchObject({ status: 500 });
 
     vi.restoreAllMocks();

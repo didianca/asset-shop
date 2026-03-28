@@ -90,11 +90,14 @@ import { z } from "zod";
  *         - id
  *         - name
  *         - slug
+ *         - description
  *         - price
+ *         - discountPercent
  *         - isActive
  *         - tags
  *         - previewUrl
  *         - assetUrl
+ *         - bundle
  *         - createdAt
  *       properties:
  *         id:

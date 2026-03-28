@@ -7,6 +7,7 @@ import { authConfig } from "../../auth/auth.config.js";
 
 const SLUG_PREFIX = "gp-test-";
 const ADMIN_EMAIL = "admin@getproduct.test";
+const NONEXISTENT_ID = "00000000-0000-0000-0000-000000000000";
 
 let adminId: string;
 let adminToken: string;
@@ -39,37 +40,37 @@ afterAll(async () => {
   await prisma.$disconnect();
 });
 
-describe("GET /products/:slug", () => {
+describe("GET /products/:id", () => {
   it("returns 401 without a token", async () => {
-    const res = await request(app).get(`/products/${SLUG_PREFIX}anything`);
+    const res = await request(app).get(`/products/${NONEXISTENT_ID}`);
     expect(res.status).toBe(401);
   });
 
-  it("returns 404 for a non-existent slug", async () => {
+  it("returns 404 for a non-existent id", async () => {
     const res = await request(app)
-      .get(`/products/${SLUG_PREFIX}nonexistent`)
+      .get(`/products/${NONEXISTENT_ID}`)
       .set("Authorization", `Bearer ${adminToken}`);
     expect(res.status).toBe(404);
   });
 
   it("returns 404 for an inactive product", async () => {
-    await prisma.product.create({
+    const product = await prisma.product.create({
       data: makeProduct({ name: "GP Inactive", slug: `${SLUG_PREFIX}inactive`, isActive: false }),
     });
 
     const res = await request(app)
-      .get(`/products/${SLUG_PREFIX}inactive`)
+      .get(`/products/${product.id}`)
       .set("Authorization", `Bearer ${adminToken}`);
     expect(res.status).toBe(404);
   });
 
-  it("returns 200 with the product for an active slug", async () => {
-    await prisma.product.create({
+  it("returns 200 with the product for an active id", async () => {
+    const product = await prisma.product.create({
       data: makeProduct({ name: "GP Active Product", slug: `${SLUG_PREFIX}active`, price: 29.99 }),
     });
 
     const res = await request(app)
-      .get(`/products/${SLUG_PREFIX}active`)
+      .get(`/products/${product.id}`)
       .set("Authorization", `Bearer ${adminToken}`);
 
     expect(res.status).toBe(200);
@@ -86,7 +87,7 @@ describe("GET /products/:slug", () => {
     await prisma.productTag.create({ data: { productId: product.id, tagId: tag.id } });
 
     const res = await request(app)
-      .get(`/products/${SLUG_PREFIX}rich`)
+      .get(`/products/${product.id}`)
       .set("Authorization", `Bearer ${adminToken}`);
 
     expect(res.status).toBe(200);

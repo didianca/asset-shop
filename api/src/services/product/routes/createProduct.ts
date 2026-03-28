@@ -1,0 +1,93 @@
+import type { Request, Response } from "express";
+import { Prisma } from "../../../generated/prisma/index.js";
+import prisma from "../../../db.js";
+import type { CreateProductBody } from "../product.types.js";
+import { formatProduct, toTagSlug } from "../utils.js";
+
+/**
+ * @openapi
+ * /products:
+ *   post:
+ *     summary: Create a new product
+ *     description: Admin only. Creates a new product with optional tags.
+ *     tags:
+ *       - Products
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateProductBody'
+ *     responses:
+ *       201:
+ *         description: Product created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ProductResponse'
+ *       401:
+ *         description: Authentication required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/MessageResponse'
+ *       403:
+ *         description: Admin access required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/MessageResponse'
+ *       400:
+ *         description: Validation error (missing fields, wrong types, or unknown keys)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ValidationErrorResponse'
+ *       409:
+ *         description: Product with those details already exists
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/MessageResponse'
+ */
+export async function createProductHandler(
+  req: Request<object, object, CreateProductBody>,
+  res: Response
+): Promise<void> {
+  const { name, slug, description, price, discountPercent, tags, previewUrl, assetUrl } = req.body;
+  const createdBy = req.user!.id;
+
+  try {
+    const product = await prisma.$transaction(async (tx) => {
+      const created = await tx.product.create({
+        data: { name, slug, description: description ?? null, price, discountPercent: discountPercent ?? null, previewUrl, assetUrl, createdBy },
+      });
+
+      if (tags && tags.length > 0) {
+        for (const tagName of tags) {
+          const tag = await tx.tag.upsert({
+            where: { slug: toTagSlug(tagName) },
+            update: {},
+            create: { name: tagName, slug: toTagSlug(tagName) },
+          });
+          await tx.productTag.create({ data: { productId: created.id, tagId: tag.id } });
+        }
+      }
+
+      return tx.product.findUnique({
+        where: { id: created.id },
+        include: { tags: { include: { tag: true } }, bundle: true },
+      });
+    });
+
+    res.status(201).json(formatProduct(product!));
+  } catch (e: unknown) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+      res.status(409).json({ message: "A product with those details already exists" });
+      return;
+    }
+    throw e;
+  }
+}

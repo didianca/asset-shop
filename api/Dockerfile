@@ -22,6 +22,16 @@ RUN npx prisma generate
 
 RUN npm run build
 
+# ---------------------------------------------------------------------------
+# Dev stage — runs tsx with Node inspector for WebStorm / Docker debugging
+# Usage: set `target: dev` in docker-compose and mount api/src as a volume
+# ---------------------------------------------------------------------------
+FROM builder AS dev
+
+EXPOSE 3000 9229
+
+CMD ["sh", "-c", "npx prisma generate && node --enable-source-maps --inspect=0.0.0.0:9229 --import tsx --watch src/index.ts"]
+
 FROM node:20-slim AS production
 
 RUN apt-get update -y && apt-get install -y openssl --no-install-recommends && rm -rf /var/lib/apt/lists/*

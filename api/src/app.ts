@@ -34,4 +34,21 @@ app.use(authenticate);
 
 app.use("/products", productRouter);
 
+// Handle malformed JSON bodies
+// TODO: move to util func
+app.use(
+  (
+    err: SyntaxError & { status?: number },
+    _req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) => {
+    if (err.status === 400 && "body" in err) {
+      res.status(400).json({ message: "Invalid JSON in request body" });
+      return;
+    }
+    next(err);
+  }
+);
+
 export default app;

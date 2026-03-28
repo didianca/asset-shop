@@ -6,10 +6,13 @@ import { z } from "zod";
  *   schemas:
  *     CreateProductBody:
  *       type: object
+ *       additionalProperties: false
  *       required:
  *         - name
  *         - slug
  *         - price
+ *         - previewUrl
+ *         - assetUrl
  *       properties:
  *         name:
  *           type: string
@@ -43,6 +46,17 @@ import { z } from "zod";
  *           example: https://s3.example.com/asset.zip
  *     UpdateProductBody:
  *       type: object
+ *       additionalProperties: false
+ *       required:
+ *         - name
+ *         - slug
+ *         - description
+ *         - price
+ *         - discountPercent
+ *         - isActive
+ *         - tags
+ *         - previewUrl
+ *         - assetUrl
  *       properties:
  *         name:
  *           type: string
@@ -50,12 +64,16 @@ import { z } from "zod";
  *           type: string
  *         description:
  *           type: string
+ *           nullable: true
  *         price:
  *           type: number
  *         discountPercent:
  *           type: integer
  *           minimum: 0
  *           maximum: 100
+ *           nullable: true
+ *         isActive:
+ *           type: boolean
  *         tags:
  *           type: array
  *           items:
@@ -68,6 +86,19 @@ import { z } from "zod";
  *           format: uri
  *     ProductResponse:
  *       type: object
+ *       required:
+ *         - id
+ *         - name
+ *         - slug
+ *         - description
+ *         - price
+ *         - discountPercent
+ *         - isActive
+ *         - tags
+ *         - previewUrl
+ *         - assetUrl
+ *         - bundle
+ *         - createdAt
  *       properties:
  *         id:
  *           type: string
@@ -90,8 +121,24 @@ import { z } from "zod";
  *             type: string
  *         previewUrl:
  *           type: string
+ *           format: uri
  *         assetUrl:
  *           type: string
+ *           format: uri
+ *         bundle:
+ *           nullable: true
+ *           type: object
+ *           properties:
+ *             id:
+ *               type: string
+ *               format: uuid
+ *             name:
+ *               type: string
+ *             slug:
+ *               type: string
+ *             discountPercent:
+ *               type: integer
+ *               nullable: true
  *         createdAt:
  *           type: string
  *           format: date-time
@@ -102,6 +149,10 @@ import { z } from "zod";
  *       bearerFormat: JWT
  */
 
+export const UuidParamsSchema = z.object({
+  id: z.string().uuid(),
+});
+
 export const CreateProductSchema = z.object({
   name: z.string().min(1),
   slug: z.string().min(1),
@@ -109,11 +160,21 @@ export const CreateProductSchema = z.object({
   price: z.number().positive(),
   discountPercent: z.number().int().min(0).max(100).optional(),
   tags: z.array(z.string()).optional(),
-  previewUrl: z.string().url().optional(),
-  assetUrl: z.string().url().optional(),
-});
+  previewUrl: z.string().url(),
+  assetUrl: z.string().url(),
+}).strict();
 
-export const UpdateProductSchema = CreateProductSchema.partial();
+export const UpdateProductSchema = z.object({
+  name: z.string().min(1),
+  slug: z.string().min(1),
+  description: z.string().nullable(),
+  price: z.number().positive(),
+  discountPercent: z.number().int().min(0).max(100).nullable(),
+  isActive: z.boolean(),
+  tags: z.array(z.string()),
+  previewUrl: z.string().url(),
+  assetUrl: z.string().url(),
+}).strict();
 
 export type CreateProductBody = z.infer<typeof CreateProductSchema>;
 export type UpdateProductBody = z.infer<typeof UpdateProductSchema>;

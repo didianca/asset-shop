@@ -1,23 +1,25 @@
 import type { Request, Response } from "express";
+import prisma from "../../../db.js";
 
 /**
  * @openapi
- * /products:
+ * /products/tags:
  *   get:
- *     summary: List all active products
+ *     summary: List all tags
  *     tags:
  *       - Products
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: List of products
+ *         description: List of tag names
  *         content:
  *           application/json:
  *             schema:
  *               type: array
  *               items:
- *                 $ref: '#/components/schemas/ProductResponse'
+ *                 type: string
+ *               example: ["dark", "minimalist", "4K"]
  *       401:
  *         description: Authentication required
  *         content:
@@ -25,9 +27,10 @@ import type { Request, Response } from "express";
  *             schema:
  *               $ref: '#/components/schemas/MessageResponse'
  */
-export async function listProductsHandler(
+export async function listTagsHandler(
   _req: Request,
   res: Response
 ): Promise<void> {
-  res.status(200).json([]);
+  const tags = await prisma.tag.findMany({ orderBy: { name: "asc" } });
+  res.status(200).json(tags.map((t) => t.name));
 }

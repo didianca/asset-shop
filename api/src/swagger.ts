@@ -47,6 +47,20 @@ const options: swaggerJsdoc.Options = {
             },
           },
         },
+        ValidationErrorResponse: {
+          type: "object",
+          properties: {
+            message: { type: "string", example: "Invalid request" },
+            errors: {
+              type: "object",
+              additionalProperties: {
+                type: "array",
+                items: { type: "string" },
+              },
+              example: { discount: ["Unrecognized key(s) in object: 'discount'"] },
+            },
+          },
+        },
         HealthResponse: {
           type: "object",
           properties: {

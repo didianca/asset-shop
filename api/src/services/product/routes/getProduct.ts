@@ -1,20 +1,23 @@
 import type { Request, Response } from "express";
+import prisma from "../../../db.js";
+import { formatProduct } from "../utils.js";
 
 /**
  * @openapi
- * /products/{slug}:
+ * /products/{id}:
  *   get:
- *     summary: Get a product by slug
+ *     summary: Get a product by ID
  *     tags:
  *       - Products
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
- *         name: slug
+ *         name: id
  *         required: true
  *         schema:
  *           type: string
+ *           format: uuid
  *     responses:
  *       200:
  *         description: Product found
@@ -36,8 +39,18 @@ import type { Request, Response } from "express";
  *               $ref: '#/components/schemas/MessageResponse'
  */
 export async function getProductHandler(
-  _req: Request,
+  req: Request<{ id: string }>,
   res: Response
 ): Promise<void> {
-  res.status(200).json({ message: "Product found" });
+  const product = await prisma.product.findUnique({
+    where: { id: req.params.id },
+    include: { tags: { include: { tag: true } }, bundle: true },
+  });
+
+  if (!product || !product.isActive) {
+    res.status(404).json({ message: "Product not found" });
+    return;
+  }
+
+  res.status(200).json(formatProduct(product));
 }

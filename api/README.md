@@ -9,7 +9,7 @@ REST API built with **Node.js**, **Express**, and **TypeScript**.
 
 ### Setup
 
-Each service has its own environment file. Copy the template for each service and fill in your values:
+Each service has its own environment file. Copy the template and fill in your values — this only needs to be done once on first setup:
 ```bash
 cp src/services/auth/.env.example src/services/auth/.env
 ```

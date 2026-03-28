@@ -56,7 +56,7 @@ afterAll(async () => {
   await prisma.$disconnect();
 });
 
-async function addToCart(productIds: string[], token: string) {
+async function addToCart(productIds: string[], token: string): Promise<void> {
   await request(app)
     .post("/cart/items")
     .set("Authorization", `Bearer ${token}`)

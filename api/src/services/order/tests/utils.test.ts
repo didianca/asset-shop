@@ -71,11 +71,11 @@ describe("formatOrder", () => {
     id: "order-1",
     userId: "user-1",
     status: "pending",
-    totalAmount: { toString: () => "25.50" },
+    totalAmount: { toString: (): string => "25.50" },
     items: [
       {
         productId: "prod-1",
-        unitPrice: { toString: () => "25.50" },
+        unitPrice: { toString: (): string => "25.50" },
         product: { name: "Test Product", slug: "test-product", previewUrl: "https://cdn.example.com/preview.jpg" },
       },
     ],
@@ -103,7 +103,7 @@ describe("formatOrder", () => {
       ...baseOrder,
       payment: {
         id: "pay-1",
-        amount: { toString: () => "25.50" },
+        amount: { toString: (): string => "25.50" },
         status: "captured",
         provider: "stripe",
         createdAt: new Date("2026-01-02"),

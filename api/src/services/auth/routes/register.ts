@@ -47,7 +47,6 @@ export async function registerHandler(
     return;
   }
 
-  // Hash password — bcrypt handles salting internally
   const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
 
   // Generate a secure random token for email verification

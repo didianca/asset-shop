@@ -17,6 +17,8 @@ const validProduct = {
   name: "CP Test Product",
   slug: `${SLUG_PREFIX}product`,
   price: 19.99,
+  previewUrl: "https://cdn.example.com/cp-preview.jpg",
+  assetUrl: "https://s3.example.com/cp-asset.zip",
 };
 
 beforeAll(async () => {
@@ -142,19 +144,15 @@ describe("POST /products", () => {
     expect(count).toBe(1);
   });
 
-  it("creates a product image when previewUrl and assetUrl are provided", async () => {
+  it("returns previewUrl and assetUrl in the response", async () => {
     const res = await request(app)
       .post("/products")
       .set("Authorization", `Bearer ${adminToken}`)
-      .send({
-        ...validProduct,
-        previewUrl: "https://cdn.example.com/preview.jpg",
-        assetUrl: "https://s3.example.com/asset.zip",
-      });
+      .send(validProduct);
 
     expect(res.status).toBe(201);
-    expect(res.body.previewUrl).toBe("https://cdn.example.com/preview.jpg");
-    expect(res.body.assetUrl).toBe("https://s3.example.com/asset.zip");
+    expect(res.body.previewUrl).toBe(validProduct.previewUrl);
+    expect(res.body.assetUrl).toBe(validProduct.assetUrl);
   });
 
   it("returns 409 for a duplicate slug", async () => {

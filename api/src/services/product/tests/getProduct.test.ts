@@ -11,6 +11,14 @@ const ADMIN_EMAIL = "admin@getproduct.test";
 let adminId: string;
 let adminToken: string;
 
+const makeProduct = <T extends object>(overrides: T) => ({
+  price: 10,
+  previewUrl: "https://cdn.example.com/gp-preview.jpg",
+  assetUrl: "https://s3.example.com/gp-asset.zip",
+  createdBy: adminId,
+  ...overrides,
+});
+
 beforeAll(async () => {
   await prisma.user.deleteMany({ where: { email: ADMIN_EMAIL } });
 
@@ -46,7 +54,7 @@ describe("GET /products/:slug", () => {
 
   it("returns 404 for an inactive product", async () => {
     await prisma.product.create({
-      data: { name: "GP Inactive", slug: `${SLUG_PREFIX}inactive`, price: 10, isActive: false, createdBy: adminId },
+      data: makeProduct({ name: "GP Inactive", slug: `${SLUG_PREFIX}inactive`, isActive: false }),
     });
 
     const res = await request(app)
@@ -57,7 +65,7 @@ describe("GET /products/:slug", () => {
 
   it("returns 200 with the product for an active slug", async () => {
     await prisma.product.create({
-      data: { name: "GP Active Product", slug: `${SLUG_PREFIX}active`, price: 29.99, createdBy: adminId },
+      data: makeProduct({ name: "GP Active Product", slug: `${SLUG_PREFIX}active`, price: 29.99 }),
     });
 
     const res = await request(app)
@@ -70,15 +78,12 @@ describe("GET /products/:slug", () => {
     expect(res.body.isActive).toBe(true);
   });
 
-  it("returns tags and image in the response", async () => {
+  it("returns tags and urls in the response", async () => {
     const product = await prisma.product.create({
-      data: { name: "GP Rich Product", slug: `${SLUG_PREFIX}rich`, price: 15, createdBy: adminId },
+      data: makeProduct({ name: "GP Rich Product", slug: `${SLUG_PREFIX}rich`, price: 15 }),
     });
     const tag = await prisma.tag.upsert({ where: { slug: "gp-tag-one" }, update: {}, create: { name: "gp-tag-one", slug: "gp-tag-one" } });
     await prisma.productTag.create({ data: { productId: product.id, tagId: tag.id } });
-    await prisma.productImage.create({
-      data: { productId: product.id, previewUrl: "https://cdn.example.com/p.jpg", assetUrl: "https://s3.example.com/a.zip" },
-    });
 
     const res = await request(app)
       .get(`/products/${SLUG_PREFIX}rich`)
@@ -86,8 +91,8 @@ describe("GET /products/:slug", () => {
 
     expect(res.status).toBe(200);
     expect(res.body.tags).toContain("gp-tag-one");
-    expect(res.body.previewUrl).toBe("https://cdn.example.com/p.jpg");
-    expect(res.body.assetUrl).toBe("https://s3.example.com/a.zip");
+    expect(res.body.previewUrl).toBe("https://cdn.example.com/gp-preview.jpg");
+    expect(res.body.assetUrl).toBe("https://s3.example.com/gp-asset.zip");
 
     await prisma.tag.delete({ where: { slug: "gp-tag-one" } });
   });

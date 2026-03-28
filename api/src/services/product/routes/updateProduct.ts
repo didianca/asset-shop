@@ -81,6 +81,8 @@ export async function updateProductHandler(
           ...(description !== undefined && { description: description ?? null }),
           ...(price !== undefined && { price }),
           ...(discountPercent !== undefined && { discountPercent: discountPercent ?? null }),
+          ...(previewUrl !== undefined && { previewUrl }),
+          ...(assetUrl !== undefined && { assetUrl }),
         },
       });
 
@@ -96,26 +98,9 @@ export async function updateProductHandler(
         }
       }
 
-      if (previewUrl !== undefined || assetUrl !== undefined) {
-        const existingImage = await tx.productImage.findUnique({ where: { productId: existing.id } });
-        if (existingImage) {
-          await tx.productImage.update({
-            where: { productId: existing.id },
-            data: {
-              ...(previewUrl !== undefined && { previewUrl }),
-              ...(assetUrl !== undefined && { assetUrl }),
-            },
-          });
-        } else if (previewUrl && assetUrl) {
-          await tx.productImage.create({
-            data: { productId: existing.id, previewUrl, assetUrl },
-          });
-        }
-      }
-
       return tx.product.findUnique({
         where: { id: existing.id },
-        include: { image: true, tags: { include: { tag: true } } },
+        include: { tags: { include: { tag: true } } },
       });
     });
 

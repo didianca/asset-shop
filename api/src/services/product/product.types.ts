@@ -10,6 +10,8 @@ import { z } from "zod";
  *         - name
  *         - slug
  *         - price
+ *         - previewUrl
+ *         - assetUrl
  *       properties:
  *         name:
  *           type: string
@@ -68,6 +70,16 @@ import { z } from "zod";
  *           format: uri
  *     ProductResponse:
  *       type: object
+ *       required:
+ *         - id
+ *         - name
+ *         - slug
+ *         - price
+ *         - isActive
+ *         - tags
+ *         - previewUrl
+ *         - assetUrl
+ *         - createdAt
  *       properties:
  *         id:
  *           type: string
@@ -90,8 +102,10 @@ import { z } from "zod";
  *             type: string
  *         previewUrl:
  *           type: string
+ *           format: uri
  *         assetUrl:
  *           type: string
+ *           format: uri
  *         createdAt:
  *           type: string
  *           format: date-time
@@ -109,8 +123,8 @@ export const CreateProductSchema = z.object({
   price: z.number().positive(),
   discountPercent: z.number().int().min(0).max(100).optional(),
   tags: z.array(z.string()).optional(),
-  previewUrl: z.string().url().optional(),
-  assetUrl: z.string().url().optional(),
+  previewUrl: z.string().url(),
+  assetUrl: z.string().url(),
 });
 
 export const UpdateProductSchema = CreateProductSchema.partial();

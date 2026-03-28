@@ -14,6 +14,14 @@ let adminId: string;
 let adminToken: string;
 let customerToken: string;
 
+const makeProduct = <T extends object>(overrides: T) => ({
+  price: 10,
+  previewUrl: "https://cdn.example.com/up-preview.jpg",
+  assetUrl: "https://s3.example.com/up-asset.zip",
+  createdBy: adminId,
+  ...overrides,
+});
+
 beforeAll(async () => {
   await prisma.user.deleteMany({ where: { email: { in: [ADMIN_EMAIL, CUSTOMER_EMAIL] } } });
 
@@ -65,7 +73,7 @@ describe("PUT /products/:slug", () => {
 
   it("returns 404 for an inactive product", async () => {
     await prisma.product.create({
-      data: { name: "UP Inactive", slug: `${SLUG_PREFIX}inactive`, price: 10, isActive: false, createdBy: adminId },
+      data: makeProduct({ name: "UP Inactive", slug: `${SLUG_PREFIX}inactive`, isActive: false }),
     });
 
     const res = await request(app)
@@ -77,7 +85,7 @@ describe("PUT /products/:slug", () => {
 
   it("returns 200 and updates product fields", async () => {
     await prisma.product.create({
-      data: { name: "UP Original", slug: `${SLUG_PREFIX}original`, price: 10, createdBy: adminId },
+      data: makeProduct({ name: "UP Original", slug: `${SLUG_PREFIX}original` }),
     });
 
     const res = await request(app)
@@ -92,7 +100,7 @@ describe("PUT /products/:slug", () => {
 
   it("replaces all tags when tags are provided", async () => {
     const product = await prisma.product.create({
-      data: { name: "UP Tagged", slug: `${SLUG_PREFIX}tagged`, price: 10, createdBy: adminId },
+      data: makeProduct({ name: "UP Tagged", slug: `${SLUG_PREFIX}tagged` }),
     });
     const oldTag = await prisma.tag.create({ data: { name: `${TAG_PREFIX}old`, slug: `${TAG_PREFIX}old` } });
     await prisma.productTag.create({ data: { productId: product.id, tagId: oldTag.id } });
@@ -109,7 +117,7 @@ describe("PUT /products/:slug", () => {
 
   it("does not change tags when tags field is omitted", async () => {
     const product = await prisma.product.create({
-      data: { name: "UP Keep Tags", slug: `${SLUG_PREFIX}keeptags`, price: 10, createdBy: adminId },
+      data: makeProduct({ name: "UP Keep Tags", slug: `${SLUG_PREFIX}keeptags` }),
     });
     const tag = await prisma.tag.create({ data: { name: `${TAG_PREFIX}keep`, slug: `${TAG_PREFIX}keep` } });
     await prisma.productTag.create({ data: { productId: product.id, tagId: tag.id } });
@@ -123,44 +131,42 @@ describe("PUT /products/:slug", () => {
     expect(res.body.tags).toContain(`${TAG_PREFIX}keep`);
   });
 
-  it("creates a product image if none exists", async () => {
+  it("updates previewUrl and assetUrl when both are provided", async () => {
     await prisma.product.create({
-      data: { name: "UP No Image", slug: `${SLUG_PREFIX}noimage`, price: 10, createdBy: adminId },
+      data: makeProduct({ name: "UP Update URLs", slug: `${SLUG_PREFIX}updateurls` }),
     });
 
     const res = await request(app)
-      .put(`/products/${SLUG_PREFIX}noimage`)
+      .put(`/products/${SLUG_PREFIX}updateurls`)
       .set("Authorization", `Bearer ${adminToken}`)
-      .send({ previewUrl: "https://cdn.example.com/new.jpg", assetUrl: "https://s3.example.com/new.zip" });
+      .send({ previewUrl: "https://cdn.example.com/up-new-preview.jpg", assetUrl: "https://s3.example.com/up-new-asset.zip" });
 
     expect(res.status).toBe(200);
-    expect(res.body.previewUrl).toBe("https://cdn.example.com/new.jpg");
+    expect(res.body.previewUrl).toBe("https://cdn.example.com/up-new-preview.jpg");
+    expect(res.body.assetUrl).toBe("https://s3.example.com/up-new-asset.zip");
   });
 
-  it("updates an existing product image", async () => {
-    const product = await prisma.product.create({
-      data: { name: "UP Has Image", slug: `${SLUG_PREFIX}hasimage`, price: 10, createdBy: adminId },
-    });
-    await prisma.productImage.create({
-      data: { productId: product.id, previewUrl: "https://cdn.example.com/old.jpg", assetUrl: "https://s3.example.com/old.zip" },
+  it("updates only previewUrl when only previewUrl is provided", async () => {
+    await prisma.product.create({
+      data: makeProduct({ name: "UP Partial URL", slug: `${SLUG_PREFIX}partialurl` }),
     });
 
     const res = await request(app)
-      .put(`/products/${SLUG_PREFIX}hasimage`)
+      .put(`/products/${SLUG_PREFIX}partialurl`)
       .set("Authorization", `Bearer ${adminToken}`)
-      .send({ previewUrl: "https://cdn.example.com/updated.jpg" });
+      .send({ previewUrl: "https://cdn.example.com/up-updated-preview.jpg" });
 
     expect(res.status).toBe(200);
-    expect(res.body.previewUrl).toBe("https://cdn.example.com/updated.jpg");
-    expect(res.body.assetUrl).toBe("https://s3.example.com/old.zip");
+    expect(res.body.previewUrl).toBe("https://cdn.example.com/up-updated-preview.jpg");
+    expect(res.body.assetUrl).toBe("https://s3.example.com/up-asset.zip");
   });
 
   it("returns 409 when updating to a slug already taken", async () => {
     await prisma.product.create({
-      data: { name: "UP Product A", slug: `${SLUG_PREFIX}a`, price: 10, createdBy: adminId },
+      data: makeProduct({ name: "UP Product A", slug: `${SLUG_PREFIX}a`, previewUrl: "https://cdn.example.com/up-a.jpg", assetUrl: "https://s3.example.com/up-a.zip" }),
     });
     await prisma.product.create({
-      data: { name: "UP Product B", slug: `${SLUG_PREFIX}b`, price: 10, createdBy: adminId },
+      data: makeProduct({ name: "UP Product B", slug: `${SLUG_PREFIX}b`, previewUrl: "https://cdn.example.com/up-b.jpg", assetUrl: "https://s3.example.com/up-b.zip" }),
     });
 
     const res = await request(app)

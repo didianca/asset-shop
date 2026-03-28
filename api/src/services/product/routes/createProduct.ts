@@ -9,7 +9,7 @@ import { formatProduct, toTagSlug } from "../utils.js";
  * /products:
  *   post:
  *     summary: Create a new product
- *     description: Admin only. Creates a new product with optional tags and image URLs.
+ *     description: Admin only. Creates a new product with optional tags.
  *     tags:
  *       - Products
  *     security:
@@ -56,14 +56,8 @@ export async function createProductHandler(
   try {
     const product = await prisma.$transaction(async (tx) => {
       const created = await tx.product.create({
-        data: { name, slug, description: description ?? null, price, discountPercent: discountPercent ?? null, createdBy },
+        data: { name, slug, description: description ?? null, price, discountPercent: discountPercent ?? null, previewUrl, assetUrl, createdBy },
       });
-
-      if (previewUrl && assetUrl) {
-        await tx.productImage.create({
-          data: { productId: created.id, previewUrl, assetUrl },
-        });
-      }
 
       if (tags && tags.length > 0) {
         for (const tagName of tags) {
@@ -78,7 +72,7 @@ export async function createProductHandler(
 
       return tx.product.findUnique({
         where: { id: created.id },
-        include: { image: true, tags: { include: { tag: true } } },
+        include: { tags: { include: { tag: true } } },
       });
     });
 

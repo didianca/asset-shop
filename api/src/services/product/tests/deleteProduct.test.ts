@@ -13,6 +13,14 @@ let adminId: string;
 let adminToken: string;
 let customerToken: string;
 
+const makeProduct = <T extends object>(overrides: T) => ({
+  price: 10,
+  previewUrl: "https://cdn.example.com/dp-preview.jpg",
+  assetUrl: "https://s3.example.com/dp-asset.zip",
+  createdBy: adminId,
+  ...overrides,
+});
+
 beforeAll(async () => {
   await prisma.user.deleteMany({ where: { email: { in: [ADMIN_EMAIL, CUSTOMER_EMAIL] } } });
 
@@ -60,7 +68,7 @@ describe("DELETE /products/:slug", () => {
 
   it("returns 404 for an already inactive product", async () => {
     await prisma.product.create({
-      data: { name: "DP Already Deleted", slug: `${SLUG_PREFIX}already-deleted`, price: 10, isActive: false, createdBy: adminId },
+      data: makeProduct({ name: "DP Already Deleted", slug: `${SLUG_PREFIX}already-deleted`, isActive: false }),
     });
 
     const res = await request(app)
@@ -71,7 +79,7 @@ describe("DELETE /products/:slug", () => {
 
   it("returns 200 and soft deletes the product", async () => {
     await prisma.product.create({
-      data: { name: "DP Active Product", slug: `${SLUG_PREFIX}active`, price: 10, createdBy: adminId },
+      data: makeProduct({ name: "DP Active Product", slug: `${SLUG_PREFIX}active` }),
     });
 
     const res = await request(app)
@@ -84,7 +92,7 @@ describe("DELETE /products/:slug", () => {
 
   it("sets isActive to false in the database", async () => {
     await prisma.product.create({
-      data: { name: "DP Check DB", slug: `${SLUG_PREFIX}checkdb`, price: 10, createdBy: adminId },
+      data: makeProduct({ name: "DP Check DB", slug: `${SLUG_PREFIX}checkdb` }),
     });
 
     await request(app)
@@ -97,7 +105,7 @@ describe("DELETE /products/:slug", () => {
 
   it("does not hard delete the product row", async () => {
     await prisma.product.create({
-      data: { name: "DP Preserve Row", slug: `${SLUG_PREFIX}preserve`, price: 10, createdBy: adminId },
+      data: makeProduct({ name: "DP Preserve Row", slug: `${SLUG_PREFIX}preserve` }),
     });
 
     await request(app)

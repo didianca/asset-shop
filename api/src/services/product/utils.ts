@@ -7,7 +7,8 @@ type ProductWithRelations = {
   discountPercent: number | null;
   isActive: boolean;
   createdAt: Date;
-  image: { previewUrl: string; assetUrl: string } | null;
+  previewUrl: string;
+  assetUrl: string;
   tags: { tag: { name: string } }[];
 };
 
@@ -20,8 +21,8 @@ type ProductResponse = {
   discountPercent: number | null;
   isActive: boolean;
   tags: string[];
-  previewUrl: string | null;
-  assetUrl: string | null;
+  previewUrl: string;
+  assetUrl: string;
   createdAt: Date;
 };
 
@@ -35,8 +36,8 @@ export function formatProduct(product: ProductWithRelations): ProductResponse {
     discountPercent: product.discountPercent,
     isActive: product.isActive,
     tags: product.tags.map((pt) => pt.tag.name),
-    previewUrl: product.image?.previewUrl ?? null,
-    assetUrl: product.image?.assetUrl ?? null,
+    previewUrl: product.previewUrl,
+    assetUrl: product.assetUrl,
     createdAt: product.createdAt,
   };
 }

@@ -43,7 +43,7 @@ export async function getProductHandler(
 ): Promise<void> {
   const product = await prisma.product.findUnique({
     where: { slug: req.params.slug },
-    include: { image: true, tags: { include: { tag: true } } },
+    include: { tags: { include: { tag: true } } },
   });
 
   if (!product || !product.isActive) {

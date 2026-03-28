@@ -11,6 +11,14 @@ const ADMIN_EMAIL = "admin@getproducts.test";
 let adminId: string;
 let adminToken: string;
 
+const makeProduct = <T extends object>(overrides: T) => ({
+  price: 10,
+  previewUrl: "https://cdn.example.com/gps-preview.jpg",
+  assetUrl: "https://s3.example.com/gps-asset.zip",
+  createdBy: adminId,
+  ...overrides,
+});
+
 beforeAll(async () => {
   await prisma.user.deleteMany({ where: { email: ADMIN_EMAIL } });
 
@@ -48,7 +56,7 @@ describe("GET /products", () => {
 
   it("returns active products", async () => {
     await prisma.product.create({
-      data: { name: "GPS Active Product", slug: `${SLUG_PREFIX}active`, price: 10, createdBy: adminId },
+      data: makeProduct({ name: "GPS Active Product", slug: `${SLUG_PREFIX}active` }),
     });
 
     const res = await request(app)
@@ -62,7 +70,7 @@ describe("GET /products", () => {
 
   it("excludes inactive products", async () => {
     await prisma.product.create({
-      data: { name: "GPS Inactive Product", slug: `${SLUG_PREFIX}inactive`, price: 10, isActive: false, createdBy: adminId },
+      data: makeProduct({ name: "GPS Inactive Product", slug: `${SLUG_PREFIX}inactive`, isActive: false }),
     });
 
     const res = await request(app)
@@ -75,7 +83,7 @@ describe("GET /products", () => {
 
   it("excludes bundle products", async () => {
     await prisma.product.create({
-      data: { name: "GPS Bundle Product", slug: `${SLUG_PREFIX}bundle`, price: 30, isBundle: true, createdBy: adminId },
+      data: makeProduct({ name: "GPS Bundle Product", slug: `${SLUG_PREFIX}bundle`, price: 30, isBundle: true }),
     });
 
     const res = await request(app)
@@ -86,15 +94,12 @@ describe("GET /products", () => {
     expect(slugs).not.toContain(`${SLUG_PREFIX}bundle`);
   });
 
-  it("returns products with tags and image included", async () => {
+  it("returns products with tags and urls included", async () => {
     const product = await prisma.product.create({
-      data: { name: "GPS Rich Product", slug: `${SLUG_PREFIX}rich`, price: 25, createdBy: adminId },
+      data: makeProduct({ name: "GPS Rich Product", slug: `${SLUG_PREFIX}rich`, price: 25 }),
     });
     const tag = await prisma.tag.upsert({ where: { slug: "gps-tag-one" }, update: {}, create: { name: "gps-tag-one", slug: "gps-tag-one" } });
     await prisma.productTag.create({ data: { productId: product.id, tagId: tag.id } });
-    await prisma.productImage.create({
-      data: { productId: product.id, previewUrl: "https://cdn.example.com/gps-p.jpg", assetUrl: "https://s3.example.com/gps-a.zip" },
-    });
 
     const res = await request(app)
       .get("/products")
@@ -102,17 +107,17 @@ describe("GET /products", () => {
 
     const found = res.body.find((p: { slug: string }) => p.slug === `${SLUG_PREFIX}rich`);
     expect(found.tags).toContain("gps-tag-one");
-    expect(found.previewUrl).toBe("https://cdn.example.com/gps-p.jpg");
+    expect(found.previewUrl).toBe("https://cdn.example.com/gps-preview.jpg");
 
     await prisma.tag.delete({ where: { slug: "gps-tag-one" } });
   });
 
   it("returns products ordered by createdAt descending", async () => {
     await prisma.product.create({
-      data: { name: "GPS First Product", slug: `${SLUG_PREFIX}first`, price: 10, createdBy: adminId },
+      data: makeProduct({ name: "GPS First Product", slug: `${SLUG_PREFIX}first`, previewUrl: "https://cdn.example.com/gps-first.jpg", assetUrl: "https://s3.example.com/gps-first.zip" }),
     });
     await prisma.product.create({
-      data: { name: "GPS Second Product", slug: `${SLUG_PREFIX}second`, price: 10, createdBy: adminId },
+      data: makeProduct({ name: "GPS Second Product", slug: `${SLUG_PREFIX}second`, previewUrl: "https://cdn.example.com/gps-second.jpg", assetUrl: "https://s3.example.com/gps-second.zip" }),
     });
 
     const res = await request(app)

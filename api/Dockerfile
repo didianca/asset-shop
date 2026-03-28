@@ -1,4 +1,6 @@
-FROM node:20-alpine AS builder
+FROM node:20-slim AS builder
+
+RUN apt-get update -y && apt-get install -y openssl --no-install-recommends && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -20,7 +22,9 @@ RUN npx prisma generate
 
 RUN npm run build
 
-FROM node:20-alpine AS production
+FROM node:20-slim AS production
+
+RUN apt-get update -y && apt-get install -y openssl --no-install-recommends && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -29,7 +33,14 @@ COPY api/package.json ./api/
 
 RUN npm ci --omit=dev
 
+# Copy compiled app
 COPY --from=builder /app/api/dist ./api/dist
+
+# Copy generated Prisma client (gitignored, must be carried over from builder)
+COPY --from=builder /app/api/src/generated ./api/dist/generated
+
+# Copy prisma folder so migrate deploy knows which migrations to apply
+COPY --from=builder /app/api/prisma ./api/prisma
 
 EXPOSE 3000
 

@@ -6,6 +6,7 @@ import { z } from "zod";
  *   schemas:
  *     CreateProductBody:
  *       type: object
+ *       additionalProperties: false
  *       required:
  *         - name
  *         - slug
@@ -45,6 +46,7 @@ import { z } from "zod";
  *           example: https://s3.example.com/asset.zip
  *     UpdateProductBody:
  *       type: object
+ *       additionalProperties: false
  *       required:
  *         - name
  *         - slug
@@ -157,7 +159,7 @@ export const CreateProductSchema = z.object({
   tags: z.array(z.string()).optional(),
   previewUrl: z.string().url(),
   assetUrl: z.string().url(),
-});
+}).strict();
 
 export const UpdateProductSchema = z.object({
   name: z.string().min(1),
@@ -169,7 +171,7 @@ export const UpdateProductSchema = z.object({
   tags: z.array(z.string()),
   previewUrl: z.string().url(),
   assetUrl: z.string().url(),
-});
+}).strict();
 
 export type CreateProductBody = z.infer<typeof CreateProductSchema>;
 export type UpdateProductBody = z.infer<typeof UpdateProductSchema>;

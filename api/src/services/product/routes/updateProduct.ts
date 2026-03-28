@@ -52,8 +52,14 @@ import { formatProduct, toTagSlug } from "../utils.js";
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/MessageResponse'
+ *       400:
+ *         description: Validation error (missing fields, wrong types, or unknown keys)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ValidationErrorResponse'
  *       409:
- *         description: Name or slug already taken
+ *         description: Product with those details already exists
  *         content:
  *           application/json:
  *             schema:
@@ -98,7 +104,7 @@ export async function updateProductHandler(
     res.status(200).json(formatProduct(product!));
   } catch (e: unknown) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
-      res.status(409).json({ message: "A product with that name or slug already exists" });
+      res.status(409).json({ message: "A product with those details already exists" });
       return;
     }
     throw e;

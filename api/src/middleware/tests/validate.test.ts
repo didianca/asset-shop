@@ -8,6 +8,11 @@ const TestSchema = z.object({
   name: z.string().min(1),
 });
 
+const StrictSchema = z.object({
+  email: z.string().email(),
+  name: z.string().min(1),
+}).strict();
+
 function mockReq(body: unknown, params?: unknown): Request {
   return { body, params: params ?? {} } as Request;
 }
@@ -49,6 +54,17 @@ describe("validate middleware", () => {
         }),
       })
     );
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 when unknown keys are sent to a strict schema", () => {
+    const req = mockReq({ email: "user@example.com", name: "Alice", discount: 10 });
+    const res = mockRes();
+    const next = vi.fn() as NextFunction;
+
+    validate(StrictSchema)(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(400);
     expect(next).not.toHaveBeenCalled();
   });
 

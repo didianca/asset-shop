@@ -3,6 +3,7 @@ import swaggerUi from "swagger-ui-express";
 import { swaggerSpec } from "./swagger.js";
 import { authenticate } from "./middleware/auth.js";
 import authRouter from "./services/auth/routes/index.js";
+import productRouter from "./services/product/routes/index.js";
 
 const app = express();
 
@@ -70,6 +71,11 @@ app.use("/auth", authRouter);
  *         message:
  *           type: string
  *           example: Testing API
+ *   securitySchemes:
+ *     bearerAuth:
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: JWT
  *
  * /health:
  *   get:
@@ -87,5 +93,7 @@ app.get("/health", (req, res) => {
 
 // All routes defined below this line require authentication
 app.use(authenticate);
+
+app.use("/products", productRouter);
 
 export default app;

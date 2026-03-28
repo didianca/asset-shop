@@ -11,6 +11,7 @@ export default defineConfig({
     ],
     setupFiles: [
       "./src/services/auth/tests/setup.ts",
+      "./src/services/product/tests/setup.ts",
     ],
     coverage: {
       provider: "v8",

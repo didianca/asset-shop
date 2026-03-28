@@ -106,6 +106,7 @@ api/
 │   │       ├── .env.example         # Env template (committed)
 │   │       ├── <service>.config.ts  # Centralised env var access for this service
 │   │       ├── <service>.types.ts   # Zod schemas + inferred request/response types
+│   │       ├── utils.ts             # Service-scoped utility functions (formatting, slug generation, etc.)
 │   │       ├── routes/              # Route handlers — validation applied at router level via validate()
 │   │       └── tests/               # Integration tests + setup.ts
 │   ├── app.ts                  # Express app setup

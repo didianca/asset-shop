@@ -6,6 +6,7 @@ config({ path: resolve(process.cwd(), ".env") });
 
 // Load each service's .env. Add new service paths here as services are added.
 config({ path: resolve(process.cwd(), "src/services/auth/.env") });
+config({ path: resolve(process.cwd(), "src/services/cart/.env") });
 
 import app from "./app.js";
 

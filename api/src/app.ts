@@ -4,6 +4,7 @@ import { swaggerSpec } from "./swagger.js";
 import { authenticate } from "./middleware/auth.js";
 import authRouter from "./services/auth/routes/index.js";
 import productRouter from "./services/product/routes/index.js";
+import cartRouter from "./services/cart/routes/index.js";
 
 const app = express();
 
@@ -33,6 +34,7 @@ app.get("/health", (req, res) => {
 app.use(authenticate);
 
 app.use("/products", productRouter);
+app.use("/cart", cartRouter);
 
 // Handle malformed JSON bodies
 // TODO: move to util func

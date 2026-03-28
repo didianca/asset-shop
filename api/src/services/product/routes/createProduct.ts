@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import { Prisma } from "../../../generated/prisma/index.js";
 import prisma from "../../../db.js";
 import type { CreateProductBody } from "../product.types.js";
 import { formatProduct, toTagSlug } from "../utils.js";
@@ -55,7 +56,7 @@ export async function createProductHandler(
   try {
     const product = await prisma.$transaction(async (tx) => {
       const created = await tx.product.create({
-        data: { name, slug, description, price, discountPercent, createdBy },
+        data: { name, slug, description: description ?? null, price, discountPercent: discountPercent ?? null, createdBy },
       });
 
       if (previewUrl && assetUrl) {
@@ -82,8 +83,8 @@ export async function createProductHandler(
     });
 
     res.status(201).json(formatProduct(product!));
-  } catch (e: any) {
-    if (e.code === "P2002") {
+  } catch (e: unknown) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
       res.status(409).json({ message: "A product with that name or slug already exists" });
       return;
     }

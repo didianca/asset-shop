@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import { Prisma } from "../../../generated/prisma/index.js";
 import prisma from "../../../db.js";
 import type { UpdateProductBody } from "../product.types.js";
 import { formatProduct, toTagSlug } from "../utils.js";
@@ -77,9 +78,9 @@ export async function updateProductHandler(
         data: {
           ...(name !== undefined && { name }),
           ...(newSlug !== undefined && { slug: newSlug }),
-          ...(description !== undefined && { description }),
+          ...(description !== undefined && { description: description ?? null }),
           ...(price !== undefined && { price }),
-          ...(discountPercent !== undefined && { discountPercent }),
+          ...(discountPercent !== undefined && { discountPercent: discountPercent ?? null }),
         },
       });
 
@@ -119,8 +120,8 @@ export async function updateProductHandler(
     });
 
     res.status(200).json(formatProduct(product!));
-  } catch (e: any) {
-    if (e.code === "P2002") {
+  } catch (e: unknown) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
       res.status(409).json({ message: "A product with that name or slug already exists" });
       return;
     }

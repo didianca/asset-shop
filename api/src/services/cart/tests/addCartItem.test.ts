@@ -14,7 +14,7 @@ let adminId: string;
 let customerId: string;
 let customerToken: string;
 
-const makeProduct = <T extends object>(overrides: T) => ({
+const makeProduct = <T extends object>(overrides: T): { price: number; previewUrl: string; assetUrl: string; createdBy: string } & T => ({
   price: 10,
   previewUrl: "https://cdn.example.com/aci-preview.jpg",
   assetUrl: "https://s3.example.com/aci-asset.zip",

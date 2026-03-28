@@ -25,8 +25,8 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
-    # Auth service env vars — mirrors api/src/services/auth/.env
-    # DATABASE_URL points to the CI Postgres service container, not localhost
+    # DATABASE_URL mirrors api/.env but points to the CI Postgres service container, not localhost
+    # Auth service env vars mirror api/src/services/auth/.env
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/asset_shop_test
       JWT_SECRET: ${{ secrets.JWT_SECRET }}

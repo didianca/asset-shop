@@ -1,15 +1,15 @@
 import { describe, it, expect, vi } from "vitest";
 import type { Request, Response, NextFunction } from "express";
 import { z } from "zod";
-import { validate } from "../validate.js";
+import { validate, validateParams } from "../validate.js";
 
 const TestSchema = z.object({
   email: z.string().email(),
   name: z.string().min(1),
 });
 
-function mockReq(body: unknown): Request {
-  return { body } as Request;
+function mockReq(body: unknown, params?: unknown): Request {
+  return { body, params: params ?? {} } as Request;
 }
 
 function mockRes(): Response {
@@ -61,6 +61,42 @@ describe("validate middleware", () => {
     validate(TestSchema)(req, res, next);
 
     expect(res.status).toHaveBeenCalledWith(400);
+    expect(next).not.toHaveBeenCalled();
+  });
+});
+
+const UuidSchema = z.object({
+  id: z.string().uuid(),
+});
+
+describe("validateParams middleware", () => {
+  it("calls next for valid params", () => {
+    const req = mockReq({}, { id: "550e8400-e29b-41d4-a716-446655440000" });
+    const res = mockRes();
+    const next = vi.fn() as NextFunction;
+
+    validateParams(UuidSchema)(req, res, next);
+
+    expect(next).toHaveBeenCalledOnce();
+    expect(res.status).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 with field errors for invalid params", () => {
+    const req = mockReq({}, { id: "not-a-uuid" });
+    const res = mockRes();
+    const next = vi.fn() as NextFunction;
+
+    validateParams(UuidSchema)(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: "Invalid request",
+        errors: expect.objectContaining({
+          id: expect.any(Array),
+        }),
+      })
+    );
     expect(next).not.toHaveBeenCalled();
   });
 });

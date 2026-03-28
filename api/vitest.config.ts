@@ -13,6 +13,7 @@ export default defineConfig({
       "./src/services/auth/tests/setup.ts",
       "./src/services/product/tests/setup.ts",
       "./src/services/cart/tests/setup.ts",
+      "./src/services/order/tests/setup.ts",
     ],
     coverage: {
       provider: "v8",

@@ -90,7 +90,7 @@ describe("formatOrder", () => {
   it("converts Decimal fields to numbers", () => {
     const result = formatOrder(baseOrder);
     expect(result.totalAmount).toBe(25.5);
-    expect(result.items[0].unitPrice).toBe(25.5);
+    expect(result.items[0]!.unitPrice).toBe(25.5);
   });
 
   it("returns null payment when no payment exists", () => {

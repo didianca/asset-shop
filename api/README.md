@@ -9,11 +9,7 @@ REST API built with **Node.js**, **Express**, and **TypeScript**.
 
 ### Setup
 
-Copy and fill in the environment files — this only needs to be done once on first setup:
-```bash
-cp .env.example .env                                    # DATABASE_URL and other infrastructure vars
-cp src/services/auth/.env.example src/services/auth/.env  # Auth service vars
-```
+Copy and fill in the environment files — see the [root README](../README.md#setup) for the full list of `.env` files to create.
 
 Then start the dev server:
 ```bash

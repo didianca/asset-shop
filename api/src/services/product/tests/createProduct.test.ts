@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, beforeEach, afterAll } from "vitest";
+import { describe, it, expect, beforeAll, beforeEach, afterAll, vi } from "vitest";
 import request from "supertest";
 import jwt from "jsonwebtoken";
 import app from "../../../app.js";
@@ -181,5 +181,18 @@ describe("POST /products", () => {
       .send({ ...validProduct, slug: `${SLUG_PREFIX}different-slug` });
 
     expect(res.status).toBe(409);
+  });
+
+  it("re-throws unexpected non-P2002 errors", async () => {
+    vi.spyOn(prisma, "$transaction").mockRejectedValueOnce(new Error("Unexpected DB error"));
+
+    await expect(
+      request(app)
+        .post("/products")
+        .set("Authorization", `Bearer ${adminToken}`)
+        .send(validProduct)
+    ).resolves.toMatchObject({ status: 500 });
+
+    vi.restoreAllMocks();
   });
 });

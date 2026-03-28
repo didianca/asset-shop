@@ -15,7 +15,7 @@ router.get("/", listProductsHandler);
 router.get("/tags", listTagsHandler);
 router.get("/:slug", getProductHandler);
 router.post("/", requireAdmin, validate(CreateProductSchema), createProductHandler);
-router.put("/:slug", requireAdmin, validate(UpdateProductSchema), updateProductHandler);
-router.delete("/:slug", requireAdmin, deleteProductHandler);
+router.put("/:id", requireAdmin, validate(UpdateProductSchema), updateProductHandler);
+router.delete("/:id", requireAdmin, deleteProductHandler);
 
 export default router;

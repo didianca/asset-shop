@@ -9,6 +9,8 @@ const SLUG_PREFIX = "dp-test-";
 const ADMIN_EMAIL = "admin@deleteproduct.test";
 const CUSTOMER_EMAIL = "customer@deleteproduct.test";
 
+const NONEXISTENT_ID = "00000000-0000-0000-0000-000000000000";
+
 let adminId: string;
 let adminToken: string;
 let customerToken: string;
@@ -46,44 +48,44 @@ afterAll(async () => {
   await prisma.$disconnect();
 });
 
-describe("DELETE /products/:slug", () => {
+describe("DELETE /products/:id", () => {
   it("returns 401 without a token", async () => {
-    const res = await request(app).delete(`/products/${SLUG_PREFIX}any`);
+    const res = await request(app).delete(`/products/${NONEXISTENT_ID}`);
     expect(res.status).toBe(401);
   });
 
   it("returns 403 for a customer", async () => {
     const res = await request(app)
-      .delete(`/products/${SLUG_PREFIX}any`)
+      .delete(`/products/${NONEXISTENT_ID}`)
       .set("Authorization", `Bearer ${customerToken}`);
     expect(res.status).toBe(403);
   });
 
-  it("returns 404 for a non-existent slug", async () => {
+  it("returns 404 for a non-existent id", async () => {
     const res = await request(app)
-      .delete(`/products/${SLUG_PREFIX}nonexistent`)
+      .delete(`/products/${NONEXISTENT_ID}`)
       .set("Authorization", `Bearer ${adminToken}`);
     expect(res.status).toBe(404);
   });
 
   it("returns 404 for an already inactive product", async () => {
-    await prisma.product.create({
+    const product = await prisma.product.create({
       data: makeProduct({ name: "DP Already Deleted", slug: `${SLUG_PREFIX}already-deleted`, isActive: false }),
     });
 
     const res = await request(app)
-      .delete(`/products/${SLUG_PREFIX}already-deleted`)
+      .delete(`/products/${product.id}`)
       .set("Authorization", `Bearer ${adminToken}`);
     expect(res.status).toBe(404);
   });
 
   it("returns 200 and soft deletes the product", async () => {
-    await prisma.product.create({
+    const product = await prisma.product.create({
       data: makeProduct({ name: "DP Active Product", slug: `${SLUG_PREFIX}active` }),
     });
 
     const res = await request(app)
-      .delete(`/products/${SLUG_PREFIX}active`)
+      .delete(`/products/${product.id}`)
       .set("Authorization", `Bearer ${adminToken}`);
 
     expect(res.status).toBe(200);
@@ -91,28 +93,28 @@ describe("DELETE /products/:slug", () => {
   });
 
   it("sets isActive to false in the database", async () => {
-    await prisma.product.create({
+    const product = await prisma.product.create({
       data: makeProduct({ name: "DP Check DB", slug: `${SLUG_PREFIX}checkdb` }),
     });
 
     await request(app)
-      .delete(`/products/${SLUG_PREFIX}checkdb`)
+      .delete(`/products/${product.id}`)
       .set("Authorization", `Bearer ${adminToken}`);
 
-    const product = await prisma.product.findUnique({ where: { slug: `${SLUG_PREFIX}checkdb` } });
-    expect(product?.isActive).toBe(false);
+    const updated = await prisma.product.findUnique({ where: { id: product.id } });
+    expect(updated?.isActive).toBe(false);
   });
 
   it("does not hard delete the product row", async () => {
-    await prisma.product.create({
+    const product = await prisma.product.create({
       data: makeProduct({ name: "DP Preserve Row", slug: `${SLUG_PREFIX}preserve` }),
     });
 
     await request(app)
-      .delete(`/products/${SLUG_PREFIX}preserve`)
+      .delete(`/products/${product.id}`)
       .set("Authorization", `Bearer ${adminToken}`);
 
-    const product = await prisma.product.findUnique({ where: { slug: `${SLUG_PREFIX}preserve` } });
-    expect(product).not.toBeNull();
+    const updated = await prisma.product.findUnique({ where: { id: product.id } });
+    expect(updated).not.toBeNull();
   });
 });

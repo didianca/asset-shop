@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, beforeEach, afterAll } from "vitest";
+import { describe, it, expect, beforeAll, beforeEach, afterAll, vi } from "vitest";
 import request from "supertest";
 import jwt from "jsonwebtoken";
 import app from "../../../app.js";
@@ -9,6 +9,8 @@ const SLUG_PREFIX = "up-test-";
 const TAG_PREFIX = "up-tag-";
 const ADMIN_EMAIL = "admin@updateproduct.test";
 const CUSTOMER_EMAIL = "customer@updateproduct.test";
+
+const NONEXISTENT_ID = "00000000-0000-0000-0000-000000000000";
 
 let adminId: string;
 let adminToken: string;
@@ -49,53 +51,55 @@ afterAll(async () => {
   await prisma.$disconnect();
 });
 
-describe("PUT /products/:slug", () => {
+describe("PUT /products/:id", () => {
   it("returns 401 without a token", async () => {
-    const res = await request(app).put(`/products/${SLUG_PREFIX}any`).send({ price: 9.99 });
+    const res = await request(app).put(`/products/${NONEXISTENT_ID}`).send({ price: 9.99 });
     expect(res.status).toBe(401);
   });
 
   it("returns 403 for a customer", async () => {
     const res = await request(app)
-      .put(`/products/${SLUG_PREFIX}any`)
+      .put(`/products/${NONEXISTENT_ID}`)
       .set("Authorization", `Bearer ${customerToken}`)
       .send({ price: 9.99 });
     expect(res.status).toBe(403);
   });
 
-  it("returns 404 for a non-existent slug", async () => {
+  it("returns 404 for a non-existent id", async () => {
     const res = await request(app)
-      .put(`/products/${SLUG_PREFIX}nonexistent`)
+      .put(`/products/${NONEXISTENT_ID}`)
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ price: 9.99 });
     expect(res.status).toBe(404);
   });
 
   it("returns 404 for an inactive product", async () => {
-    await prisma.product.create({
+    const product = await prisma.product.create({
       data: makeProduct({ name: "UP Inactive", slug: `${SLUG_PREFIX}inactive`, isActive: false }),
     });
 
     const res = await request(app)
-      .put(`/products/${SLUG_PREFIX}inactive`)
+      .put(`/products/${product.id}`)
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ price: 5 });
     expect(res.status).toBe(404);
   });
 
   it("returns 200 and updates product fields", async () => {
-    await prisma.product.create({
+    const product = await prisma.product.create({
       data: makeProduct({ name: "UP Original", slug: `${SLUG_PREFIX}original` }),
     });
 
     const res = await request(app)
-      .put(`/products/${SLUG_PREFIX}original`)
+      .put(`/products/${product.id}`)
       .set("Authorization", `Bearer ${adminToken}`)
-      .send({ price: 49.99, description: "Updated description" });
+      .send({ name: "UP Renamed", slug: `${SLUG_PREFIX}renamed`, price: 49.99, description: "Updated description", discountPercent: 10 });
 
     expect(res.status).toBe(200);
+    expect(res.body.name).toBe("UP Renamed");
     expect(res.body.price).toBe(49.99);
     expect(res.body.description).toBe("Updated description");
+    expect(res.body.discountPercent).toBe(10);
   });
 
   it("replaces all tags when tags are provided", async () => {
@@ -106,7 +110,7 @@ describe("PUT /products/:slug", () => {
     await prisma.productTag.create({ data: { productId: product.id, tagId: oldTag.id } });
 
     const res = await request(app)
-      .put(`/products/${SLUG_PREFIX}tagged`)
+      .put(`/products/${product.id}`)
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ tags: [`${TAG_PREFIX}new`] });
 
@@ -123,7 +127,7 @@ describe("PUT /products/:slug", () => {
     await prisma.productTag.create({ data: { productId: product.id, tagId: tag.id } });
 
     const res = await request(app)
-      .put(`/products/${SLUG_PREFIX}keeptags`)
+      .put(`/products/${product.id}`)
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ price: 15 });
 
@@ -132,12 +136,12 @@ describe("PUT /products/:slug", () => {
   });
 
   it("updates previewUrl and assetUrl when both are provided", async () => {
-    await prisma.product.create({
+    const product = await prisma.product.create({
       data: makeProduct({ name: "UP Update URLs", slug: `${SLUG_PREFIX}updateurls` }),
     });
 
     const res = await request(app)
-      .put(`/products/${SLUG_PREFIX}updateurls`)
+      .put(`/products/${product.id}`)
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ previewUrl: "https://cdn.example.com/up-new-preview.jpg", assetUrl: "https://s3.example.com/up-new-asset.zip" });
 
@@ -147,12 +151,12 @@ describe("PUT /products/:slug", () => {
   });
 
   it("updates only previewUrl when only previewUrl is provided", async () => {
-    await prisma.product.create({
+    const product = await prisma.product.create({
       data: makeProduct({ name: "UP Partial URL", slug: `${SLUG_PREFIX}partialurl` }),
     });
 
     const res = await request(app)
-      .put(`/products/${SLUG_PREFIX}partialurl`)
+      .put(`/products/${product.id}`)
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ previewUrl: "https://cdn.example.com/up-updated-preview.jpg" });
 
@@ -162,7 +166,7 @@ describe("PUT /products/:slug", () => {
   });
 
   it("returns 409 when updating to a slug already taken", async () => {
-    await prisma.product.create({
+    const productA = await prisma.product.create({
       data: makeProduct({ name: "UP Product A", slug: `${SLUG_PREFIX}a`, previewUrl: "https://cdn.example.com/up-a.jpg", assetUrl: "https://s3.example.com/up-a.zip" }),
     });
     await prisma.product.create({
@@ -170,10 +174,27 @@ describe("PUT /products/:slug", () => {
     });
 
     const res = await request(app)
-      .put(`/products/${SLUG_PREFIX}a`)
+      .put(`/products/${productA.id}`)
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ slug: `${SLUG_PREFIX}b` });
 
     expect(res.status).toBe(409);
+  });
+
+  it("re-throws unexpected non-P2002 errors", async () => {
+    const product = await prisma.product.create({
+      data: makeProduct({ name: "UP Error Test", slug: `${SLUG_PREFIX}error` }),
+    });
+
+    vi.spyOn(prisma, "$transaction").mockRejectedValueOnce(new Error("Unexpected DB error"));
+
+    await expect(
+      request(app)
+        .put(`/products/${product.id}`)
+        .set("Authorization", `Bearer ${adminToken}`)
+        .send({ price: 99 })
+    ).resolves.toMatchObject({ status: 500 });
+
+    vi.restoreAllMocks();
   });
 });

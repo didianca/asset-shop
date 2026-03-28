@@ -6,7 +6,7 @@ import { formatProduct, toTagSlug } from "../utils.js";
 
 /**
  * @openapi
- * /products/{slug}:
+ * /products/{id}:
  *   put:
  *     summary: Update a product
  *     description: Admin only.
@@ -16,10 +16,11 @@ import { formatProduct, toTagSlug } from "../utils.js";
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
- *         name: slug
+ *         name: id
  *         required: true
  *         schema:
  *           type: string
+ *           format: uuid
  *     requestBody:
  *       required: true
  *       content:
@@ -59,13 +60,13 @@ import { formatProduct, toTagSlug } from "../utils.js";
  *               $ref: '#/components/schemas/MessageResponse'
  */
 export async function updateProductHandler(
-  req: Request<{ slug: string }, object, UpdateProductBody>,
+  req: Request<{ id: string }, object, UpdateProductBody>,
   res: Response
 ): Promise<void> {
-  const { slug } = req.params;
+  const { id } = req.params;
   const { name, slug: newSlug, description, price, discountPercent, tags, previewUrl, assetUrl } = req.body;
 
-  const existing = await prisma.product.findUnique({ where: { slug } });
+  const existing = await prisma.product.findUnique({ where: { id } });
   if (!existing || !existing.isActive) {
     res.status(404).json({ message: "Product not found" });
     return;
@@ -74,13 +75,13 @@ export async function updateProductHandler(
   try {
     const product = await prisma.$transaction(async (tx) => {
       await tx.product.update({
-        where: { slug },
+        where: { id },
         data: {
           ...(name !== undefined && { name }),
           ...(newSlug !== undefined && { slug: newSlug }),
-          ...(description !== undefined && { description: description ?? null }),
+          ...(description !== undefined && { description }),
           ...(price !== undefined && { price }),
-          ...(discountPercent !== undefined && { discountPercent: discountPercent ?? null }),
+          ...(discountPercent !== undefined && { discountPercent }),
           ...(previewUrl !== undefined && { previewUrl }),
           ...(assetUrl !== undefined && { assetUrl }),
         },

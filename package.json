@@ -6,7 +6,5 @@
     "api",
     "client"
   ],
-  "scripts": {
-    "test:coverage": "npm run test:coverage -w api"
-  }
+  "scripts": {}
 }

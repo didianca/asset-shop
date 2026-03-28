@@ -1,7 +1,7 @@
-import { describe, it, expect, vi } from "vitest";
-import type { Request, Response, NextFunction } from "express";
-import { z } from "zod";
-import { validate, validateParams } from "../validate.js";
+import {describe, expect, it, vi} from "vitest";
+import type {NextFunction, Request, Response} from "express";
+import {z} from "zod";
+import {validate, validateParams} from "../validate.js";
 
 const TestSchema = z.object({
   email: z.string().email(),
@@ -13,11 +13,10 @@ function mockReq(body: unknown, params?: unknown): Request {
 }
 
 function mockRes(): Response {
-  const res = {
+  return {
     status: vi.fn().mockReturnThis(),
     json: vi.fn().mockReturnThis(),
   } as unknown as Response;
-  return res;
 }
 
 describe("validate middleware", () => {

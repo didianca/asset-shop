@@ -44,7 +44,7 @@ export async function getProductHandler(
 ): Promise<void> {
   const product = await prisma.product.findUnique({
     where: { id: req.params.id },
-    include: { tags: { include: { tag: true } } },
+    include: { tags: { include: { tag: true } }, bundle: true },
   });
 
   if (!product || !product.isActive) {

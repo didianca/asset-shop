@@ -72,7 +72,7 @@ export async function createProductHandler(
 
       return tx.product.findUnique({
         where: { id: created.id },
-        include: { tags: { include: { tag: true } } },
+        include: { tags: { include: { tag: true } }, bundle: true },
       });
     });
 

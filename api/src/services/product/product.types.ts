@@ -120,6 +120,20 @@ import { z } from "zod";
  *         assetUrl:
  *           type: string
  *           format: uri
+ *         bundle:
+ *           nullable: true
+ *           type: object
+ *           properties:
+ *             id:
+ *               type: string
+ *               format: uuid
+ *             name:
+ *               type: string
+ *             slug:
+ *               type: string
+ *             discountPercent:
+ *               type: integer
+ *               nullable: true
  *         createdAt:
  *           type: string
  *           format: date-time

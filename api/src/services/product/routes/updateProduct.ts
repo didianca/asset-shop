@@ -91,7 +91,7 @@ export async function updateProductHandler(
 
       return tx.product.findUnique({
         where: { id: existing.id },
-        include: { tags: { include: { tag: true } } },
+        include: { tags: { include: { tag: true } }, bundle: true },
       });
     });
 

@@ -33,7 +33,7 @@ export async function listProductsHandler(
 ): Promise<void> {
   const products = await prisma.product.findMany({
     where: { isActive: true, isBundle: false },
-    include: { tags: { include: { tag: true } } },
+    include: { tags: { include: { tag: true } }, bundle: true },
     orderBy: { createdAt: "desc" },
   });
 

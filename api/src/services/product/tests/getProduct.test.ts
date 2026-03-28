@@ -97,4 +97,41 @@ describe("GET /products/:id", () => {
 
     await prisma.tag.delete({ where: { slug: "gp-tag-one" } });
   });
+
+  it("returns bundle as null when product has no bundle", async () => {
+    const product = await prisma.product.create({
+      data: makeProduct({ name: "GP No Bundle", slug: `${SLUG_PREFIX}no-bundle` }),
+    });
+
+    const res = await request(app)
+      .get(`/products/${product.id}`)
+      .set("Authorization", `Bearer ${adminToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.bundle).toBeNull();
+  });
+
+  it("returns bundle object when product belongs to a bundle", async () => {
+    const bundle = await prisma.bundle.create({
+      data: { name: "GP Test Bundle", slug: `${SLUG_PREFIX}bundle-parent`, discountPercent: 20, createdBy: adminId },
+    });
+    const product = await prisma.product.create({
+      data: makeProduct({ name: "GP Bundled", slug: `${SLUG_PREFIX}bundled`, bundleId: bundle.id }),
+    });
+
+    const res = await request(app)
+      .get(`/products/${product.id}`)
+      .set("Authorization", `Bearer ${adminToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.bundle).toEqual({
+      id: bundle.id,
+      name: "GP Test Bundle",
+      slug: `${SLUG_PREFIX}bundle-parent`,
+      discountPercent: 20,
+    });
+
+    await prisma.product.deleteMany({ where: { bundleId: bundle.id } });
+    await prisma.bundle.delete({ where: { id: bundle.id } });
+  });
 });

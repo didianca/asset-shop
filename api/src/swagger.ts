@@ -12,6 +12,57 @@ const options: swaggerJsdoc.Options = {
       version: "1.0.0",
       description: "REST API for the Asset Shop e-commerce platform",
     },
+    components: {
+      schemas: {
+        MessageResponse: {
+          type: "object",
+          properties: {
+            message: { type: "string" },
+          },
+        },
+        RegisterBody: {
+          type: "object",
+          required: ["email", "password", "firstName", "lastName"],
+          properties: {
+            email: { type: "string", format: "email", example: "user@example.com" },
+            password: { type: "string", example: "Password123!" },
+            firstName: { type: "string", example: "Jane" },
+            lastName: { type: "string", example: "Doe" },
+          },
+        },
+        LoginBody: {
+          type: "object",
+          required: ["email", "password"],
+          properties: {
+            email: { type: "string", format: "email", example: "user@example.com" },
+            password: { type: "string", example: "Password123!" },
+          },
+        },
+        LoginResponse: {
+          type: "object",
+          properties: {
+            token: {
+              type: "string",
+              example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+            },
+          },
+        },
+        HealthResponse: {
+          type: "object",
+          properties: {
+            status: { type: "string", example: "ok" },
+            message: { type: "string", example: "Testing API" },
+          },
+        },
+      },
+      securitySchemes: {
+        bearerAuth: {
+          type: "http",
+          scheme: "bearer",
+          bearerFormat: "JWT",
+        },
+      },
+    },
   },
   apis: [resolve(__dirname, "./**/*.ts")],
 };

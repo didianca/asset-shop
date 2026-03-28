@@ -35,6 +35,7 @@ app.use(authenticate);
 app.use("/products", productRouter);
 
 // Handle malformed JSON bodies
+// TODO: move to util func
 app.use(
   (
     err: SyntaxError & { status?: number },

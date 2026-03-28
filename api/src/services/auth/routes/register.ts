@@ -5,7 +5,7 @@ import prisma from "../../../db.js";
 import { sendVerificationEmail } from "../../../lib/email.js";
 import type { RegisterBody } from "../auth.types.js";
 
-const SALT_ROUNDS = 10; //sweet spot of fast and secure
+const SALT_ROUNDS = 10; 
 const VERIFICATION_TOKEN_EXPIRES_HOURS = 12;
 
 /**

@@ -5,6 +5,9 @@ services:
       dockerfile: api/Dockerfile
     ports:
       - "3000:3000"
+    env_file:
+      - .env
+      - api/src/services/auth/.env
     environment:
       NODE_ENV: development
       PORT: 3000

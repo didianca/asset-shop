@@ -8,6 +8,7 @@ services:
       - .env
       - api/.env
       - api/src/services/auth/.env
+      - api/src/services/cart/.env
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
     depends_on:
@@ -29,6 +30,7 @@ services:
       - .env
       - api/.env
       - api/src/services/auth/.env
+      - api/src/services/cart/.env
     environment:
       NODE_ENV: development
       PORT: 3000

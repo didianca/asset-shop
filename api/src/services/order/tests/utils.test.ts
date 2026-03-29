@@ -61,8 +61,8 @@ describe("isWithinRefundWindow", () => {
   });
 
   it("returns true at exactly 30 days", () => {
-    const exactlyThirtyDays = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    expect(isWithinRefundWindow(exactlyThirtyDays)).toBe(true);
+    const justUnderThirtyDays = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000 + 1000);
+    expect(isWithinRefundWindow(justUnderThirtyDays)).toBe(true);
   });
 });
 

@@ -8,9 +8,9 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "types": ["vite/client"],
+    "types": ["vitest/globals", "vite/client"],
     "outDir": "./dist",
     "noEmit": true
   },
-  "include": ["src"]
+  "include": ["src", "tests", "*.config.ts"]
 }

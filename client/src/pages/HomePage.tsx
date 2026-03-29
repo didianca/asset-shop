@@ -27,10 +27,10 @@ export default function HomePage() {
     <div className="space-y-12">
       <section className="rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 px-8 py-16 text-center text-white">
         <h1 className="text-4xl font-bold sm:text-5xl">
-          Premium Digital Assets
+          Digital Assets
         </h1>
         <p className="mx-auto mt-4 max-w-xl text-lg text-indigo-100">
-          High-quality digital assets for designers, developers, and creators.
+          Pixel art like digital assets for personal use.
         </p>
         <Link to={ROUTES.CATALOG} className="mt-8 inline-block">
           <Button

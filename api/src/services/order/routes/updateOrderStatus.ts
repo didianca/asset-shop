@@ -7,7 +7,7 @@ const orderInclude = {
   items: {
     include: {
       product: {
-        select: { name: true, slug: true, previewUrl: true },
+        select: { name: true, slug: true, previewKey: true },
       },
     },
   },

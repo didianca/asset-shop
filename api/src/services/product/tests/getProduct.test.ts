@@ -12,10 +12,10 @@ const NONEXISTENT_ID = "00000000-0000-0000-0000-000000000000";
 let adminId: string;
 let adminToken: string;
 
-const makeProduct = <T extends object>(overrides: T): { price: number; previewUrl: string; assetUrl: string; createdBy: string } & T => ({
+const makeProduct = <T extends object>(overrides: T): { price: number; previewKey: string; assetKey: string; createdBy: string } & T => ({
   price: 10,
-  previewUrl: "https://cdn.example.com/gp-preview.jpg",
-  assetUrl: "https://s3.example.com/gp-asset.zip",
+  previewKey: "previews/gp-preview.jpg",
+  assetKey: "assets/gp-asset.zip",
   createdBy: adminId,
   ...overrides,
 });
@@ -92,8 +92,8 @@ describe("GET /products/:id", () => {
 
     expect(res.status).toBe(200);
     expect(res.body.tags).toContain("gp-tag-one");
-    expect(res.body.previewUrl).toBe("https://cdn.example.com/gp-preview.jpg");
-    expect(res.body.assetUrl).toBe("https://s3.example.com/gp-asset.zip");
+    expect(res.body.previewUrl).toContain("previews/gp-preview.jpg");
+    expect(res.body.assetUrl).toContain("assets/gp-asset.zip");
 
     await prisma.tag.delete({ where: { slug: "gp-tag-one" } });
   });

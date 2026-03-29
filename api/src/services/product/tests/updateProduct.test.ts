@@ -5,6 +5,14 @@ import app from "../../../app.js";
 import prisma from "../../../db.js";
 import { authConfig } from "../../auth/auth.config.js";
 
+vi.mock("../utils.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../utils.js")>();
+  return {
+    ...actual,
+    resolveKeysFromSlug: vi.fn().mockResolvedValue({ previewKey: "previews/up-resolved.jpg", assetKey: "assets/up-resolved.zip" }),
+  };
+});
+
 const SLUG_PREFIX = "up-test-";
 const TAG_PREFIX = "up-tag-";
 const ADMIN_EMAIL = "admin@updateproduct.test";
@@ -16,10 +24,10 @@ let adminId: string;
 let adminToken: string;
 let customerToken: string;
 
-const makeProduct = <T extends object>(overrides: T): { price: number; previewUrl: string; assetUrl: string; createdBy: string } & T => ({
+const makeProduct = <T extends object>(overrides: T): { price: number; previewKey: string; assetKey: string; createdBy: string } & T => ({
   price: 10,
-  previewUrl: "https://cdn.example.com/up-preview.jpg",
-  assetUrl: "https://s3.example.com/up-asset.zip",
+  previewKey: "previews/up-preview.jpg",
+  assetKey: "assets/up-asset.zip",
   createdBy: adminId,
   ...overrides,
 });
@@ -32,8 +40,6 @@ const validUpdate = {
   discountPercent: null,
   isActive: true,
   tags: [],
-  previewUrl: "https://cdn.example.com/up-updated-preview.jpg",
-  assetUrl: "https://s3.example.com/up-updated-asset.zip",
 };
 
 beforeAll(async () => {
@@ -172,10 +178,10 @@ describe("PUT /products/:id", () => {
 
   it("returns 409 when updating to a slug already taken", async () => {
     const productA = await prisma.product.create({
-      data: makeProduct({ name: "UP Product A", slug: `${SLUG_PREFIX}a`, previewUrl: "https://cdn.example.com/up-a.jpg", assetUrl: "https://s3.example.com/up-a.zip" }),
+      data: makeProduct({ name: "UP Product A", slug: `${SLUG_PREFIX}a`, previewKey: "previews/up-a.jpg", assetKey: "assets/up-a.zip" }),
     });
     await prisma.product.create({
-      data: makeProduct({ name: "UP Product B", slug: `${SLUG_PREFIX}b`, previewUrl: "https://cdn.example.com/up-b.jpg", assetUrl: "https://s3.example.com/up-b.zip" }),
+      data: makeProduct({ name: "UP Product B", slug: `${SLUG_PREFIX}b`, previewKey: "previews/up-b.jpg", assetKey: "assets/up-b.zip" }),
     });
 
     const res = await request(app)
@@ -184,6 +190,38 @@ describe("PUT /products/:id", () => {
       .send({ ...validUpdate, slug: `${SLUG_PREFIX}b` });
 
     expect(res.status).toBe(409);
+  });
+
+  it("returns 400 when slug changes and no assets are uploaded for the new slug", async () => {
+    const { resolveKeysFromSlug } = await import("../utils.js");
+    (resolveKeysFromSlug as ReturnType<typeof vi.fn>).mockResolvedValueOnce(null);
+
+    const product = await prisma.product.create({
+      data: makeProduct({ name: "UP No Upload", slug: `${SLUG_PREFIX}no-upload` }),
+    });
+
+    const res = await request(app)
+      .put(`/products/${product.id}`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ ...validUpdate, slug: `${SLUG_PREFIX}new-slug` });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toContain("No uploaded assets found");
+  });
+
+  it("keeps existing keys when slug does not change", async () => {
+    const product = await prisma.product.create({
+      data: makeProduct({ name: "UP Same Slug", slug: `${SLUG_PREFIX}same-slug` }),
+    });
+
+    const res = await request(app)
+      .put(`/products/${product.id}`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ ...validUpdate, slug: `${SLUG_PREFIX}same-slug` });
+
+    expect(res.status).toBe(200);
+    expect(res.body.previewKey).toBe("previews/up-preview.jpg");
+    expect(res.body.assetKey).toBe("assets/up-asset.zip");
   });
 
   it("re-throws unexpected non-P2002 errors", async () => {

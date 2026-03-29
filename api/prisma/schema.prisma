@@ -124,10 +124,10 @@ model Product {
   price           Decimal  @db.Decimal(12, 2)
   // Individual asset discount. Null means no discount.
   discountPercent Int?     @map("discount_percent")
-  // preview_url — public watermarked URL shown on storefront
-  previewUrl      String   @unique @map("preview_url")
-  // asset_url — private S3 URL, only sent to customer after purchase
-  assetUrl        String   @unique @map("asset_url")
+  // preview_key — S3 object key for the public watermarked preview
+  previewKey      String   @unique @map("preview_key")
+  // asset_key — S3 object key for the private original asset
+  assetKey        String   @unique @map("asset_key")
   bundleId        String?  @map("bundle_id") @db.Uuid
   // True only for the row that represents the purchasable bundle product.
   isBundle        Boolean  @default(false) @map("is_bundle")

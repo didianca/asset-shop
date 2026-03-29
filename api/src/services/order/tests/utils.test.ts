@@ -76,7 +76,7 @@ describe("formatOrder", () => {
       {
         productId: "prod-1",
         unitPrice: { toString: (): string => "25.50" },
-        product: { name: "Test Product", slug: "test-product", previewUrl: "https://cdn.example.com/preview.jpg" },
+        product: { name: "Test Product", slug: "test-product", previewKey: "previews/preview.jpg" },
       },
     ],
     statusHistory: [
@@ -119,13 +119,11 @@ describe("formatOrder", () => {
 
   it("maps items correctly", () => {
     const result = formatOrder(baseOrder);
-    expect(result.items[0]).toEqual({
-      productId: "prod-1",
-      name: "Test Product",
-      slug: "test-product",
-      unitPrice: 25.5,
-      previewUrl: "https://cdn.example.com/preview.jpg",
-    });
+    expect(result.items[0]!.productId).toBe("prod-1");
+    expect(result.items[0]!.name).toBe("Test Product");
+    expect(result.items[0]!.slug).toBe("test-product");
+    expect(result.items[0]!.unitPrice).toBe(25.5);
+    expect(result.items[0]!.previewUrl).toContain("previews/preview.jpg");
   });
 
   it("maps status history correctly", () => {

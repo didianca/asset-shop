@@ -24,6 +24,9 @@ E-commerce platform built as a monorepo with microservices.
 | env-var | Environment variable validation — centralised in per-service `*.config.ts` files |
 | Stripe | Payment processing (PaymentIntents, webhooks) |
 | AWS SES | Transactional email (verification emails) |
+| AWS S3 | Asset file storage (original + watermarked previews) |
+| Sharp | Image processing — watermark generation at upload time |
+| Multer | Multipart file upload handling |
 | Vitest + Supertest | Testing |
 | Swagger / OpenAPI | API documentation |
 | tsx | Dev server with hot reload |
@@ -71,6 +74,7 @@ cp api/.env.example api/.env                                        # DATABASE_U
 cp api/src/services/auth/.env.example api/src/services/auth/.env    # Auth service vars
 cp api/src/services/order/.env.example api/src/services/order/.env      # Order service vars
 cp api/src/services/payment/.env.example api/src/services/payment/.env  # Stripe keys
+cp api/src/services/upload/.env.example api/src/services/upload/.env    # S3 keys
 ```
 
 ### Start all services

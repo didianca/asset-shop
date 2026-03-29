@@ -23,3 +23,14 @@ export function validateParams(schema: ZodSchema) {
     next();
   };
 }
+
+export function validateQuery(schema: ZodSchema) {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    const result = schema.safeParse(req.query);
+    if (!result.success) {
+      res.status(400).json({ message: "Invalid request", errors: result.error.flatten().fieldErrors });
+      return;
+    }
+    next();
+  };
+}

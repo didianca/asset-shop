@@ -11,8 +11,6 @@ import { z } from "zod";
  *         - name
  *         - slug
  *         - price
- *         - previewUrl
- *         - assetUrl
  *       properties:
  *         name:
  *           type: string
@@ -36,14 +34,6 @@ import { z } from "zod";
  *           items:
  *             type: string
  *           example: ["dark", "minimalist"]
- *         previewUrl:
- *           type: string
- *           format: uri
- *           example: https://cdn.example.com/preview.jpg
- *         assetUrl:
- *           type: string
- *           format: uri
- *           example: https://s3.example.com/asset.zip
  *     UpdateProductBody:
  *       type: object
  *       additionalProperties: false
@@ -55,8 +45,6 @@ import { z } from "zod";
  *         - discountPercent
  *         - isActive
  *         - tags
- *         - previewUrl
- *         - assetUrl
  *       properties:
  *         name:
  *           type: string
@@ -78,12 +66,6 @@ import { z } from "zod";
  *           type: array
  *           items:
  *             type: string
- *         previewUrl:
- *           type: string
- *           format: uri
- *         assetUrl:
- *           type: string
- *           format: uri
  *     ProductResponse:
  *       type: object
  *       required:
@@ -95,6 +77,8 @@ import { z } from "zod";
  *         - discountPercent
  *         - isActive
  *         - tags
+ *         - previewKey
+ *         - assetKey
  *         - previewUrl
  *         - assetUrl
  *         - bundle
@@ -119,6 +103,12 @@ import { z } from "zod";
  *           type: array
  *           items:
  *             type: string
+ *         previewKey:
+ *           type: string
+ *           example: previews/dark-minimalist-pack.png
+ *         assetKey:
+ *           type: string
+ *           example: assets/dark-minimalist-pack.png
  *         previewUrl:
  *           type: string
  *           format: uri
@@ -160,8 +150,6 @@ export const CreateProductSchema = z.object({
   price: z.number().positive(),
   discountPercent: z.number().int().min(0).max(100).optional(),
   tags: z.array(z.string()).optional(),
-  previewUrl: z.string().url(),
-  assetUrl: z.string().url(),
 }).strict();
 
 export const UpdateProductSchema = z.object({
@@ -172,8 +160,6 @@ export const UpdateProductSchema = z.object({
   discountPercent: z.number().int().min(0).max(100).nullable(),
   isActive: z.boolean(),
   tags: z.array(z.string()),
-  previewUrl: z.string().url(),
-  assetUrl: z.string().url(),
 }).strict();
 
 export type CreateProductBody = z.infer<typeof CreateProductSchema>;

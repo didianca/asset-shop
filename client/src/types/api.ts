@@ -35,6 +35,8 @@ export interface ProductResponse {
   discountPercent: number | null;
   isActive: boolean;
   tags: string[];
+  previewKey: string;
+  assetKey: string;
   previewUrl: string;
   assetUrl: string;
   bundle: {
@@ -53,8 +55,6 @@ export interface CreateProductBody {
   price: number;
   discountPercent?: number;
   tags?: string[];
-  previewUrl: string;
-  assetUrl: string;
 }
 
 export interface UpdateProductBody {
@@ -65,8 +65,6 @@ export interface UpdateProductBody {
   discountPercent: number | null;
   isActive: boolean;
   tags: string[];
-  previewUrl: string;
-  assetUrl: string;
 }
 
 export interface CartItemResponse {

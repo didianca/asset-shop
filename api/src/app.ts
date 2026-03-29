@@ -7,6 +7,7 @@ import productRouter from "./services/product/routes/index.js";
 import cartRouter from "./services/cart/routes/index.js";
 import orderRouter from "./services/order/routes/index.js";
 import paymentRouter from "./services/payment/routes/index.js";
+import uploadRouter from "./services/upload/routes/index.js";
 import { handleWebhookHandler } from "./services/payment/routes/handleWebhook.js";
 
 const app = express();
@@ -43,6 +44,7 @@ app.use("/products", productRouter);
 app.use("/cart", cartRouter);
 app.use("/orders", orderRouter);
 app.use("/payments", paymentRouter);
+app.use("/upload", uploadRouter);
 
 // Handle malformed JSON bodies
 // TODO: move to util func

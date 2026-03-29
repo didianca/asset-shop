@@ -33,8 +33,6 @@ export default function ProductForm({
     product?.discountPercent?.toString() ?? "",
   );
   const [tags, setTags] = useState(product?.tags?.join(", ") ?? "");
-  const [previewUrl, setPreviewUrl] = useState(product?.previewUrl ?? "");
-  const [assetUrl, setAssetUrl] = useState(product?.assetUrl ?? "");
   const [isActive, setIsActive] = useState(product?.isActive ?? true);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -74,8 +72,6 @@ export default function ProductForm({
             ? parseFloat(discountPercent)
             : null,
           tags: parsedTags,
-          previewUrl,
-          assetUrl,
           isActive,
         };
         await productsApi.updateProduct(product.id, body);
@@ -90,8 +86,6 @@ export default function ProductForm({
             ? parseFloat(discountPercent)
             : undefined,
           tags: parsedTags.length > 0 ? parsedTags : undefined,
-          previewUrl,
-          assetUrl,
         };
         await productsApi.createProduct(body);
         addToast("Product created", "success");
@@ -179,26 +173,6 @@ export default function ProductForm({
         value={tags}
         onChange={(e) => setTags(e.target.value)}
         placeholder="dark, minimalist, 4K"
-      />
-
-      <Input
-        id="previewUrl"
-        label="Preview URL"
-        type="url"
-        value={previewUrl}
-        onChange={(e) => setPreviewUrl(e.target.value)}
-        error={fieldErrors.previewUrl?.[0]}
-        required
-      />
-
-      <Input
-        id="assetUrl"
-        label="Asset URL"
-        type="url"
-        value={assetUrl}
-        onChange={(e) => setAssetUrl(e.target.value)}
-        error={fieldErrors.assetUrl?.[0]}
-        required
       />
 
       {isEdit && (

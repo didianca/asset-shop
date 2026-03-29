@@ -17,10 +17,10 @@ let adminToken: string;
 let customerToken: string;
 let customer2Token: string;
 
-const makeProduct = <T extends object>(overrides: T): { price: number; previewUrl: string; assetUrl: string; createdBy: string } & T => ({
+const makeProduct = <T extends object>(overrides: T): { price: number; previewKey: string; assetKey: string; createdBy: string } & T => ({
   price: 10,
-  previewUrl: "https://cdn.example.com/go-preview.jpg",
-  assetUrl: "https://s3.example.com/go-asset.zip",
+  previewKey: "previews/go-preview.jpg",
+  assetKey: "assets/go-asset.zip",
   createdBy: adminId,
   ...overrides,
 });
@@ -102,8 +102,8 @@ describe("GET /orders", () => {
       data: makeProduct({
         name: "GO Order 2",
         slug: `${SLUG_PREFIX}order-2`,
-        previewUrl: "https://cdn.example.com/go-p2.jpg",
-        assetUrl: "https://s3.example.com/go-p2.zip",
+        previewKey: "previews/go-p2.jpg",
+        assetKey: "assets/go-p2.zip",
       }),
     });
 
@@ -145,8 +145,8 @@ describe("GET /orders", () => {
       data: makeProduct({
         name: "GO Admin 2",
         slug: `${SLUG_PREFIX}admin-2`,
-        previewUrl: "https://cdn.example.com/go-a2.jpg",
-        assetUrl: "https://s3.example.com/go-a2.zip",
+        previewKey: "previews/go-a2.jpg",
+        assetKey: "assets/go-a2.zip",
       }),
     });
 
@@ -172,8 +172,8 @@ describe("GET /orders", () => {
       data: makeProduct({
         name: "GO Filter 2",
         slug: `${SLUG_PREFIX}filter-2`,
-        previewUrl: "https://cdn.example.com/go-f2.jpg",
-        assetUrl: "https://s3.example.com/go-f2.zip",
+        previewKey: "previews/go-f2.jpg",
+        assetKey: "assets/go-f2.zip",
       }),
     });
 
@@ -197,8 +197,8 @@ describe("GET /orders", () => {
       data: makeProduct({
         name: "GO Ignore 2",
         slug: `${SLUG_PREFIX}ignore-2`,
-        previewUrl: "https://cdn.example.com/go-i2.jpg",
-        assetUrl: "https://s3.example.com/go-i2.zip",
+        previewKey: "previews/go-i2.jpg",
+        assetKey: "assets/go-i2.zip",
       }),
     });
 
@@ -221,8 +221,8 @@ describe("GET /orders", () => {
           data: makeProduct({
             name: `GO Page ${i}`,
             slug: `${SLUG_PREFIX}page-${i}`,
-            previewUrl: `https://cdn.example.com/go-pg-${i}.jpg`,
-            assetUrl: `https://s3.example.com/go-pg-${i}.zip`,
+            previewKey: `previews/go-pg-${i}.jpg`,
+            assetKey: `assets/go-pg-${i}.zip`,
           }),
         })
       )

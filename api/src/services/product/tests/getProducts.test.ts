@@ -11,10 +11,10 @@ const ADMIN_EMAIL = "admin@getproducts.test";
 let adminId: string;
 let adminToken: string;
 
-const makeProduct = <T extends object>(overrides: T): { price: number; previewUrl: string; assetUrl: string; createdBy: string } & T => ({
+const makeProduct = <T extends object>(overrides: T): { price: number; previewKey: string; assetKey: string; createdBy: string } & T => ({
   price: 10,
-  previewUrl: "https://cdn.example.com/gps-preview.jpg",
-  assetUrl: "https://s3.example.com/gps-asset.zip",
+  previewKey: "previews/gps-preview.jpg",
+  assetKey: "assets/gps-asset.zip",
   createdBy: adminId,
   ...overrides,
 });
@@ -107,7 +107,7 @@ describe("GET /products", () => {
 
     const found = res.body.find((p: { slug: string }) => p.slug === `${SLUG_PREFIX}rich`);
     expect(found.tags).toContain("gps-tag-one");
-    expect(found.previewUrl).toBe("https://cdn.example.com/gps-preview.jpg");
+    expect(found.previewUrl).toContain("previews/gps-preview.jpg");
 
     await prisma.tag.delete({ where: { slug: "gps-tag-one" } });
   });
@@ -151,10 +151,10 @@ describe("GET /products", () => {
 
   it("returns products ordered by createdAt descending", async () => {
     await prisma.product.create({
-      data: makeProduct({ name: "GPS First Product", slug: `${SLUG_PREFIX}first`, previewUrl: "https://cdn.example.com/gps-first.jpg", assetUrl: "https://s3.example.com/gps-first.zip" }),
+      data: makeProduct({ name: "GPS First Product", slug: `${SLUG_PREFIX}first`, previewKey: "previews/gps-first.jpg", assetKey: "assets/gps-first.zip" }),
     });
     await prisma.product.create({
-      data: makeProduct({ name: "GPS Second Product", slug: `${SLUG_PREFIX}second`, previewUrl: "https://cdn.example.com/gps-second.jpg", assetUrl: "https://s3.example.com/gps-second.zip" }),
+      data: makeProduct({ name: "GPS Second Product", slug: `${SLUG_PREFIX}second`, previewKey: "previews/gps-second.jpg", assetKey: "assets/gps-second.zip" }),
     });
 
     const res = await request(app)

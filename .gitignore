@@ -4,5 +4,6 @@ coverage
 .env
 *.local
 .claude/
+.idea/
 PLAN.md
 CLAUDE.md

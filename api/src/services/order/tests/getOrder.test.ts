@@ -18,10 +18,10 @@ let adminToken: string;
 let customerToken: string;
 let customer2Token: string;
 
-const makeProduct = <T extends object>(overrides: T): { price: number; previewUrl: string; assetUrl: string; createdBy: string } & T => ({
+const makeProduct = <T extends object>(overrides: T): { price: number; previewKey: string; assetKey: string; createdBy: string } & T => ({
   price: 10,
-  previewUrl: "https://cdn.example.com/gor-preview.jpg",
-  assetUrl: "https://s3.example.com/gor-asset.zip",
+  previewKey: "previews/gor-preview.jpg",
+  assetKey: "assets/gor-asset.zip",
   createdBy: adminId,
   ...overrides,
 });

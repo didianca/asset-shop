@@ -2,14 +2,16 @@ import type { Request, Response } from "express";
 import { Prisma } from "../../../generated/prisma/index.js";
 import prisma from "../../../db.js";
 import type { CreateProductBody } from "../product.types.js";
-import { formatProduct, toTagSlug } from "../utils.js";
+import { formatProduct, resolveKeysFromSlug, toTagSlug } from "../utils.js";
 
 /**
  * @openapi
  * /products:
  *   post:
  *     summary: Create a new product
- *     description: Admin only. Creates a new product with optional tags.
+ *     description: |
+ *       Admin only. Creates a new product with optional tags.
+ *       The preview and asset S3 keys are inferred from the slug — upload the asset via POST /upload before creating the product.
  *     tags:
  *       - Products
  *     security:
@@ -40,7 +42,7 @@ import { formatProduct, toTagSlug } from "../utils.js";
  *             schema:
  *               $ref: '#/components/schemas/MessageResponse'
  *       400:
- *         description: Validation error (missing fields, wrong types, or unknown keys)
+ *         description: Validation error or no uploaded assets found for the given slug
  *         content:
  *           application/json:
  *             schema:
@@ -56,13 +58,20 @@ export async function createProductHandler(
   req: Request<object, object, CreateProductBody>,
   res: Response
 ): Promise<void> {
-  const { name, slug, description, price, discountPercent, tags, previewUrl, assetUrl } = req.body;
+  const { name, slug, description, price, discountPercent, tags } = req.body;
   const createdBy = req.user!.id;
+
+  const keys = await resolveKeysFromSlug(slug);
+  if (!keys) {
+    res.status(400).json({ message: "No uploaded assets found for this slug. Upload the asset via POST /upload first." });
+    return;
+  }
+  const { previewKey, assetKey } = keys;
 
   try {
     const product = await prisma.$transaction(async (tx) => {
       const created = await tx.product.create({
-        data: { name, slug, description: description ?? null, price, discountPercent: discountPercent ?? null, previewUrl, assetUrl, createdBy },
+        data: { name, slug, description: description ?? null, price, discountPercent: discountPercent ?? null, previewKey, assetKey, createdBy },
       });
 
       if (tags && tags.length > 0) {

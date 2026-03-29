@@ -1,3 +1,5 @@
+import { getPublicUrl, findKeyByPrefix } from "../upload/s3.js";
+
 type BundleResponse = {
   id: string;
   name: string;
@@ -14,8 +16,8 @@ type ProductWithRelations = {
   discountPercent: number | null;
   isActive: boolean;
   createdAt: Date;
-  previewUrl: string;
-  assetUrl: string;
+  previewKey: string;
+  assetKey: string;
   tags: { tag: { name: string } }[];
   bundle: { id: string; name: string; slug: string; discountPercent: number | null } | null;
 };
@@ -29,6 +31,8 @@ type ProductResponse = {
   discountPercent: number | null;
   isActive: boolean;
   tags: string[];
+  previewKey: string;
+  assetKey: string;
   previewUrl: string;
   assetUrl: string;
   bundle: BundleResponse | null;
@@ -45,13 +49,25 @@ export function formatProduct(product: ProductWithRelations): ProductResponse {
     discountPercent: product.discountPercent,
     isActive: product.isActive,
     tags: product.tags.map((pt) => pt.tag.name),
-    previewUrl: product.previewUrl,
-    assetUrl: product.assetUrl,
+    previewKey: product.previewKey,
+    assetKey: product.assetKey,
+    previewUrl: getPublicUrl(product.previewKey),
+    assetUrl: getPublicUrl(product.assetKey),
     bundle: product.bundle
       ? { id: product.bundle.id, name: product.bundle.name, slug: product.bundle.slug, discountPercent: product.bundle.discountPercent }
       : null,
     createdAt: product.createdAt,
   };
+}
+
+export async function resolveKeysFromSlug(slug: string): Promise<{ previewKey: string; assetKey: string } | null> {
+  const [previewKey, assetKey] = await Promise.all([
+    findKeyByPrefix(`previews/${slug}`),
+    findKeyByPrefix(`assets/${slug}`),
+  ]);
+
+  if (!previewKey || !assetKey) return null;
+  return { previewKey, assetKey };
 }
 
 export function toTagSlug(name: string): string {

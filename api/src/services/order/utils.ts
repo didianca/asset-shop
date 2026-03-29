@@ -1,10 +1,12 @@
+import { getPublicUrl } from "../upload/s3.js";
+
 type OrderItemWithProduct = {
   productId: string;
   unitPrice: { toString(): string } | number;
   product: {
     name: string;
     slug: string;
-    previewUrl: string;
+    previewKey: string;
   };
 };
 
@@ -95,7 +97,7 @@ export function formatOrder(order: OrderWithDetails): OrderResponse {
     name: item.product.name,
     slug: item.product.slug,
     unitPrice: Number(item.unitPrice),
-    previewUrl: item.product.previewUrl,
+    previewUrl: getPublicUrl(item.product.previewKey),
   }));
 
   const statusHistory = order.statusHistory.map((entry) => ({

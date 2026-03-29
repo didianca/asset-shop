@@ -14,10 +14,10 @@ let adminId: string;
 let customerId: string;
 let customerToken: string;
 
-const makeProduct = <T extends object>(overrides: T): { price: number; previewUrl: string; assetUrl: string; createdBy: string } & T => ({
+const makeProduct = <T extends object>(overrides: T): { price: number; previewKey: string; assetKey: string; createdBy: string } & T => ({
   price: 10,
-  previewUrl: "https://cdn.example.com/aci-preview.jpg",
-  assetUrl: "https://s3.example.com/aci-asset.zip",
+  previewKey: "previews/aci-preview.jpg",
+  assetKey: "assets/aci-asset.zip",
   createdBy: adminId,
   ...overrides,
 });
@@ -137,8 +137,8 @@ describe("POST /cart/items", () => {
       data: makeProduct({
         name: "ACI Multi 1",
         slug: `${SLUG_PREFIX}multi-1`,
-        previewUrl: "https://cdn.example.com/aci-m1.jpg",
-        assetUrl: "https://s3.example.com/aci-m1.zip",
+        previewKey: "previews/aci-m1.jpg",
+        assetKey: "assets/aci-m1.zip",
       }),
     });
     const p2 = await prisma.product.create({
@@ -146,8 +146,8 @@ describe("POST /cart/items", () => {
         name: "ACI Multi 2",
         slug: `${SLUG_PREFIX}multi-2`,
         price: 20,
-        previewUrl: "https://cdn.example.com/aci-m2.jpg",
-        assetUrl: "https://s3.example.com/aci-m2.zip",
+        previewKey: "previews/aci-m2.jpg",
+        assetKey: "assets/aci-m2.zip",
       }),
     });
 

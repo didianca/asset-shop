@@ -8,7 +8,7 @@ const cartInclude = {
   items: {
     include: {
       product: {
-        select: { name: true, slug: true, price: true, discountPercent: true, previewUrl: true },
+        select: { name: true, slug: true, price: true, discountPercent: true, previewKey: true },
       },
     },
   },

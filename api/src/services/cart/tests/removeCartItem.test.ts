@@ -14,10 +14,10 @@ let adminId: string;
 let customerId: string;
 let customerToken: string;
 
-const makeProduct = <T extends object>(overrides: T): { price: number; previewUrl: string; assetUrl: string; createdBy: string } & T => ({
+const makeProduct = <T extends object>(overrides: T): { price: number; previewKey: string; assetKey: string; createdBy: string } & T => ({
   price: 10,
-  previewUrl: "https://cdn.example.com/rci-preview.jpg",
-  assetUrl: "https://s3.example.com/rci-asset.zip",
+  previewKey: "previews/rci-preview.jpg",
+  assetKey: "assets/rci-asset.zip",
   createdBy: adminId,
   ...overrides,
 });
@@ -104,8 +104,8 @@ describe("DELETE /cart/items/:productId", () => {
         name: "RCI Keep",
         slug: `${SLUG_PREFIX}keep`,
         price: 15,
-        previewUrl: "https://cdn.example.com/rci-keep.jpg",
-        assetUrl: "https://s3.example.com/rci-keep.zip",
+        previewKey: "previews/rci-keep.jpg",
+        assetKey: "assets/rci-keep.zip",
       }),
     });
     const p2 = await prisma.product.create({
@@ -113,8 +113,8 @@ describe("DELETE /cart/items/:productId", () => {
         name: "RCI Remove",
         slug: `${SLUG_PREFIX}remove`,
         price: 25,
-        previewUrl: "https://cdn.example.com/rci-remove.jpg",
-        assetUrl: "https://s3.example.com/rci-remove.zip",
+        previewKey: "previews/rci-remove.jpg",
+        assetKey: "assets/rci-remove.zip",
       }),
     });
 

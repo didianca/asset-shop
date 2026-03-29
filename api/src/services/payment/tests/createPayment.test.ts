@@ -27,10 +27,10 @@ vi.mock("stripe", () => {
   };
 });
 
-const makeProduct = <T extends object>(overrides: T): { price: number; previewUrl: string; assetUrl: string; createdBy: string } & T => ({
+const makeProduct = <T extends object>(overrides: T): { price: number; previewKey: string; assetKey: string; createdBy: string } & T => ({
   price: 10,
-  previewUrl: "https://cdn.example.com/cpay-preview.jpg",
-  assetUrl: "https://s3.example.com/cpay-asset.zip",
+  previewKey: "previews/cpay-preview.jpg",
+  assetKey: "assets/cpay-asset.zip",
   createdBy: adminId,
   ...overrides,
 });

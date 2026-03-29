@@ -13,10 +13,10 @@ let adminId: string;
 let customerId: string;
 let customerToken: string;
 
-const makeProduct = <T extends object>(overrides: T): { price: number; previewUrl: string; assetUrl: string; createdBy: string } & T => ({
+const makeProduct = <T extends object>(overrides: T): { price: number; previewKey: string; assetKey: string; createdBy: string } & T => ({
   price: 10,
-  previewUrl: "https://cdn.example.com/cc-preview.jpg",
-  assetUrl: "https://s3.example.com/cc-asset.zip",
+  previewKey: "previews/cc-preview.jpg",
+  assetKey: "assets/cc-asset.zip",
   createdBy: adminId,
   ...overrides,
 });
@@ -69,16 +69,16 @@ describe("DELETE /cart", () => {
       data: makeProduct({
         name: "CC Product 1",
         slug: `${SLUG_PREFIX}product-1`,
-        previewUrl: "https://cdn.example.com/cc-p1.jpg",
-        assetUrl: "https://s3.example.com/cc-p1.zip",
+        previewKey: "previews/cc-p1.jpg",
+        assetKey: "assets/cc-p1.zip",
       }),
     });
     const p2 = await prisma.product.create({
       data: makeProduct({
         name: "CC Product 2",
         slug: `${SLUG_PREFIX}product-2`,
-        previewUrl: "https://cdn.example.com/cc-p2.jpg",
-        assetUrl: "https://s3.example.com/cc-p2.zip",
+        previewKey: "previews/cc-p2.jpg",
+        assetKey: "assets/cc-p2.zip",
       }),
     });
 

@@ -2,14 +2,15 @@ import type { Request, Response } from "express";
 import { Prisma } from "../../../generated/prisma/index.js";
 import prisma from "../../../db.js";
 import type { UpdateProductBody } from "../product.types.js";
-import { formatProduct, toTagSlug } from "../utils.js";
+import { formatProduct, resolveKeysFromSlug, toTagSlug } from "../utils.js";
 
 /**
  * @openapi
  * /products/{id}:
  *   put:
  *     summary: Update a product
- *     description: Admin only.
+ *     description: |
+ *       Admin only. If the slug changes, the preview and asset S3 keys are re-resolved from S3 — upload the asset via POST /upload with the new slug first.
  *     tags:
  *       - Products
  *     security:
@@ -53,7 +54,7 @@ import { formatProduct, toTagSlug } from "../utils.js";
  *             schema:
  *               $ref: '#/components/schemas/MessageResponse'
  *       400:
- *         description: Validation error (missing fields, wrong types, or unknown keys)
+ *         description: Validation error or no uploaded assets found for the new slug
  *         content:
  *           application/json:
  *             schema:
@@ -70,7 +71,7 @@ export async function updateProductHandler(
   res: Response
 ): Promise<void> {
   const { id } = req.params;
-  const { name, slug: newSlug, description, price, discountPercent, isActive, tags, previewUrl, assetUrl } = req.body;
+  const { name, slug: newSlug, description, price, discountPercent, isActive, tags } = req.body;
 
   const existing = await prisma.product.findUnique({ where: { id } });
   if (!existing || !existing.isActive) {
@@ -78,11 +79,24 @@ export async function updateProductHandler(
     return;
   }
 
+  let previewKey = existing.previewKey;
+  let assetKey = existing.assetKey;
+
+  if (newSlug !== existing.slug) {
+    const keys = await resolveKeysFromSlug(newSlug);
+    if (!keys) {
+      res.status(400).json({ message: "No uploaded assets found for this slug. Upload the asset via POST /upload first." });
+      return;
+    }
+    previewKey = keys.previewKey;
+    assetKey = keys.assetKey;
+  }
+
   try {
     const product = await prisma.$transaction(async (tx) => {
       await tx.product.update({
         where: { id },
-        data: { name, slug: newSlug, description, price, discountPercent, isActive, previewUrl, assetUrl },
+        data: { name, slug: newSlug, description, price, discountPercent, isActive, previewKey, assetKey },
       });
 
       await tx.productTag.deleteMany({ where: { productId: existing.id } });

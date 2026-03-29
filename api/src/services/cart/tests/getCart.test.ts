@@ -13,10 +13,10 @@ let adminId: string;
 let customerId: string;
 let customerToken: string;
 
-const makeProduct = <T extends object>(overrides: T): { price: number; previewUrl: string; assetUrl: string; createdBy: string } & T => ({
+const makeProduct = <T extends object>(overrides: T): { price: number; previewKey: string; assetKey: string; createdBy: string } & T => ({
   price: 10,
-  previewUrl: "https://cdn.example.com/gc-preview.jpg",
-  assetUrl: "https://s3.example.com/gc-asset.zip",
+  previewKey: "previews/gc-preview.jpg",
+  assetKey: "assets/gc-asset.zip",
   createdBy: adminId,
   ...overrides,
 });
@@ -103,8 +103,8 @@ describe("GET /cart", () => {
         slug: `${SLUG_PREFIX}discounted`,
         price: 100,
         discountPercent: 20,
-        previewUrl: "https://cdn.example.com/gc-disc-preview.jpg",
-        assetUrl: "https://s3.example.com/gc-disc-asset.zip",
+        previewKey: "previews/gc-disc-preview.jpg",
+        assetKey: "assets/gc-disc-asset.zip",
       }),
     });
     const p2 = await prisma.product.create({
@@ -112,8 +112,8 @@ describe("GET /cart", () => {
         name: "GC Full Price",
         slug: `${SLUG_PREFIX}full`,
         price: 50,
-        previewUrl: "https://cdn.example.com/gc-full-preview.jpg",
-        assetUrl: "https://s3.example.com/gc-full-asset.zip",
+        previewKey: "previews/gc-full-preview.jpg",
+        assetKey: "assets/gc-full-asset.zip",
       }),
     });
 

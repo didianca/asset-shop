@@ -5,6 +5,14 @@ import app from "../../../app.js";
 import prisma from "../../../db.js";
 import { authConfig } from "../../auth/auth.config.js";
 
+vi.mock("../utils.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../utils.js")>();
+  return {
+    ...actual,
+    resolveKeysFromSlug: vi.fn().mockResolvedValue({ previewKey: "previews/cp-preview.jpg", assetKey: "assets/cp-asset.zip" }),
+  };
+});
+
 const SLUG_PREFIX = "cp-test-";
 const TAG_PREFIX = "cp-tag-";
 const ADMIN_EMAIL = "admin@createproduct.test";
@@ -17,8 +25,6 @@ const validProduct = {
   name: "CP Test Product",
   slug: `${SLUG_PREFIX}product`,
   price: 19.99,
-  previewUrl: "https://cdn.example.com/cp-preview.jpg",
-  assetUrl: "https://s3.example.com/cp-asset.zip",
 };
 
 beforeAll(async () => {
@@ -144,15 +150,30 @@ describe("POST /products", () => {
     expect(count).toBe(1);
   });
 
-  it("returns previewUrl and assetUrl in the response", async () => {
+  it("returns keys and computed URLs in the response", async () => {
     const res = await request(app)
       .post("/products")
       .set("Authorization", `Bearer ${adminToken}`)
       .send(validProduct);
 
     expect(res.status).toBe(201);
-    expect(res.body.previewUrl).toBe(validProduct.previewUrl);
-    expect(res.body.assetUrl).toBe(validProduct.assetUrl);
+    expect(res.body.previewKey).toBe("previews/cp-preview.jpg");
+    expect(res.body.assetKey).toBe("assets/cp-asset.zip");
+    expect(res.body.previewUrl).toContain("previews/cp-preview.jpg");
+    expect(res.body.assetUrl).toContain("assets/cp-asset.zip");
+  });
+
+  it("returns 400 when no assets are uploaded for the slug", async () => {
+    const { resolveKeysFromSlug } = await import("../utils.js");
+    (resolveKeysFromSlug as ReturnType<typeof vi.fn>).mockResolvedValueOnce(null);
+
+    const res = await request(app)
+      .post("/products")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ ...validProduct, name: "CP No Upload", slug: `${SLUG_PREFIX}no-upload` });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toContain("No uploaded assets found");
   });
 
   it("returns 409 for a duplicate slug", async () => {

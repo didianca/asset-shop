@@ -9,6 +9,7 @@ config({ path: resolve(process.cwd(), "src/services/auth/.env") });
 config({ path: resolve(process.cwd(), "src/services/cart/.env") });
 config({ path: resolve(process.cwd(), "src/services/order/.env") });
 config({ path: resolve(process.cwd(), "src/services/payment/.env") });
+config({ path: resolve(process.cwd(), "src/services/upload/.env") });
 
 import app from "./app.js";
 

@@ -13,10 +13,10 @@ let adminId: string;
 let customerId: string;
 let customerToken: string;
 
-const makeProduct = <T extends object>(overrides: T): { price: number; previewUrl: string; assetUrl: string; createdBy: string } & T => ({
+const makeProduct = <T extends object>(overrides: T): { price: number; previewKey: string; assetKey: string; createdBy: string } & T => ({
   price: 10,
-  previewUrl: "https://cdn.example.com/co-preview.jpg",
-  assetUrl: "https://s3.example.com/co-asset.zip",
+  previewKey: "previews/co-preview.jpg",
+  assetKey: "assets/co-asset.zip",
   createdBy: adminId,
   ...overrides,
 });
@@ -112,8 +112,8 @@ describe("POST /orders", () => {
       data: makeProduct({
         name: "CO Multi 1",
         slug: `${SLUG_PREFIX}multi-1`,
-        previewUrl: "https://cdn.example.com/co-m1.jpg",
-        assetUrl: "https://s3.example.com/co-m1.zip",
+        previewKey: "previews/co-m1.jpg",
+        assetKey: "assets/co-m1.zip",
       }),
     });
     const p2 = await prisma.product.create({
@@ -121,8 +121,8 @@ describe("POST /orders", () => {
         name: "CO Multi 2",
         slug: `${SLUG_PREFIX}multi-2`,
         price: 25,
-        previewUrl: "https://cdn.example.com/co-m2.jpg",
-        assetUrl: "https://s3.example.com/co-m2.zip",
+        previewKey: "previews/co-m2.jpg",
+        assetKey: "assets/co-m2.zip",
       }),
     });
     await addToCart([p1.id, p2.id], customerToken);

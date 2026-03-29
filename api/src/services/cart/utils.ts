@@ -1,3 +1,5 @@
+import { getPublicUrl } from "../upload/s3.js";
+
 type CartItemWithProduct = {
   productId: string;
   createdAt: Date;
@@ -6,7 +8,7 @@ type CartItemWithProduct = {
     slug: string;
     price: { toString(): string } | number;
     discountPercent: number | null;
-    previewUrl: string;
+    previewKey: string;
   };
 };
 
@@ -45,7 +47,7 @@ export function formatCart(cart: CartWithItems): CartResponse {
       slug: item.product.slug,
       price,
       discountPercent: item.product.discountPercent,
-      previewUrl: item.product.previewUrl,
+      previewUrl: getPublicUrl(item.product.previewKey),
       addedAt: item.createdAt,
     };
   });

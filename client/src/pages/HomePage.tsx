@@ -25,7 +25,7 @@ export default function HomePage() {
 
   return (
     <div className="space-y-12">
-      <section className="rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 px-8 py-16 text-center text-white">
+      <section className="rounded-2xl bg-linear-to-r from-indigo-600 to-purple-600 px-8 py-16 text-center text-white">
         <h1 className="text-4xl font-bold sm:text-5xl">
           Digital Assets
         </h1>

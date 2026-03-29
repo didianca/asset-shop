@@ -14,6 +14,7 @@ export default defineConfig({
       "./src/services/product/tests/setup.ts",
       "./src/services/cart/tests/setup.ts",
       "./src/services/order/tests/setup.ts",
+      "./src/services/payment/tests/setup.ts",
     ],
     coverage: {
       provider: "v8",

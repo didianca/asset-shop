@@ -24,9 +24,9 @@ describe("UpdateOrderStatusSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("rejects pending as a target status", () => {
+  it("accepts pending as a target status", () => {
     const result = UpdateOrderStatusSchema.safeParse({ status: "pending" });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 
   it("rejects extra fields", () => {

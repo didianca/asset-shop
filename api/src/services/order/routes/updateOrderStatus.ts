@@ -22,7 +22,7 @@ const orderInclude = {
  *     summary: Update order status (admin only)
  *     description: |
  *       Transitions an order's status. Valid transitions:
- *       pending → paid, paid → fulfilled, fulfilled → refunded (within 30 days).
+ *       pending → paid, paid → fulfilled, fulfilled → refunded (within 30 days), refunded → pending.
  *     tags:
  *       - Orders
  *     security:

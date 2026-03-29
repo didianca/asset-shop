@@ -22,6 +22,7 @@ E-commerce platform built as a monorepo with microservices.
 | Prisma | ORM — schema management, migrations, type-safe query client |
 | Zod | Request body validation — schemas defined in `*.types.ts`, applied via `validate` middleware |
 | env-var | Environment variable validation — centralised in per-service `*.config.ts` files |
+| Stripe | Payment processing (PaymentIntents, webhooks) |
 | AWS SES | Transactional email (verification emails) |
 | Vitest + Supertest | Testing |
 | Swagger / OpenAPI | API documentation |
@@ -68,7 +69,8 @@ Each service also has its own environment file. Copy and fill in the templates:
 ```bash
 cp api/.env.example api/.env                                        # DATABASE_URL
 cp api/src/services/auth/.env.example api/src/services/auth/.env    # Auth service vars
-cp api/src/services/order/.env.example api/src/services/order/.env  # Order service vars
+cp api/src/services/order/.env.example api/src/services/order/.env      # Order service vars
+cp api/src/services/payment/.env.example api/src/services/payment/.env  # Stripe keys
 ```
 
 ### Start all services

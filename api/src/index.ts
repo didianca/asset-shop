@@ -8,6 +8,7 @@ config({ path: resolve(process.cwd(), ".env") });
 config({ path: resolve(process.cwd(), "src/services/auth/.env") });
 config({ path: resolve(process.cwd(), "src/services/cart/.env") });
 config({ path: resolve(process.cwd(), "src/services/order/.env") });
+config({ path: resolve(process.cwd(), "src/services/payment/.env") });
 
 import app from "./app.js";
 

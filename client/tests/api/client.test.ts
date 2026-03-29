@@ -1,6 +1,5 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import apiClient from "../../src/api/client";
-import MockAdapter from "axios-mock-adapter";
 
 // We need to install axios-mock-adapter — let's use msw-style inline mocking instead
 // Actually let's just test the instance config and interceptor behavior directly

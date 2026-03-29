@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { useAuthStore } from "../../src/stores/authStore";
 
 // A valid JWT with payload: { id: "user-1", role: "customer", status: "active", exp: 9999999999 }

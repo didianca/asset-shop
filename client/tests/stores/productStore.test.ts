@@ -1,55 +1,43 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { useProductStore } from "../../src/stores/productStore";
-import type { ProductResponse } from "../../src/types/api";
 
-const makeProduct = (overrides: Partial<ProductResponse>): ProductResponse => ({
-  id: "p1",
-  name: "Asset 1",
-  slug: "asset-1",
-  description: null,
-  price: 10,
-  discountPercent: null,
-  isActive: true,
-  tags: ["dark"],
-  previewUrl: "https://example.com/preview.jpg",
-  assetUrl: "https://example.com/asset.zip",
-  bundle: null,
-  createdAt: "2026-01-01T00:00:00Z",
-  ...overrides,
+const { product1, product2 } = vi.hoisted(() => {
+  const makeProduct = (overrides: Record<string, unknown>) => ({
+    id: "p1",
+    name: "Asset 1",
+    slug: "asset-1",
+    description: null,
+    price: 10,
+    discountPercent: null,
+    isActive: true,
+    tags: ["dark"],
+    previewUrl: "https://example.com/preview.jpg",
+    assetUrl: "https://example.com/asset.zip",
+    bundle: null,
+    createdAt: "2026-01-01T00:00:00Z",
+    ...overrides,
+  });
+
+  return {
+    product1: makeProduct({}),
+    product2: makeProduct({
+      id: "p2",
+      name: "Asset 2",
+      slug: "asset-2",
+      description: "Second asset",
+      price: 20,
+      discountPercent: 15,
+      tags: ["minimalist"],
+      previewUrl: "https://example.com/preview2.jpg",
+      assetUrl: "https://example.com/asset2.zip",
+      createdAt: "2026-01-02T00:00:00Z",
+    }),
+  };
 });
 
 vi.mock("../../src/api/products.api", () => ({
   getProducts: vi.fn().mockResolvedValue({
-    data: [
-      {
-        id: "p1",
-        name: "Asset 1",
-        slug: "asset-1",
-        description: null,
-        price: 10,
-        discountPercent: null,
-        isActive: true,
-        tags: ["dark"],
-        previewUrl: "https://example.com/preview.jpg",
-        assetUrl: "https://example.com/asset.zip",
-        bundle: null,
-        createdAt: "2026-01-01T00:00:00Z",
-      },
-      {
-        id: "p2",
-        name: "Asset 2",
-        slug: "asset-2",
-        description: "Second asset",
-        price: 20,
-        discountPercent: 15,
-        isActive: true,
-        tags: ["minimalist"],
-        previewUrl: "https://example.com/preview2.jpg",
-        assetUrl: "https://example.com/asset2.zip",
-        bundle: null,
-        createdAt: "2026-01-02T00:00:00Z",
-      },
-    ],
+    data: [product1, product2],
   }),
   getTags: vi.fn().mockResolvedValue({
     data: ["dark", "minimalist", "4K"],

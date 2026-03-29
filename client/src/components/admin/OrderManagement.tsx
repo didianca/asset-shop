@@ -1,13 +1,14 @@
-import { useEffect, useState, useCallback } from "react";
 import * as ordersApi from "../../api/orders.api";
-import type { OrderResponse, OrderStatus, ApiError } from "../../types/api";
+import type { OrderStatus, ApiError } from "../../types/api";
 import { formatPrice } from "../../lib/utils";
 import { useUiStore } from "../../stores/uiStore";
+import { useOrders } from "../../hooks/useOrders";
 import StatusBadge from "../orders/StatusBadge";
 import OrderDetail from "../orders/OrderDetail";
 import Pagination from "../ui/Pagination";
 import Button from "../ui/Button";
 import Spinner from "../ui/Spinner";
+import { useState } from "react";
 import { AxiosError } from "axios";
 
 const NEXT_STATUS: Partial<
@@ -19,33 +20,23 @@ const NEXT_STATUS: Partial<
 };
 
 export default function OrderManagement() {
-  const [orders, setOrders] = useState<OrderResponse[]>([]);
-  const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
-  const [isLoading, setIsLoading] = useState(true);
-  const [selectedOrder, setSelectedOrder] = useState<OrderResponse | null>(
-    null,
-  );
+  const {
+    orders,
+    total,
+    page,
+    setPage,
+    isLoading,
+    selectedOrder,
+    selectOrder,
+    clearSelection,
+    fetchOrders,
+    limit,
+  } = useOrders({ limit: 20 });
+
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const addToast = useUiStore((s) => s.addToast);
-  const limit = 20;
 
-  const fetchOrders = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const { data } = await ordersApi.getOrders({ page, limit });
-      setOrders(data.orders);
-      setTotal(data.total);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [page]);
-
-  useEffect(() => {
-    fetchOrders();
-  }, [fetchOrders]);
-
-  const handleTransition = async (order: OrderResponse) => {
+  const handleTransition = async (order: { id: string; status: OrderStatus }) => {
     const nextStatus = NEXT_STATUS[order.status];
     if (!nextStatus) return;
 
@@ -65,17 +56,12 @@ export default function OrderManagement() {
     }
   };
 
-  const handleSelectOrder = async (id: string) => {
-    const { data } = await ordersApi.getOrder(id);
-    setSelectedOrder(data);
-  };
-
   if (selectedOrder) {
     return (
       <OrderDetail
         order={selectedOrder}
         onBack={() => {
-          setSelectedOrder(null);
+          clearSelection();
           fetchOrders();
         }}
       />
@@ -111,7 +97,7 @@ export default function OrderManagement() {
                 <tr key={order.id} className="border-b border-gray-100">
                   <td
                     className="cursor-pointer py-3 font-mono text-xs text-indigo-600 hover:underline"
-                    onClick={() => handleSelectOrder(order.id)}
+                    onClick={() => selectOrder(order.id)}
                   >
                     {order.id.slice(0, 8)}...
                   </td>

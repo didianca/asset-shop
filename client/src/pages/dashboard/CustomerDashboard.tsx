@@ -1,47 +1,25 @@
-import { useEffect, useState, useCallback } from "react";
-import * as ordersApi from "../../api/orders.api";
-import type { OrderResponse } from "../../types/api";
+import { useOrders } from "../../hooks/useOrders";
 import OrderList from "../../components/orders/OrderList";
 import OrderDetail from "../../components/orders/OrderDetail";
 import Pagination from "../../components/ui/Pagination";
 import Spinner from "../../components/ui/Spinner";
 
 export default function CustomerDashboard() {
-  const [orders, setOrders] = useState<OrderResponse[]>([]);
-  const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
-  const [isLoading, setIsLoading] = useState(true);
-  const [selectedOrder, setSelectedOrder] = useState<OrderResponse | null>(
-    null,
-  );
-  const limit = 10;
-
-  const fetchOrders = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const { data } = await ordersApi.getOrders({ page, limit });
-      setOrders(data.orders);
-      setTotal(data.total);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [page]);
-
-  useEffect(() => {
-    fetchOrders();
-  }, [fetchOrders]);
-
-  const handleSelectOrder = async (id: string) => {
-    const { data } = await ordersApi.getOrder(id);
-    setSelectedOrder(data);
-  };
+  const {
+    orders,
+    total,
+    page,
+    setPage,
+    isLoading,
+    selectedOrder,
+    selectOrder,
+    clearSelection,
+    limit,
+  } = useOrders({ limit: 10 });
 
   if (selectedOrder) {
     return (
-      <OrderDetail
-        order={selectedOrder}
-        onBack={() => setSelectedOrder(null)}
-      />
+      <OrderDetail order={selectedOrder} onBack={clearSelection} />
     );
   }
 
@@ -55,7 +33,7 @@ export default function CustomerDashboard() {
         </div>
       ) : (
         <>
-          <OrderList orders={orders} onSelectOrder={handleSelectOrder} />
+          <OrderList orders={orders} onSelectOrder={selectOrder} />
           <Pagination
             page={page}
             total={total}

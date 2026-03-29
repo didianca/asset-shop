@@ -221,4 +221,88 @@ describe("POST /payments/webhook", () => {
     expect(res.status).toBe(200);
     expect(res.body.message).toBe("Already processed");
   });
+
+  it("returns 200 and skips when payment not found on payment_failed", async () => {
+    mockConstructEvent.mockReturnValue({
+      type: "payment_intent.payment_failed",
+      data: { object: { id: "pi_nonexistent_fail" } },
+    });
+
+    const res = await request(app)
+      .post("/payments/webhook")
+      .set("stripe-signature", "valid_sig")
+      .set("Content-Type", "application/json")
+      .send(JSON.stringify({ type: "payment_intent.payment_failed" }));
+
+    expect(res.status).toBe(200);
+    expect(res.body.message).toBe("Payment not found, skipping");
+  });
+
+  it("does not change order status on payment_intent.payment_failed", async () => {
+    const product = await prisma.product.create({
+      data: makeProduct({ name: "HW Fail Order", slug: `${SLUG_PREFIX}fail-order` }),
+    });
+    const { orderId } = await createOrderWithPayment(customerToken, product.id);
+
+    mockConstructEvent.mockReturnValue({
+      type: "payment_intent.payment_failed",
+      data: { object: { id: "pi_webhook_test" } },
+    });
+
+    await request(app)
+      .post("/payments/webhook")
+      .set("stripe-signature", "valid_sig")
+      .set("Content-Type", "application/json")
+      .send(JSON.stringify({ type: "payment_intent.payment_failed" }));
+
+    const order = await prisma.order.findUnique({ where: { id: orderId } });
+    expect(order!.status).toBe("pending");
+  });
+
+  it("stores metadata on successful payment", async () => {
+    const product = await prisma.product.create({
+      data: makeProduct({ name: "HW Meta Success", slug: `${SLUG_PREFIX}meta-success` }),
+    });
+    const { orderId } = await createOrderWithPayment(customerToken, product.id);
+
+    mockConstructEvent.mockReturnValue({
+      type: "payment_intent.succeeded",
+      data: { object: { id: "pi_webhook_test", amount: 1000, currency: "usd" } },
+    });
+
+    await request(app)
+      .post("/payments/webhook")
+      .set("stripe-signature", "valid_sig")
+      .set("Content-Type", "application/json")
+      .send(JSON.stringify({ type: "payment_intent.succeeded" }));
+
+    const payment = await prisma.payment.findUnique({ where: { orderId } });
+    const metadata = payment!.metadata as Record<string, unknown>;
+    expect(metadata.id).toBe("pi_webhook_test");
+    expect(metadata.amount).toBe(1000);
+    expect(metadata.currency).toBe("usd");
+  });
+
+  it("stores metadata on failed payment", async () => {
+    const product = await prisma.product.create({
+      data: makeProduct({ name: "HW Meta Fail", slug: `${SLUG_PREFIX}meta-fail` }),
+    });
+    const { orderId } = await createOrderWithPayment(customerToken, product.id);
+
+    mockConstructEvent.mockReturnValue({
+      type: "payment_intent.payment_failed",
+      data: { object: { id: "pi_webhook_test", last_payment_error: { message: "Card declined" } } },
+    });
+
+    await request(app)
+      .post("/payments/webhook")
+      .set("stripe-signature", "valid_sig")
+      .set("Content-Type", "application/json")
+      .send(JSON.stringify({ type: "payment_intent.payment_failed" }));
+
+    const payment = await prisma.payment.findUnique({ where: { orderId } });
+    const metadata = payment!.metadata as Record<string, unknown>;
+    expect(metadata.id).toBe("pi_webhook_test");
+    expect((metadata.last_payment_error as Record<string, unknown>).message).toBe("Card declined");
+  });
 });

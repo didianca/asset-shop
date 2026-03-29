@@ -54,14 +54,14 @@ afterAll(async () => {
 describe("POST /cart/items", () => {
   it("returns 401 without a token", async () => {
     const res = await request(app)
-      .post("/cart/items")
+      .post("/api/cart/items")
       .send({ productIds: [NONEXISTENT_ID] });
     expect(res.status).toBe(401);
   });
 
   it("returns 400 for invalid UUIDs", async () => {
     const res = await request(app)
-      .post("/cart/items")
+      .post("/api/cart/items")
       .set("Authorization", `Bearer ${customerToken}`)
       .send({ productIds: ["not-a-uuid"] });
     expect(res.status).toBe(400);
@@ -69,7 +69,7 @@ describe("POST /cart/items", () => {
 
   it("returns 400 for an empty array", async () => {
     const res = await request(app)
-      .post("/cart/items")
+      .post("/api/cart/items")
       .set("Authorization", `Bearer ${customerToken}`)
       .send({ productIds: [] });
     expect(res.status).toBe(400);
@@ -77,7 +77,7 @@ describe("POST /cart/items", () => {
 
   it("returns 400 for extra fields", async () => {
     const res = await request(app)
-      .post("/cart/items")
+      .post("/api/cart/items")
       .set("Authorization", `Bearer ${customerToken}`)
       .send({ productIds: [NONEXISTENT_ID], extra: true });
     expect(res.status).toBe(400);
@@ -85,7 +85,7 @@ describe("POST /cart/items", () => {
 
   it("returns 404 for a non-existent product", async () => {
     const res = await request(app)
-      .post("/cart/items")
+      .post("/api/cart/items")
       .set("Authorization", `Bearer ${customerToken}`)
       .send({ productIds: [NONEXISTENT_ID] });
     expect(res.status).toBe(404);
@@ -97,7 +97,7 @@ describe("POST /cart/items", () => {
     });
 
     const res = await request(app)
-      .post("/cart/items")
+      .post("/api/cart/items")
       .set("Authorization", `Bearer ${customerToken}`)
       .send({ productIds: [product.id] });
     expect(res.status).toBe(404);
@@ -109,7 +109,7 @@ describe("POST /cart/items", () => {
     });
 
     const res = await request(app)
-      .post("/cart/items")
+      .post("/api/cart/items")
       .set("Authorization", `Bearer ${customerToken}`)
       .send({ productIds: [product.id, NONEXISTENT_ID] });
     expect(res.status).toBe(404);
@@ -121,7 +121,7 @@ describe("POST /cart/items", () => {
     });
 
     const res = await request(app)
-      .post("/cart/items")
+      .post("/api/cart/items")
       .set("Authorization", `Bearer ${customerToken}`)
       .send({ productIds: [product.id] });
 
@@ -152,7 +152,7 @@ describe("POST /cart/items", () => {
     });
 
     const res = await request(app)
-      .post("/cart/items")
+      .post("/api/cart/items")
       .set("Authorization", `Bearer ${customerToken}`)
       .send({ productIds: [p1.id, p2.id] });
 
@@ -167,12 +167,12 @@ describe("POST /cart/items", () => {
     });
 
     await request(app)
-      .post("/cart/items")
+      .post("/api/cart/items")
       .set("Authorization", `Bearer ${customerToken}`)
       .send({ productIds: [product.id] });
 
     const res = await request(app)
-      .post("/cart/items")
+      .post("/api/cart/items")
       .set("Authorization", `Bearer ${customerToken}`)
       .send({ productIds: [product.id] });
 
@@ -187,7 +187,7 @@ describe("POST /cart/items", () => {
     });
 
     const res = await request(app)
-      .post("/cart/items")
+      .post("/api/cart/items")
       .set("Authorization", `Bearer ${ghostToken}`)
       .send({ productIds: [product.id] });
 
@@ -204,7 +204,7 @@ describe("POST /cart/items", () => {
 
     await expect(
       request(app)
-        .post("/cart/items")
+        .post("/api/cart/items")
         .set("Authorization", `Bearer ${customerToken}`)
         .send({ productIds: [product.id] })
     ).resolves.toMatchObject({ status: 500 });

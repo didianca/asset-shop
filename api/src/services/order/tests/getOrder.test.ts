@@ -28,11 +28,11 @@ const makeProduct = <T extends object>(overrides: T): { price: number; previewKe
 
 async function createOrderForUser(token: string, productId: string): Promise<string> {
   await request(app)
-    .post("/cart/items")
+    .post("/api/cart/items")
     .set("Authorization", `Bearer ${token}`)
     .send({ productIds: [productId] });
   const res = await request(app)
-    .post("/orders")
+    .post("/api/orders")
     .set("Authorization", `Bearer ${token}`);
   return res.body.id as string;
 }
@@ -81,20 +81,20 @@ afterAll(async () => {
 
 describe("GET /orders/:id", () => {
   it("returns 401 without a token", async () => {
-    const res = await request(app).get(`/orders/${NONEXISTENT_ID}`);
+    const res = await request(app).get(`/api/orders/${NONEXISTENT_ID}`);
     expect(res.status).toBe(401);
   });
 
   it("returns 400 for an invalid UUID", async () => {
     const res = await request(app)
-      .get("/orders/not-a-uuid")
+      .get("/api/orders/not-a-uuid")
       .set("Authorization", `Bearer ${customerToken}`);
     expect(res.status).toBe(400);
   });
 
   it("returns 404 for a non-existent order", async () => {
     const res = await request(app)
-      .get(`/orders/${NONEXISTENT_ID}`)
+      .get(`/api/orders/${NONEXISTENT_ID}`)
       .set("Authorization", `Bearer ${customerToken}`);
     expect(res.status).toBe(404);
     expect(res.body.message).toBe("Order not found");
@@ -107,7 +107,7 @@ describe("GET /orders/:id", () => {
     const orderId = await createOrderForUser(customerToken, product.id);
 
     const res = await request(app)
-      .get(`/orders/${orderId}`)
+      .get(`/api/orders/${orderId}`)
       .set("Authorization", `Bearer ${customerToken}`);
 
     expect(res.status).toBe(200);
@@ -126,7 +126,7 @@ describe("GET /orders/:id", () => {
     const orderId = await createOrderForUser(customer2Token, product.id);
 
     const res = await request(app)
-      .get(`/orders/${orderId}`)
+      .get(`/api/orders/${orderId}`)
       .set("Authorization", `Bearer ${customerToken}`);
 
     expect(res.status).toBe(404);
@@ -140,7 +140,7 @@ describe("GET /orders/:id", () => {
     const orderId = await createOrderForUser(customerToken, product.id);
 
     const res = await request(app)
-      .get(`/orders/${orderId}`)
+      .get(`/api/orders/${orderId}`)
       .set("Authorization", `Bearer ${adminToken}`);
 
     expect(res.status).toBe(200);
@@ -160,7 +160,7 @@ describe("GET /orders/:id", () => {
     });
 
     const res = await request(app)
-      .get(`/orders/${orderId}`)
+      .get(`/api/orders/${orderId}`)
       .set("Authorization", `Bearer ${customerToken}`);
 
     expect(res.status).toBe(200);
@@ -183,7 +183,7 @@ describe("GET /orders/:id", () => {
     });
 
     const res = await request(app)
-      .get(`/orders/${orderId}`)
+      .get(`/api/orders/${orderId}`)
       .set("Authorization", `Bearer ${customerToken}`);
 
     expect(res.status).toBe(200);

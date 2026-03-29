@@ -52,13 +52,13 @@ afterAll(async () => {
 
 describe("GET /cart", () => {
   it("returns 401 without a token", async () => {
-    const res = await request(app).get("/cart");
+    const res = await request(app).get("/api/cart");
     expect(res.status).toBe(401);
   });
 
   it("returns 404 when user has no cart", async () => {
     const res = await request(app)
-      .get("/cart")
+      .get("/api/cart")
       .set("Authorization", `Bearer ${customerToken}`);
     expect(res.status).toBe(404);
     expect(res.body.message).toBe("Cart not found");
@@ -68,7 +68,7 @@ describe("GET /cart", () => {
     const cart = await prisma.cart.create({ data: { userId: customerId } });
 
     const res = await request(app)
-      .get("/cart")
+      .get("/api/cart")
       .set("Authorization", `Bearer ${customerToken}`);
 
     expect(res.status).toBe(200);
@@ -85,7 +85,7 @@ describe("GET /cart", () => {
     await prisma.cartItem.create({ data: { cartId: cart.id, productId: product.id } });
 
     const res = await request(app)
-      .get("/cart")
+      .get("/api/cart")
       .set("Authorization", `Bearer ${customerToken}`);
 
     expect(res.status).toBe(200);
@@ -122,7 +122,7 @@ describe("GET /cart", () => {
     await prisma.cartItem.create({ data: { cartId: cart.id, productId: p2.id } });
 
     const res = await request(app)
-      .get("/cart")
+      .get("/api/cart")
       .set("Authorization", `Bearer ${customerToken}`);
 
     expect(res.status).toBe(200);

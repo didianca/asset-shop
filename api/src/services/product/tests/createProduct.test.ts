@@ -55,13 +55,13 @@ afterAll(async () => {
 
 describe("POST /products", () => {
   it("returns 401 without a token", async () => {
-    const res = await request(app).post("/products").send(validProduct);
+    const res = await request(app).post("/api/products").send(validProduct);
     expect(res.status).toBe(401);
   });
 
   it("returns 403 for a customer", async () => {
     const res = await request(app)
-      .post("/products")
+      .post("/api/products")
       .set("Authorization", `Bearer ${customerToken}`)
       .send(validProduct);
     expect(res.status).toBe(403);
@@ -69,7 +69,7 @@ describe("POST /products", () => {
 
   it("returns 400 for missing required fields", async () => {
     const res = await request(app)
-      .post("/products")
+      .post("/api/products")
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ name: "Missing price and slug" });
     expect(res.status).toBe(400);
@@ -77,7 +77,7 @@ describe("POST /products", () => {
 
   it("returns 400 for negative price", async () => {
     const res = await request(app)
-      .post("/products")
+      .post("/api/products")
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ ...validProduct, price: -5 });
     expect(res.status).toBe(400);
@@ -85,7 +85,7 @@ describe("POST /products", () => {
 
   it("returns 400 for discountPercent out of range", async () => {
     const res = await request(app)
-      .post("/products")
+      .post("/api/products")
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ ...validProduct, discountPercent: 101 });
     expect(res.status).toBe(400);
@@ -93,7 +93,7 @@ describe("POST /products", () => {
 
   it("returns 201 and the created product", async () => {
     const res = await request(app)
-      .post("/products")
+      .post("/api/products")
       .set("Authorization", `Bearer ${adminToken}`)
       .send(validProduct);
 
@@ -109,7 +109,7 @@ describe("POST /products", () => {
 
   it("creates the product in the database", async () => {
     await request(app)
-      .post("/products")
+      .post("/api/products")
       .set("Authorization", `Bearer ${adminToken}`)
       .send(validProduct);
 
@@ -121,7 +121,7 @@ describe("POST /products", () => {
   it("creates tags and links them to the product", async () => {
     const tags = [`${TAG_PREFIX}dark`, `${TAG_PREFIX}minimal`];
     const res = await request(app)
-      .post("/products")
+      .post("/api/products")
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ ...validProduct, tags });
 
@@ -142,7 +142,7 @@ describe("POST /products", () => {
     await prisma.tag.create({ data: { name: tagName, slug: tagSlug } });
 
     await request(app)
-      .post("/products")
+      .post("/api/products")
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ ...validProduct, tags: [tagName] });
 
@@ -152,7 +152,7 @@ describe("POST /products", () => {
 
   it("returns keys and computed URLs in the response", async () => {
     const res = await request(app)
-      .post("/products")
+      .post("/api/products")
       .set("Authorization", `Bearer ${adminToken}`)
       .send(validProduct);
 
@@ -168,7 +168,7 @@ describe("POST /products", () => {
     (resolveKeysFromSlug as ReturnType<typeof vi.fn>).mockResolvedValueOnce(null);
 
     const res = await request(app)
-      .post("/products")
+      .post("/api/products")
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ ...validProduct, name: "CP No Upload", slug: `${SLUG_PREFIX}no-upload` });
 
@@ -178,12 +178,12 @@ describe("POST /products", () => {
 
   it("returns 409 for a duplicate slug", async () => {
     await request(app)
-      .post("/products")
+      .post("/api/products")
       .set("Authorization", `Bearer ${adminToken}`)
       .send(validProduct);
 
     const res = await request(app)
-      .post("/products")
+      .post("/api/products")
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ ...validProduct, name: "Different Name" });
 
@@ -192,12 +192,12 @@ describe("POST /products", () => {
 
   it("returns 409 for a duplicate name", async () => {
     await request(app)
-      .post("/products")
+      .post("/api/products")
       .set("Authorization", `Bearer ${adminToken}`)
       .send(validProduct);
 
     const res = await request(app)
-      .post("/products")
+      .post("/api/products")
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ ...validProduct, slug: `${SLUG_PREFIX}different-slug` });
 
@@ -209,7 +209,7 @@ describe("POST /products", () => {
 
     await expect(
       request(app)
-        .post("/products")
+        .post("/api/products")
         .set("Authorization", `Bearer ${adminToken}`)
         .send(validProduct)
     ).resolves.toMatchObject({ status: 500 });

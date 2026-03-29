@@ -27,11 +27,11 @@ const makeProduct = <T extends object>(overrides: T): { price: number; previewKe
 
 async function createOrderForUser(token: string, productId: string): Promise<void> {
   await request(app)
-    .post("/cart/items")
+    .post("/api/cart/items")
     .set("Authorization", `Bearer ${token}`)
     .send({ productIds: [productId] });
   await request(app)
-    .post("/orders")
+    .post("/api/orders")
     .set("Authorization", `Bearer ${token}`);
 }
 
@@ -79,13 +79,13 @@ afterAll(async () => {
 
 describe("GET /orders", () => {
   it("returns 401 without a token", async () => {
-    const res = await request(app).get("/orders");
+    const res = await request(app).get("/api/orders");
     expect(res.status).toBe(401);
   });
 
   it("returns empty array when customer has no orders", async () => {
     const res = await request(app)
-      .get("/orders")
+      .get("/api/orders")
       .set("Authorization", `Bearer ${customerToken}`);
     expect(res.status).toBe(200);
     expect(res.body.orders).toHaveLength(0);
@@ -111,7 +111,7 @@ describe("GET /orders", () => {
     await createOrderForUser(customerToken, p2.id);
 
     const res = await request(app)
-      .get("/orders")
+      .get("/api/orders")
       .set("Authorization", `Bearer ${customerToken}`);
 
     expect(res.status).toBe(200);
@@ -129,7 +129,7 @@ describe("GET /orders", () => {
     await createOrderForUser(customer2Token, product.id);
 
     const res = await request(app)
-      .get("/orders")
+      .get("/api/orders")
       .set("Authorization", `Bearer ${customerToken}`);
 
     expect(res.status).toBe(200);
@@ -154,7 +154,7 @@ describe("GET /orders", () => {
     await createOrderForUser(customer2Token, p2.id);
 
     const res = await request(app)
-      .get("/orders")
+      .get("/api/orders")
       .set("Authorization", `Bearer ${adminToken}`);
 
     expect(res.status).toBe(200);
@@ -181,7 +181,7 @@ describe("GET /orders", () => {
     await createOrderForUser(customer2Token, p2.id);
 
     const res = await request(app)
-      .get(`/orders?userId=${customerId}`)
+      .get(`/api/orders?userId=${customerId}`)
       .set("Authorization", `Bearer ${adminToken}`);
 
     expect(res.status).toBe(200);
@@ -206,7 +206,7 @@ describe("GET /orders", () => {
     await createOrderForUser(customer2Token, p2.id);
 
     const res = await request(app)
-      .get(`/orders?userId=${customer2Id}`)
+      .get(`/api/orders?userId=${customer2Id}`)
       .set("Authorization", `Bearer ${customerToken}`);
 
     expect(res.status).toBe(200);
@@ -233,7 +233,7 @@ describe("GET /orders", () => {
     }
 
     const page1 = await request(app)
-      .get("/orders?page=1&limit=2")
+      .get("/api/orders?page=1&limit=2")
       .set("Authorization", `Bearer ${customerToken}`);
 
     expect(page1.status).toBe(200);
@@ -243,7 +243,7 @@ describe("GET /orders", () => {
     expect(page1.body.limit).toBe(2);
 
     const page2 = await request(app)
-      .get("/orders?page=2&limit=2")
+      .get("/api/orders?page=2&limit=2")
       .set("Authorization", `Bearer ${customerToken}`);
 
     expect(page2.status).toBe(200);
@@ -252,7 +252,7 @@ describe("GET /orders", () => {
 
   it("returns 400 for invalid query params", async () => {
     const res = await request(app)
-      .get("/orders?page=0")
+      .get("/api/orders?page=0")
       .set("Authorization", `Bearer ${customerToken}`);
     expect(res.status).toBe(400);
     expect(res.body.message).toBe("Invalid query parameters");

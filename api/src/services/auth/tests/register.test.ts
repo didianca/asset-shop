@@ -20,7 +20,7 @@ afterAll(async () => {
 
 describe("POST /auth/register", () => {
   it("returns 201 on successful registration", async () => {
-    const res = await request(app).post("/auth/register").send({
+    const res = await request(app).post("/api/auth/register").send({
       email: `user${TEST_EMAIL_DOMAIN}`,
       password: "Password123!",
       firstName: "Test",
@@ -32,7 +32,7 @@ describe("POST /auth/register", () => {
   });
 
   it("creates user with status pending", async () => {
-    await request(app).post("/auth/register").send({
+    await request(app).post("/api/auth/register").send({
       email: `pending${TEST_EMAIL_DOMAIN}`,
       password: "Password123!",
       firstName: "Test",
@@ -44,7 +44,7 @@ describe("POST /auth/register", () => {
   });
 
   it("returns 400 for invalid request body", async () => {
-    const res = await request(app).post("/auth/register").send({
+    const res = await request(app).post("/api/auth/register").send({
       email: "not-an-email",
       password: "short",
       firstName: "",
@@ -66,7 +66,7 @@ describe("POST /auth/register", () => {
       },
     });
 
-    const res = await request(app).post("/auth/register").send({
+    const res = await request(app).post("/api/auth/register").send({
       email: `active${TEST_EMAIL_DOMAIN}`,
       password: "Password123!",
       firstName: "Test",
@@ -85,8 +85,8 @@ describe("POST /auth/register", () => {
       lastName: "User",
     };
 
-    await request(app).post("/auth/register").send(body);
-    const res = await request(app).post("/auth/register").send(body);
+    await request(app).post("/api/auth/register").send(body);
+    const res = await request(app).post("/api/auth/register").send(body);
 
     expect(res.status).toBe(201);
   });
@@ -99,10 +99,10 @@ describe("POST /auth/register", () => {
       lastName: "User",
     };
 
-    await request(app).post("/auth/register").send(body);
+    await request(app).post("/api/auth/register").send(body);
     const before = await prisma.user.findUnique({ where: { email: body.email } });
 
-    await request(app).post("/auth/register").send(body);
+    await request(app).post("/api/auth/register").send(body);
     const after = await prisma.user.findUnique({ where: { email: body.email } });
 
     expect(after?.verificationToken).not.toBe(before?.verificationToken);

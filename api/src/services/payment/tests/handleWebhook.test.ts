@@ -34,11 +34,11 @@ const makeProduct = <T extends object>(overrides: T): { price: number; previewKe
 
 async function createOrderWithPayment(token: string, productId: string): Promise<{ orderId: string; paymentId: string }> {
   await request(app)
-    .post("/cart/items")
+    .post("/api/cart/items")
     .set("Authorization", `Bearer ${token}`)
     .send({ productIds: [productId] });
   const orderRes = await request(app)
-    .post("/orders")
+    .post("/api/orders")
     .set("Authorization", `Bearer ${token}`);
   const orderId = orderRes.body.id as string;
 
@@ -91,7 +91,7 @@ afterAll(async () => {
 describe("POST /payments/webhook", () => {
   it("returns 400 when stripe-signature header is missing", async () => {
     const res = await request(app)
-      .post("/payments/webhook")
+      .post("/api/payments/webhook")
       .send(JSON.stringify({ type: "test" }))
       .set("Content-Type", "application/json");
     expect(res.status).toBe(400);
@@ -104,7 +104,7 @@ describe("POST /payments/webhook", () => {
     });
 
     const res = await request(app)
-      .post("/payments/webhook")
+      .post("/api/payments/webhook")
       .set("stripe-signature", "bad_sig")
       .set("Content-Type", "application/json")
       .send(JSON.stringify({ type: "test" }));
@@ -124,7 +124,7 @@ describe("POST /payments/webhook", () => {
     });
 
     const res = await request(app)
-      .post("/payments/webhook")
+      .post("/api/payments/webhook")
       .set("stripe-signature", "valid_sig")
       .set("Content-Type", "application/json")
       .send(JSON.stringify({ type: "payment_intent.succeeded" }));
@@ -155,7 +155,7 @@ describe("POST /payments/webhook", () => {
     });
 
     const res = await request(app)
-      .post("/payments/webhook")
+      .post("/api/payments/webhook")
       .set("stripe-signature", "valid_sig")
       .set("Content-Type", "application/json")
       .send(JSON.stringify({ type: "payment_intent.payment_failed" }));
@@ -174,7 +174,7 @@ describe("POST /payments/webhook", () => {
     });
 
     const res = await request(app)
-      .post("/payments/webhook")
+      .post("/api/payments/webhook")
       .set("stripe-signature", "valid_sig")
       .set("Content-Type", "application/json")
       .send(JSON.stringify({ type: "charge.refunded" }));
@@ -190,7 +190,7 @@ describe("POST /payments/webhook", () => {
     });
 
     const res = await request(app)
-      .post("/payments/webhook")
+      .post("/api/payments/webhook")
       .set("stripe-signature", "valid_sig")
       .set("Content-Type", "application/json")
       .send(JSON.stringify({ type: "payment_intent.succeeded" }));
@@ -213,7 +213,7 @@ describe("POST /payments/webhook", () => {
     });
 
     const res = await request(app)
-      .post("/payments/webhook")
+      .post("/api/payments/webhook")
       .set("stripe-signature", "valid_sig")
       .set("Content-Type", "application/json")
       .send(JSON.stringify({ type: "payment_intent.succeeded" }));
@@ -229,7 +229,7 @@ describe("POST /payments/webhook", () => {
     });
 
     const res = await request(app)
-      .post("/payments/webhook")
+      .post("/api/payments/webhook")
       .set("stripe-signature", "valid_sig")
       .set("Content-Type", "application/json")
       .send(JSON.stringify({ type: "payment_intent.payment_failed" }));
@@ -250,7 +250,7 @@ describe("POST /payments/webhook", () => {
     });
 
     await request(app)
-      .post("/payments/webhook")
+      .post("/api/payments/webhook")
       .set("stripe-signature", "valid_sig")
       .set("Content-Type", "application/json")
       .send(JSON.stringify({ type: "payment_intent.payment_failed" }));
@@ -271,7 +271,7 @@ describe("POST /payments/webhook", () => {
     });
 
     await request(app)
-      .post("/payments/webhook")
+      .post("/api/payments/webhook")
       .set("stripe-signature", "valid_sig")
       .set("Content-Type", "application/json")
       .send(JSON.stringify({ type: "payment_intent.succeeded" }));
@@ -295,7 +295,7 @@ describe("POST /payments/webhook", () => {
     });
 
     await request(app)
-      .post("/payments/webhook")
+      .post("/api/payments/webhook")
       .set("stripe-signature", "valid_sig")
       .set("Content-Type", "application/json")
       .send(JSON.stringify({ type: "payment_intent.payment_failed" }));

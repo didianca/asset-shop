@@ -5,7 +5,7 @@ import app from "../src/app";
 describe("Malformed JSON", () => {
   it("returns 400 for invalid JSON body", async () => {
     const res = await request(app)
-      .post("/auth/register")
+      .post("/api/auth/register")
       .set("Content-Type", "application/json")
       .send('{"name": "test",}');
     expect(res.status).toBe(400);
@@ -15,17 +15,17 @@ describe("Malformed JSON", () => {
 
 describe("GET /health", () => {
   it("returns 200", async () => {
-    const res = await request(app).get("/health");
+    const res = await request(app).get("/api/health");
     expect(res.status).toBe(200);
   });
 
   it("returns status ok", async () => {
-    const res = await request(app).get("/health");
+    const res = await request(app).get("/api/health");
     expect(res.body.status).toBe("ok");
   });
 
   it("returns correct message", async () => {
-    const res = await request(app).get("/health");
+    const res = await request(app).get("/api/health");
     expect(res.body.message).toBe("Testing API");
   });
 });

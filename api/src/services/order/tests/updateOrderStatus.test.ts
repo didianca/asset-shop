@@ -25,11 +25,11 @@ const makeProduct = <T extends object>(overrides: T): { price: number; previewKe
 
 async function createOrder(token: string, productId: string): Promise<string> {
   await request(app)
-    .post("/cart/items")
+    .post("/api/cart/items")
     .set("Authorization", `Bearer ${token}`)
     .send({ productIds: [productId] });
   const res = await request(app)
-    .post("/orders")
+    .post("/api/orders")
     .set("Authorization", `Bearer ${token}`);
   return res.body.id as string;
 }
@@ -73,14 +73,14 @@ afterAll(async () => {
 describe("PATCH /orders/:id/status", () => {
   it("returns 401 without a token", async () => {
     const res = await request(app)
-      .patch(`/orders/${NONEXISTENT_ID}/status`)
+      .patch(`/api/orders/${NONEXISTENT_ID}/status`)
       .send({ status: "paid" });
     expect(res.status).toBe(401);
   });
 
   it("returns 403 for non-admin users", async () => {
     const res = await request(app)
-      .patch(`/orders/${NONEXISTENT_ID}/status`)
+      .patch(`/api/orders/${NONEXISTENT_ID}/status`)
       .set("Authorization", `Bearer ${customerToken}`)
       .send({ status: "paid" });
     expect(res.status).toBe(403);
@@ -88,7 +88,7 @@ describe("PATCH /orders/:id/status", () => {
 
   it("returns 404 for a non-existent order", async () => {
     const res = await request(app)
-      .patch(`/orders/${NONEXISTENT_ID}/status`)
+      .patch(`/api/orders/${NONEXISTENT_ID}/status`)
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ status: "paid" });
     expect(res.status).toBe(404);
@@ -102,7 +102,7 @@ describe("PATCH /orders/:id/status", () => {
     const orderId = await createOrder(customerToken, product.id);
 
     const res = await request(app)
-      .patch(`/orders/${orderId}/status`)
+      .patch(`/api/orders/${orderId}/status`)
       .set("Authorization", `Bearer ${adminToken}`)
       .send({});
     expect(res.status).toBe(400);
@@ -115,7 +115,7 @@ describe("PATCH /orders/:id/status", () => {
     const orderId = await createOrder(customerToken, product.id);
 
     const res = await request(app)
-      .patch(`/orders/${orderId}/status`)
+      .patch(`/api/orders/${orderId}/status`)
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ status: "pending" });
     expect(res.status).toBe(400);
@@ -128,7 +128,7 @@ describe("PATCH /orders/:id/status", () => {
     const orderId = await createOrder(customerToken, product.id);
 
     const res = await request(app)
-      .patch(`/orders/${orderId}/status`)
+      .patch(`/api/orders/${orderId}/status`)
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ status: "paid", extra: true });
     expect(res.status).toBe(400);
@@ -141,7 +141,7 @@ describe("PATCH /orders/:id/status", () => {
     const orderId = await createOrder(customerToken, product.id);
 
     const res = await request(app)
-      .patch(`/orders/${orderId}/status`)
+      .patch(`/api/orders/${orderId}/status`)
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ status: "paid" });
 
@@ -158,12 +158,12 @@ describe("PATCH /orders/:id/status", () => {
     const orderId = await createOrder(customerToken, product.id);
 
     await request(app)
-      .patch(`/orders/${orderId}/status`)
+      .patch(`/api/orders/${orderId}/status`)
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ status: "paid" });
 
     const res = await request(app)
-      .patch(`/orders/${orderId}/status`)
+      .patch(`/api/orders/${orderId}/status`)
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ status: "fulfilled" });
 
@@ -179,17 +179,17 @@ describe("PATCH /orders/:id/status", () => {
     const orderId = await createOrder(customerToken, product.id);
 
     await request(app)
-      .patch(`/orders/${orderId}/status`)
+      .patch(`/api/orders/${orderId}/status`)
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ status: "paid" });
 
     await request(app)
-      .patch(`/orders/${orderId}/status`)
+      .patch(`/api/orders/${orderId}/status`)
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ status: "fulfilled" });
 
     const res = await request(app)
-      .patch(`/orders/${orderId}/status`)
+      .patch(`/api/orders/${orderId}/status`)
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ status: "refunded" });
 
@@ -212,7 +212,7 @@ describe("PATCH /orders/:id/status", () => {
     });
 
     const res = await request(app)
-      .patch(`/orders/${orderId}/status`)
+      .patch(`/api/orders/${orderId}/status`)
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ status: "refunded" });
 
@@ -227,7 +227,7 @@ describe("PATCH /orders/:id/status", () => {
     const orderId = await createOrder(customerToken, product.id);
 
     const res = await request(app)
-      .patch(`/orders/${orderId}/status`)
+      .patch(`/api/orders/${orderId}/status`)
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ status: "fulfilled" });
 
@@ -245,7 +245,7 @@ describe("PATCH /orders/:id/status", () => {
 
     // "pending" is not a valid target status (rejected by Zod schema)
     const res = await request(app)
-      .patch(`/orders/${orderId}/status`)
+      .patch(`/api/orders/${orderId}/status`)
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ status: "pending" });
 
@@ -261,7 +261,7 @@ describe("PATCH /orders/:id/status", () => {
     await prisma.order.update({ where: { id: orderId }, data: { status: "refunded" } });
 
     const res = await request(app)
-      .patch(`/orders/${orderId}/status`)
+      .patch(`/api/orders/${orderId}/status`)
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ status: "paid" });
 
@@ -276,7 +276,7 @@ describe("PATCH /orders/:id/status", () => {
     const orderId = await createOrder(customerToken, product.id);
 
     const res = await request(app)
-      .patch(`/orders/${orderId}/status`)
+      .patch(`/api/orders/${orderId}/status`)
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ status: "paid", note: "Payment confirmed via Stripe" });
 

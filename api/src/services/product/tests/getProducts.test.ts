@@ -41,13 +41,13 @@ afterAll(async () => {
 
 describe("GET /products", () => {
   it("returns 401 without a token", async () => {
-    const res = await request(app).get("/products");
+    const res = await request(app).get("/api/products");
     expect(res.status).toBe(401);
   });
 
   it("returns 200 with an empty array when no products exist", async () => {
     const res = await request(app)
-      .get("/products")
+      .get("/api/products")
       .set("Authorization", `Bearer ${adminToken}`);
 
     expect(res.status).toBe(200);
@@ -60,7 +60,7 @@ describe("GET /products", () => {
     });
 
     const res = await request(app)
-      .get("/products")
+      .get("/api/products")
       .set("Authorization", `Bearer ${adminToken}`);
 
     expect(res.status).toBe(200);
@@ -74,7 +74,7 @@ describe("GET /products", () => {
     });
 
     const res = await request(app)
-      .get("/products")
+      .get("/api/products")
       .set("Authorization", `Bearer ${adminToken}`);
 
     const slugs = res.body.map((p: { slug: string }) => p.slug);
@@ -87,7 +87,7 @@ describe("GET /products", () => {
     });
 
     const res = await request(app)
-      .get("/products")
+      .get("/api/products")
       .set("Authorization", `Bearer ${adminToken}`);
 
     const slugs = res.body.map((p: { slug: string }) => p.slug);
@@ -102,7 +102,7 @@ describe("GET /products", () => {
     await prisma.productTag.create({ data: { productId: product.id, tagId: tag.id } });
 
     const res = await request(app)
-      .get("/products")
+      .get("/api/products")
       .set("Authorization", `Bearer ${adminToken}`);
 
     const found = res.body.find((p: { slug: string }) => p.slug === `${SLUG_PREFIX}rich`);
@@ -118,7 +118,7 @@ describe("GET /products", () => {
     });
 
     const res = await request(app)
-      .get("/products")
+      .get("/api/products")
       .set("Authorization", `Bearer ${adminToken}`);
 
     const found = res.body.find((p: { slug: string }) => p.slug === `${SLUG_PREFIX}no-bundle`);
@@ -134,7 +134,7 @@ describe("GET /products", () => {
     });
 
     const res = await request(app)
-      .get("/products")
+      .get("/api/products")
       .set("Authorization", `Bearer ${adminToken}`);
 
     const found = res.body.find((p: { slug: string }) => p.slug === `${SLUG_PREFIX}bundled`);
@@ -158,7 +158,7 @@ describe("GET /products", () => {
     });
 
     const res = await request(app)
-      .get("/products")
+      .get("/api/products")
       .set("Authorization", `Bearer ${adminToken}`);
 
     const slugs = res.body

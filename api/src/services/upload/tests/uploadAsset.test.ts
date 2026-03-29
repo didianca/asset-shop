@@ -56,14 +56,14 @@ afterAll(async () => {
 describe("POST /upload", () => {
   it("returns 401 without authentication", async () => {
     const res = await request(app)
-      .post("/upload?slug=test-asset")
+      .post("/api/upload?slug=test-asset")
       .attach("file", Buffer.from("fake-image"), { filename: "test.png", contentType: "image/png" });
     expect(res.status).toBe(401);
   });
 
   it("returns 403 for non-admin users", async () => {
     const res = await request(app)
-      .post("/upload?slug=test-asset")
+      .post("/api/upload?slug=test-asset")
       .set("Authorization", `Bearer ${customerToken}`)
       .attach("file", Buffer.from("fake-image"), { filename: "test.png", contentType: "image/png" });
     expect(res.status).toBe(403);
@@ -71,7 +71,7 @@ describe("POST /upload", () => {
 
   it("returns 400 when no file is provided", async () => {
     const res = await request(app)
-      .post("/upload?slug=test-asset")
+      .post("/api/upload?slug=test-asset")
       .set("Authorization", `Bearer ${adminToken}`);
     expect(res.status).toBe(400);
     expect(res.body.message).toBe("No file provided");
@@ -79,7 +79,7 @@ describe("POST /upload", () => {
 
   it("returns 400 when slug query param is missing", async () => {
     const res = await request(app)
-      .post("/upload")
+      .post("/api/upload")
       .set("Authorization", `Bearer ${adminToken}`)
       .attach("file", Buffer.from("fake-image"), { filename: "test.png", contentType: "image/png" });
     expect(res.status).toBe(400);
@@ -88,7 +88,7 @@ describe("POST /upload", () => {
 
   it("returns 400 for non-image file types", async () => {
     const res = await request(app)
-      .post("/upload?slug=test-asset")
+      .post("/api/upload?slug=test-asset")
       .set("Authorization", `Bearer ${adminToken}`)
       .attach("file", Buffer.from("fake-pdf"), { filename: "test.pdf", contentType: "application/pdf" });
     expect(res.status).toBe(400);
@@ -97,7 +97,7 @@ describe("POST /upload", () => {
 
   it("uploads to S3 and returns asset and preview keys", async () => {
     const res = await request(app)
-      .post("/upload?slug=dark-minimalist-pack")
+      .post("/api/upload?slug=dark-minimalist-pack")
       .set("Authorization", `Bearer ${adminToken}`)
       .attach("file", Buffer.from("fake-image"), { filename: "asset.png", contentType: "image/png" });
 
@@ -110,7 +110,7 @@ describe("POST /upload", () => {
     mockS3Send.mockClear();
 
     await request(app)
-      .post("/upload?slug=double-upload")
+      .post("/api/upload?slug=double-upload")
       .set("Authorization", `Bearer ${adminToken}`)
       .attach("file", Buffer.from("fake-image"), { filename: "asset.jpg", contentType: "image/jpeg" });
 
@@ -119,7 +119,7 @@ describe("POST /upload", () => {
 
   it("supports webp images", async () => {
     const res = await request(app)
-      .post("/upload?slug=webp-test")
+      .post("/api/upload?slug=webp-test")
       .set("Authorization", `Bearer ${adminToken}`)
       .attach("file", Buffer.from("fake-image"), { filename: "asset.webp", contentType: "image/webp" });
 

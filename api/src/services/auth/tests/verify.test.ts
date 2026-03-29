@@ -36,19 +36,19 @@ async function createPendingUser(email: string, tokenExpiresHoursFromNow = 24): 
 
 describe("GET /auth/verify", () => {
   it("returns 400 when token is missing", async () => {
-    const res = await request(app).get("/auth/verify");
+    const res = await request(app).get("/api/auth/verify");
     expect(res.status).toBe(400);
   });
 
   it("returns 400 for invalid token", async () => {
-    const res = await request(app).get("/auth/verify?token=invalid-token");
+    const res = await request(app).get("/api/auth/verify?token=invalid-token");
     expect(res.status).toBe(400);
     expect(res.body.message).toBe("Invalid verification token");
   });
 
   it("returns 400 for expired token", async () => {
     const token = await createPendingUser(`expired${TEST_EMAIL_DOMAIN}`, -1);
-    const res = await request(app).get(`/auth/verify?token=${token}`);
+    const res = await request(app).get(`/api/auth/verify?token=${token}`);
     expect(res.status).toBe(400);
     expect(res.body.message).toMatch(/expired/i);
   });
@@ -67,7 +67,7 @@ describe("GET /auth/verify", () => {
       },
     });
 
-    const res = await request(app).get(`/auth/verify?token=${token}`);
+    const res = await request(app).get(`/api/auth/verify?token=${token}`);
     expect(res.status).toBe(400);
     expect(res.body.message).toBe("Email is already verified");
   });
@@ -75,7 +75,7 @@ describe("GET /auth/verify", () => {
   it("returns 200 and activates user with valid token", async () => {
     const token = await createPendingUser(`new${TEST_EMAIL_DOMAIN}`);
 
-    const res = await request(app).get(`/auth/verify?token=${token}`);
+    const res = await request(app).get(`/api/auth/verify?token=${token}`);
     expect(res.status).toBe(200);
 
     const user = await prisma.user.findUnique({ where: { email: `new${TEST_EMAIL_DOMAIN}` } });

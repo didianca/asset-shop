@@ -53,20 +53,20 @@ afterAll(async () => {
 
 describe("DELETE /cart/items/:productId", () => {
   it("returns 401 without a token", async () => {
-    const res = await request(app).delete(`/cart/items/${NONEXISTENT_ID}`);
+    const res = await request(app).delete(`/api/cart/items/${NONEXISTENT_ID}`);
     expect(res.status).toBe(401);
   });
 
   it("returns 400 for an invalid productId param", async () => {
     const res = await request(app)
-      .delete("/cart/items/not-a-uuid")
+      .delete("/api/cart/items/not-a-uuid")
       .set("Authorization", `Bearer ${customerToken}`);
     expect(res.status).toBe(400);
   });
 
   it("returns 404 when user has no cart", async () => {
     const res = await request(app)
-      .delete(`/cart/items/${NONEXISTENT_ID}`)
+      .delete(`/api/cart/items/${NONEXISTENT_ID}`)
       .set("Authorization", `Bearer ${customerToken}`);
     expect(res.status).toBe(404);
     expect(res.body.message).toBe("Cart not found");
@@ -76,7 +76,7 @@ describe("DELETE /cart/items/:productId", () => {
     await prisma.cart.create({ data: { userId: customerId } });
 
     const res = await request(app)
-      .delete(`/cart/items/${NONEXISTENT_ID}`)
+      .delete(`/api/cart/items/${NONEXISTENT_ID}`)
       .set("Authorization", `Bearer ${customerToken}`);
     expect(res.status).toBe(404);
     expect(res.body.message).toBe("Item not in cart");
@@ -90,7 +90,7 @@ describe("DELETE /cart/items/:productId", () => {
     await prisma.cartItem.create({ data: { cartId: cart.id, productId: product.id } });
 
     const res = await request(app)
-      .delete(`/cart/items/${product.id}`)
+      .delete(`/api/cart/items/${product.id}`)
       .set("Authorization", `Bearer ${customerToken}`);
 
     expect(res.status).toBe(200);
@@ -123,7 +123,7 @@ describe("DELETE /cart/items/:productId", () => {
     await prisma.cartItem.create({ data: { cartId: cart.id, productId: p2.id } });
 
     const res = await request(app)
-      .delete(`/cart/items/${p2.id}`)
+      .delete(`/api/cart/items/${p2.id}`)
       .set("Authorization", `Bearer ${customerToken}`);
 
     expect(res.status).toBe(200);

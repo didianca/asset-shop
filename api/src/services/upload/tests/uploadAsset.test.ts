@@ -21,7 +21,7 @@ const mockSharpToBuffer = vi.hoisted(() => vi.fn());
 const mockSharpMetadata = vi.hoisted(() => vi.fn());
 
 vi.mock("sharp", () => {
-  const createInstance = () => ({
+  const createInstance = (): Record<string, unknown> => ({
     metadata: mockSharpMetadata,
     composite: vi.fn().mockReturnThis(),
     png: vi.fn().mockReturnThis(),

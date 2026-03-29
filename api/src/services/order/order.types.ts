@@ -122,7 +122,7 @@ import { z } from "zod";
  *       properties:
  *         status:
  *           type: string
- *           enum: [paid, fulfilled, refunded]
+ *           enum: [pending, paid, fulfilled, refunded]
  *         note:
  *           type: string
  *     OrderListResponse:
@@ -150,7 +150,7 @@ export const OrderIdParamsSchema = z.object({
 });
 
 export const UpdateOrderStatusSchema = z.object({
-  status: z.enum(["paid", "fulfilled", "refunded"]),
+  status: z.enum(["pending", "paid", "fulfilled", "refunded"]),
   note: z.string().optional(),
 }).strict();
 

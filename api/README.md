@@ -85,6 +85,7 @@ Each service owns a `<service>.config.ts` file that centralises all environment 
 | `.env` | `DATABASE_URL` |
 | `src/services/auth/auth.config.ts` | `JWT_SECRET` |
 | `src/lib/email.config.ts` | `AWS_REGION`, `AWS_SES_ACCESS_KEY`, `AWS_SES_SECRET_ACCESS_KEY`, `SES_FROM_EMAIL`, `API_URL` |
+| `src/services/payment/payment.config.ts` | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` |
 
 All variables are declared with `.required()` — the service will throw a clear error at startup if any are missing, rather than failing silently at runtime. Getters are used instead of top-level constants so that values are read lazily on each call, which keeps tests able to manipulate `process.env` without module resets.
 

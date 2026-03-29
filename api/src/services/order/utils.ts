@@ -77,7 +77,7 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
   pending: ["paid"],
   paid: ["fulfilled"],
   fulfilled: ["refunded"],
-  refunded: [],
+  refunded: ["pending"],
 };
 
 export function isValidTransition(from: string, to: string): boolean {

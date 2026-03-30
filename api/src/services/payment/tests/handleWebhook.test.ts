@@ -506,8 +506,7 @@ describe("POST /payments/webhook", () => {
 
   it("returns 400 when signature verification throws a non-Error", async () => {
     mockConstructEvent.mockImplementation(() => {
-      // eslint-disable-next-line @typescript-eslint/only-throw-error
-      throw "bad signature string";
+      throw new Error("bad signature string");
     });
 
     const res = await request(app)

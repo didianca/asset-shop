@@ -343,8 +343,7 @@ describe("POST /orders/:id/refund", () => {
     const orderId = await createOrder(customerToken, product.id);
     await prisma.order.update({ where: { id: orderId }, data: { status: "paid" } });
 
-    // eslint-disable-next-line @typescript-eslint/only-throw-error
-    mockSendRefundConfirmationEmail.mockRejectedValue("email failed");
+    mockSendRefundConfirmationEmail.mockRejectedValue(new Error("email failed"));
 
     const res = await request(app)
       .post(`/api/orders/${orderId}/refund`)

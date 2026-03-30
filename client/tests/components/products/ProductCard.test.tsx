@@ -39,6 +39,19 @@ describe("ProductCard", () => {
     expect(screen.getByText("$20.00")).toBeInTheDocument();
   });
 
+  it("does not show discount UI when discountPercent is 0", () => {
+    renderWithRouter(
+      <ProductCard product={makeProduct({ discountPercent: 0 })} />,
+    );
+    expect(screen.queryByText(/-\d+%/)).not.toBeInTheDocument();
+    expect(screen.getAllByText("$25.00")).toHaveLength(1);
+  });
+
+  it("does not show discount UI when discountPercent is null", () => {
+    renderWithRouter(<ProductCard product={makeProduct()} />);
+    expect(screen.queryByText(/-\d+%/)).not.toBeInTheDocument();
+  });
+
   it("renders tags", () => {
     renderWithRouter(<ProductCard product={makeProduct()} />);
     expect(screen.getByText("dark")).toBeInTheDocument();

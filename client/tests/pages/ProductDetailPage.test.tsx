@@ -71,6 +71,16 @@ describe("ProductDetailPage", () => {
     expect(screen.getByText("-20%")).toBeInTheDocument();
   });
 
+  it("does not show discount UI when discountPercent is 0", () => {
+    useProductStore.setState({
+      products: [{ ...product, discountPercent: 0 }],
+      tags: [],
+      isLoading: false,
+    });
+    renderWithSlug("premium-icons");
+    expect(screen.queryByText(/-\d+%/)).not.toBeInTheDocument();
+  });
+
   it("renders tags", () => {
     renderWithSlug("premium-icons");
     expect(screen.getByText("icons")).toBeInTheDocument();

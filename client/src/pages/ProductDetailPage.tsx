@@ -69,7 +69,7 @@ export default function ProductDetailPage() {
     product.price,
     product.discountPercent,
   );
-  const hasDiscount = product.discountPercent && product.discountPercent > 0;
+  const hasDiscount = (product.discountPercent ?? 0) > 0;
 
   return (
     <div className="grid gap-8 lg:grid-cols-2">

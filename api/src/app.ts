@@ -1,7 +1,10 @@
 import path from "path";
 import { fileURLToPath } from "url";
 import express from "express";
+import cors from "cors";
+import helmet from "helmet";
 import swaggerUi from "swagger-ui-express";
+import { appConfig } from "./lib/app.config.js";
 import { swaggerSpec } from "./swagger.js";
 import { authenticate } from "./middleware/auth.js";
 import authRouter from "./services/auth/routes/index.js";
@@ -17,6 +20,12 @@ const app = express();
 const apiRouter = express.Router();
 
 // Stripe webhook needs raw body for signature verification — must be before express.json()
+app.use(helmet());
+app.use(cors({
+  origin: appConfig.corsOrigin || false,
+  credentials: true,
+}));
+
 app.post("/api/payments/webhook", express.raw({ type: "application/json" }), handleWebhookHandler);
 
 app.use(express.json());

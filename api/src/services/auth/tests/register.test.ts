@@ -1,11 +1,15 @@
 import { describe, it, expect, beforeEach, afterAll, vi } from "vitest";
 import request from "supertest";
+import { MessageRejected } from "@aws-sdk/client-ses";
 import app from "../../../app.js";
 import prisma from "../../../db.js";
+import { sendVerificationEmail } from "../../../lib/email.js";
 
 vi.mock("../../../lib/email.js", () => ({
   sendVerificationEmail: vi.fn().mockResolvedValue(undefined),
 }));
+
+const mockSendVerificationEmail = vi.mocked(sendVerificationEmail);
 
 const TEST_EMAIL_DOMAIN = "@register.test";
 
@@ -106,5 +110,51 @@ describe("POST /auth/register", () => {
     const after = await prisma.user.findUnique({ where: { email: body.email } });
 
     expect(after?.verificationToken).not.toBe(before?.verificationToken);
+  });
+
+  it("returns 503 when SES rejects the email as unverified", async () => {
+    mockSendVerificationEmail.mockRejectedValueOnce(
+      new MessageRejected({ message: "Email address is not verified", $metadata: {} })
+    );
+
+    const res = await request(app).post("/api/auth/register").send({
+      email: `unverified${TEST_EMAIL_DOMAIN}`,
+      password: "Password123!",
+      firstName: "Test",
+      lastName: "User",
+    });
+
+    expect(res.status).toBe(503);
+    expect(res.body.message).toMatch(/not verified/i);
+  });
+
+  it("still creates the user in the database when SES rejects the email", async () => {
+    mockSendVerificationEmail.mockRejectedValueOnce(
+      new MessageRejected({ message: "Email address is not verified", $metadata: {} })
+    );
+
+    await request(app).post("/api/auth/register").send({
+      email: `created-anyway${TEST_EMAIL_DOMAIN}`,
+      password: "Password123!",
+      firstName: "Test",
+      lastName: "User",
+    });
+
+    const user = await prisma.user.findUnique({ where: { email: `created-anyway${TEST_EMAIL_DOMAIN}` } });
+    expect(user).not.toBeNull();
+    expect(user?.status).toBe("pending");
+  });
+
+  it("propagates non-SES errors from email sending", async () => {
+    mockSendVerificationEmail.mockRejectedValueOnce(new Error("Network failure"));
+
+    const res = await request(app).post("/api/auth/register").send({
+      email: `neterr${TEST_EMAIL_DOMAIN}`,
+      password: "Password123!",
+      firstName: "Test",
+      lastName: "User",
+    });
+
+    expect(res.status).toBe(500);
   });
 });

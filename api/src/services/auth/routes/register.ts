@@ -1,12 +1,13 @@
 import type { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
+import { MessageRejected } from "@aws-sdk/client-ses";
 import prisma from "../../../db.js";
 import { sendVerificationEmail } from "../../../lib/email.js";
 import type { RegisterBody } from "../auth.types.js";
 
 const SALT_ROUNDS = 10; 
-const VERIFICATION_TOKEN_EXPIRES_HOURS = 12;
+const VERIFICATION_TOKEN_EXPIRES_HOURS = 24;
 
 /**
  * @openapi
@@ -30,6 +31,18 @@ const VERIFICATION_TOKEN_EXPIRES_HOURS = 12;
  *               $ref: '#/components/schemas/MessageResponse'
  *       409:
  *         description: Email already registered
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/MessageResponse'
+ *       429:
+ *         description: Too many registration attempts
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/MessageResponse'
+ *       503:
+ *         description: Email address not verified in SES — recipient must be added to verified identities
  *         content:
  *           application/json:
  *             schema:
@@ -72,7 +85,19 @@ export async function registerHandler(
     });
   }
 
-  await sendVerificationEmail(email, verificationToken);
+  try {
+    await sendVerificationEmail(email, verificationToken);
+  } catch (err) {
+    if (err instanceof MessageRejected) {
+      res.status(503).json({
+        message:
+          "This email address is not verified with our email provider. " +
+          "Please contact support or use an email that has been added to the verified identities list.",
+      });
+      return;
+    }
+    throw err;
+  }
 
   res.status(201).json({ message: "Registration successful. Please check your email to verify your account." });
 }

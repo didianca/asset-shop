@@ -39,6 +39,12 @@ const JWT_EXPIRES_IN = "12h";
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/MessageResponse'
+ *       429:
+ *         description: Too many login attempts
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/MessageResponse'
  */
 export async function loginHandler(
   req: Request<object, object, LoginBody>,

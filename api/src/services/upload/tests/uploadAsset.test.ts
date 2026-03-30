@@ -17,6 +17,11 @@ vi.mock("@aws-sdk/client-s3", () => ({
   PutObjectCommand: vi.fn().mockImplementation((params) => params),
 }));
 
+const mockFileTypeFromBuffer = vi.hoisted(() => vi.fn());
+vi.mock("file-type", () => ({
+  fileTypeFromBuffer: mockFileTypeFromBuffer,
+}));
+
 const mockSharpToBuffer = vi.hoisted(() => vi.fn());
 const mockSharpMetadata = vi.hoisted(() => vi.fn());
 
@@ -34,6 +39,7 @@ beforeAll(async () => {
   mockS3Send.mockResolvedValue({});
   mockSharpMetadata.mockResolvedValue({ width: 800, height: 600 });
   mockSharpToBuffer.mockResolvedValue(Buffer.from("watermarked"));
+  mockFileTypeFromBuffer.mockResolvedValue({ ext: "png", mime: "image/png" });
 
   await prisma.user.deleteMany({ where: { email: { in: [ADMIN_EMAIL, CUSTOMER_EMAIL] } } });
 
@@ -108,6 +114,7 @@ describe("POST /upload", () => {
 
   it("calls S3 twice — once for asset, once for watermarked preview", async () => {
     mockS3Send.mockClear();
+    mockFileTypeFromBuffer.mockResolvedValueOnce({ ext: "jpg", mime: "image/jpeg" });
 
     await request(app)
       .post("/api/upload?slug=double-upload")
@@ -118,6 +125,8 @@ describe("POST /upload", () => {
   });
 
   it("supports webp images", async () => {
+    mockFileTypeFromBuffer.mockResolvedValueOnce({ ext: "webp", mime: "image/webp" });
+
     const res = await request(app)
       .post("/api/upload?slug=webp-test")
       .set("Authorization", `Bearer ${adminToken}`)
@@ -125,6 +134,30 @@ describe("POST /upload", () => {
 
     expect(res.status).toBe(200);
     expect(res.body.assetKey).toContain("webp-test.webp");
+  });
+
+  it("returns 400 when file magic bytes do not match declared MIME type", async () => {
+    mockFileTypeFromBuffer.mockResolvedValueOnce({ ext: "gif", mime: "image/gif" });
+
+    const res = await request(app)
+      .post("/api/upload?slug=spoofed-type")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .attach("file", Buffer.from("fake-image"), { filename: "spoofed.png", contentType: "image/png" });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe("File content does not match its declared type");
+  });
+
+  it("returns 400 when file type cannot be detected from buffer", async () => {
+    mockFileTypeFromBuffer.mockResolvedValueOnce(undefined);
+
+    const res = await request(app)
+      .post("/api/upload?slug=unknown-type")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .attach("file", Buffer.from("random-bytes"), { filename: "mystery.png", contentType: "image/png" });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe("File content does not match its declared type");
   });
 
   it("derives extension from mimetype when filename has no extension", async () => {

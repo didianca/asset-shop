@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { extname } from "path";
+import { fileTypeFromBuffer } from "file-type";
 import type { UploadQuery } from "../upload.types.js";
 import { uploadToS3 } from "../s3.js";
 import { generateWatermark } from "../watermark.js";
@@ -13,6 +14,7 @@ const ALLOWED_MIME_TYPES = ["image/png", "image/jpeg", "image/webp"];
  *     summary: Upload an asset image
  *     description: |
  *       Admin only. Uploads an image to S3 and generates a watermarked preview.
+ *       Validates both the declared MIME type and the file's magic bytes to prevent spoofed uploads.
  *       Returns S3 object keys for both the original asset (private) and the watermarked preview (public).
  *       Use these keys when creating a product via POST /products.
  *     tags:
@@ -77,6 +79,12 @@ export async function uploadAssetHandler(
 
   if (!ALLOWED_MIME_TYPES.includes(file.mimetype)) {
     res.status(400).json({ message: "File must be an image (png, jpeg, or webp)" });
+    return;
+  }
+
+  const detectedType = await fileTypeFromBuffer(file.buffer);
+  if (!detectedType || detectedType.mime !== file.mimetype) {
+    res.status(400).json({ message: "File content does not match its declared type" });
     return;
   }
 

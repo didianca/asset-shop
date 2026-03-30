@@ -20,7 +20,7 @@ export default function CustomerDashboard() {
     clearSelection,
     fetchOrders,
     limit,
-  } = useOrders({ limit: 10 });
+  } = useOrders({ limit: 10, myOrders: true });
 
   const addToast = useUiStore((s) => s.addToast);
 

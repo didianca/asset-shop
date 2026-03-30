@@ -5,7 +5,7 @@ export type HealthResponse = {
 
 export type UserRole = "admin" | "customer";
 export type UserStatus = "pending" | "active" | "deleted";
-export type OrderStatus = "pending" | "paid" | "fulfilled" | "refunded";
+export type OrderStatus = "pending" | "paid" | "fulfilled" | "refund_pending" | "refunded";
 export type PaymentStatus = "pending" | "captured" | "failed" | "refunded";
 
 export interface JwtPayload {
@@ -128,7 +128,7 @@ export interface OrderListResponse {
 }
 
 export interface UpdateOrderStatusBody {
-  status: "paid" | "fulfilled" | "refunded";
+  status: "paid" | "fulfilled" | "refund_pending" | "refunded";
   note?: string;
 }
 

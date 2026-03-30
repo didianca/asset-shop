@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import request from "supertest";
-import app from "../app";
+import app, { enableStaticServing } from "../app";
 
 vi.mock("../lib/email.js", () => ({
   sendVerificationEmail: vi.fn().mockResolvedValue(undefined),
@@ -19,9 +19,10 @@ describe("Malformed JSON", () => {
 
 describe("SPA fallback", () => {
   it("invokes the catch-all handler for unknown routes", async () => {
+    enableStaticServing();
     const res = await request(app).get("/some-spa-route");
     // index.html does not exist in the test env, so Express returns an error
-    // response — the important thing is the route handler is invoked (covers app.ts:79-80)
+    // response — the important thing is the route handler is invoked
     expect([404, 500]).toContain(res.status);
   });
 });

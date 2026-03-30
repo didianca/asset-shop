@@ -1,15 +1,9 @@
-import { describe, it, expect, beforeAll, beforeEach, afterAll, vi } from "vitest";
+import { describe, it, expect, beforeAll, beforeEach, afterAll } from "vitest";
 import request from "supertest";
 import jwt from "jsonwebtoken";
 import app from "../../../app.js";
 import prisma from "../../../db.js";
 import { authConfig } from "../../auth/auth.config.js";
-
-const mockSendRefundConfirmationEmail = vi.hoisted(() => vi.fn());
-
-vi.mock("../../../lib/email.js", () => ({
-  sendRefundConfirmationEmail: mockSendRefundConfirmationEmail,
-}));
 
 const SLUG_PREFIX = "rr-test-";
 const ADMIN_EMAIL = "admin@requestrefund.test";
@@ -62,9 +56,6 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
-  mockSendRefundConfirmationEmail.mockReset();
-  mockSendRefundConfirmationEmail.mockResolvedValue(undefined);
-
   await prisma.notification.deleteMany({ where: { userId: { in: [customerId, customer2Id] } } });
   await prisma.payment.deleteMany({ where: { order: { userId: { in: [customerId, customer2Id, adminId] } } } });
   await prisma.orderStatusHistory.deleteMany({ where: { order: { userId: { in: [customerId, customer2Id, adminId] } } } });
@@ -157,7 +148,7 @@ describe("POST /orders/:id/refund", () => {
       .send({ note: "Want refund" });
 
     expect(res.status).toBe(400);
-    expect(res.body.message).toBe("Cannot refund an order with status 'pending'");
+    expect(res.body.message).toBe("Cannot request refund for an order with status 'pending'");
   });
 
   it("returns 400 when order is already refunded", async () => {
@@ -173,10 +164,26 @@ describe("POST /orders/:id/refund", () => {
       .send({ note: "Already refunded" });
 
     expect(res.status).toBe(400);
-    expect(res.body.message).toBe("Cannot refund an order with status 'refunded'");
+    expect(res.body.message).toBe("Cannot request refund for an order with status 'refunded'");
   });
 
-  it("refunds a paid order successfully", async () => {
+  it("returns 400 when order is already refund_pending", async () => {
+    const product = await prisma.product.create({
+      data: makeProduct({ name: "RR Dup", slug: `${SLUG_PREFIX}dup` }),
+    });
+    const orderId = await createOrder(customerToken, product.id);
+    await prisma.order.update({ where: { id: orderId }, data: { status: "refund_pending" } });
+
+    const res = await request(app)
+      .post(`/api/orders/${orderId}/refund`)
+      .set("Authorization", `Bearer ${customerToken}`)
+      .send({ note: "Duplicate request" });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe("Cannot request refund for an order with status 'refund_pending'");
+  });
+
+  it("moves a paid order to refund_pending", async () => {
     const product = await prisma.product.create({
       data: makeProduct({ name: "RR Paid", slug: `${SLUG_PREFIX}paid` }),
     });
@@ -189,14 +196,14 @@ describe("POST /orders/:id/refund", () => {
       .send({ note: "Product not as described" });
 
     expect(res.status).toBe(200);
-    expect(res.body.status).toBe("refunded");
+    expect(res.body.status).toBe("refund_pending");
     const lastEntry = res.body.statusHistory[res.body.statusHistory.length - 1];
-    expect(lastEntry.status).toBe("refunded");
+    expect(lastEntry.status).toBe("refund_pending");
     expect(lastEntry.note).toBe("Product not as described");
     expect(lastEntry.changedBy).toBe(customerId);
   });
 
-  it("refunds a fulfilled order within 30-day window", async () => {
+  it("moves a fulfilled order to refund_pending within 30-day window", async () => {
     const product = await prisma.product.create({
       data: makeProduct({ name: "RR Fulfilled", slug: `${SLUG_PREFIX}fulfilled` }),
     });
@@ -212,7 +219,7 @@ describe("POST /orders/:id/refund", () => {
       .send({ note: "Changed my mind" });
 
     expect(res.status).toBe(200);
-    expect(res.body.status).toBe("refunded");
+    expect(res.body.status).toBe("refund_pending");
   });
 
   it("rejects refund when 30-day window has expired for fulfilled order", async () => {
@@ -236,7 +243,7 @@ describe("POST /orders/:id/refund", () => {
     expect(res.body.message).toBe("Refund window has expired (30 days from fulfillment)");
   });
 
-  it("updates payment status to refunded", async () => {
+  it("does not update payment status (left for admin approval)", async () => {
     const product = await prisma.product.create({
       data: makeProduct({ name: "RR PayStatus", slug: `${SLUG_PREFIX}pay-status` }),
     });
@@ -252,10 +259,11 @@ describe("POST /orders/:id/refund", () => {
       .send({ note: "Refund with payment" });
 
     expect(res.status).toBe(200);
-    expect(res.body.payment.status).toBe("refunded");
+    expect(res.body.status).toBe("refund_pending");
+    expect(res.body.payment.status).toBe("captured");
   });
 
-  it("creates a notification for the customer", async () => {
+  it("does not create a notification (left for admin approval)", async () => {
     const product = await prisma.product.create({
       data: makeProduct({ name: "RR Notif", slug: `${SLUG_PREFIX}notif` }),
     });
@@ -270,11 +278,10 @@ describe("POST /orders/:id/refund", () => {
     const notification = await prisma.notification.findFirst({
       where: { userId: customerId, type: "order_refunded" },
     });
-    expect(notification).not.toBeNull();
-    expect(notification!.title).toBe("Your refund has been processed");
+    expect(notification).toBeNull();
   });
 
-  it("includes user info in refund response", async () => {
+  it("includes user info in response", async () => {
     const product = await prisma.product.create({
       data: makeProduct({ name: "RR UserInfo", slug: `${SLUG_PREFIX}user-info` }),
     });
@@ -290,67 +297,5 @@ describe("POST /orders/:id/refund", () => {
     expect(res.body.user).toBeDefined();
     expect(res.body.user.email).toBe(CUSTOMER_EMAIL);
     expect(res.body.user.firstName).toBe("Customer");
-  });
-
-  it("calls sendRefundConfirmationEmail with correct recipient and order data", async () => {
-    const product = await prisma.product.create({
-      data: makeProduct({ name: "RR Email Args", slug: `${SLUG_PREFIX}email-args` }),
-    });
-    const orderId = await createOrder(customerToken, product.id);
-    await prisma.order.update({ where: { id: orderId }, data: { status: "paid" } });
-
-    await request(app)
-      .post(`/api/orders/${orderId}/refund`)
-      .set("Authorization", `Bearer ${customerToken}`)
-      .send({ note: "Not what I expected" });
-
-    expect(mockSendRefundConfirmationEmail).toHaveBeenCalledOnce();
-    const [toEmail, refundArg] = mockSendRefundConfirmationEmail.mock.calls[0]!;
-    expect(toEmail).toBe(CUSTOMER_EMAIL);
-    expect(refundArg.orderId).toBe(orderId);
-    expect(refundArg.note).toBe("Not what I expected");
-    expect(refundArg.totalAmount).toBe("10.00");
-    expect(refundArg.items).toHaveLength(1);
-    expect(refundArg.items[0].productName).toBe("RR Email Args");
-  });
-
-  it("still returns 200 when sendRefundConfirmationEmail throws", async () => {
-    const product = await prisma.product.create({
-      data: makeProduct({ name: "RR Email Err", slug: `${SLUG_PREFIX}email-err` }),
-    });
-    const orderId = await createOrder(customerToken, product.id);
-    await prisma.order.update({ where: { id: orderId }, data: { status: "paid" } });
-
-    mockSendRefundConfirmationEmail.mockRejectedValue(new Error("SES unavailable"));
-
-    const res = await request(app)
-      .post(`/api/orders/${orderId}/refund`)
-      .set("Authorization", `Bearer ${customerToken}`)
-      .send({ note: "Changed my mind" });
-
-    expect(res.status).toBe(200);
-    expect(res.body.status).toBe("refunded");
-  });
-
-  // TypeScript strict mode types `catch (err)` as `unknown`, requiring an `err instanceof Error`
-  // check before accessing `.message`. The false branch (non-Error throwable) is unreachable in
-  // practice since the email library always throws Error instances, but must be covered.
-
-  it("still returns 200 when email throws a non-Error", async () => {
-    const product = await prisma.product.create({
-      data: makeProduct({ name: "RR Email NonError", slug: `${SLUG_PREFIX}email-non-err` }),
-    });
-    const orderId = await createOrder(customerToken, product.id);
-    await prisma.order.update({ where: { id: orderId }, data: { status: "paid" } });
-
-    mockSendRefundConfirmationEmail.mockRejectedValue(new Error("email failed"));
-
-    const res = await request(app)
-      .post(`/api/orders/${orderId}/refund`)
-      .set("Authorization", `Bearer ${customerToken}`)
-      .send({ note: "Changed my mind" });
-
-    expect(res.status).toBe(200);
-    expect(res.body.status).toBe("refunded");
   });
 });

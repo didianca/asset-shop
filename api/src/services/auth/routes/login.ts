@@ -6,6 +6,7 @@ import type { LoginBody, JwtPayload } from "../auth.types.js";
 import { authConfig } from "../auth.config.js";
 
 const JWT_EXPIRES_IN = "12h";
+const DUMMY_HASH = "$2b$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012";
 
 /**
  * @openapi
@@ -54,14 +55,12 @@ export async function loginHandler(
 
   const user = await prisma.user.findUnique({ where: { email } });
 
-  // Same error for wrong email or wrong password — prevents user enumeration
-  if (!user) {
-    res.status(401).json({ message: "Invalid credentials" });
-    return;
-  }
+  // Always run bcrypt.compare even when user doesn't exist — prevents timing side-channel
+  // that leaks whether an email is registered (bcrypt is ~250ms, skipping it is obvious)
+  const hash = user?.passwordHash ?? DUMMY_HASH;
+  const passwordMatch = await bcrypt.compare(password, hash);
 
-  const passwordMatch = await bcrypt.compare(password, user.passwordHash);
-  if (!passwordMatch) {
+  if (!user || !passwordMatch) {
     res.status(401).json({ message: "Invalid credentials" });
     return;
   }

@@ -28,12 +28,32 @@ describe("isValidTransition", () => {
     expect(isValidTransition("paid", "fulfilled")).toBe(true);
   });
 
-  it("allows paid -> refunded", () => {
-    expect(isValidTransition("paid", "refunded")).toBe(true);
+  it("allows paid -> refund_pending", () => {
+    expect(isValidTransition("paid", "refund_pending")).toBe(true);
   });
 
-  it("allows fulfilled -> refunded", () => {
-    expect(isValidTransition("fulfilled", "refunded")).toBe(true);
+  it("allows fulfilled -> refund_pending", () => {
+    expect(isValidTransition("fulfilled", "refund_pending")).toBe(true);
+  });
+
+  it("allows refund_pending -> refunded (admin approve)", () => {
+    expect(isValidTransition("refund_pending", "refunded")).toBe(true);
+  });
+
+  it("allows refund_pending -> paid (admin reject)", () => {
+    expect(isValidTransition("refund_pending", "paid")).toBe(true);
+  });
+
+  it("allows refund_pending -> fulfilled (admin reject)", () => {
+    expect(isValidTransition("refund_pending", "fulfilled")).toBe(true);
+  });
+
+  it("rejects paid -> refunded (must go through refund_pending)", () => {
+    expect(isValidTransition("paid", "refunded")).toBe(false);
+  });
+
+  it("rejects fulfilled -> refunded (must go through refund_pending)", () => {
+    expect(isValidTransition("fulfilled", "refunded")).toBe(false);
   });
 
   it("rejects pending -> fulfilled", () => {
@@ -44,7 +64,7 @@ describe("isValidTransition", () => {
     expect(isValidTransition("paid", "pending")).toBe(false);
   });
 
-  it("rejects refunded -> anything (terminal)", () => {
+  it("rejects refunded -> paid", () => {
     expect(isValidTransition("refunded", "paid")).toBe(false);
   });
 

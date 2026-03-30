@@ -6,11 +6,21 @@ import { formatProduct } from "../utils.js";
  * @openapi
  * /products:
  *   get:
- *     summary: List all active products
+ *     summary: List products
+ *     description: >
+ *       Returns active products by default. Admins can pass
+ *       `includeInactive=true` to include inactive products.
  *     tags:
  *       - Products
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: includeInactive
+ *         schema:
+ *           type: string
+ *           enum: ["true"]
+ *         description: Include inactive products (admin only)
  *     responses:
  *       200:
  *         description: List of products
@@ -28,11 +38,14 @@ import { formatProduct } from "../utils.js";
  *               $ref: '#/components/schemas/MessageResponse'
  */
 export async function listProductsHandler(
-  _req: Request,
+  req: Request,
   res: Response
 ): Promise<void> {
+  const isAdmin = req.user?.role === "admin";
+  const includeInactive = req.query.includeInactive === "true";
+
   const products = await prisma.product.findMany({
-    where: { isActive: true },
+    where: isAdmin && includeInactive ? {} : { isActive: true },
     include: { tags: { include: { tag: true } } },
     orderBy: { createdAt: "desc" },
   });

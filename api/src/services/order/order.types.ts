@@ -39,7 +39,7 @@ import { z } from "zod";
  *           format: uuid
  *         status:
  *           type: string
- *           enum: [pending, paid, fulfilled, refunded]
+ *           enum: [pending, paid, fulfilled, refund_pending, refunded]
  *         note:
  *           type: string
  *           nullable: true
@@ -93,7 +93,7 @@ import { z } from "zod";
  *           format: uuid
  *         status:
  *           type: string
- *           enum: [pending, paid, fulfilled, refunded]
+ *           enum: [pending, paid, fulfilled, refund_pending, refunded]
  *         totalAmount:
  *           type: number
  *         items:
@@ -134,7 +134,7 @@ import { z } from "zod";
  *       properties:
  *         status:
  *           type: string
- *           enum: [pending, paid, fulfilled, refunded]
+ *           enum: [pending, paid, fulfilled, refund_pending, refunded]
  *         note:
  *           type: string
  *     OrderListResponse:
@@ -162,7 +162,7 @@ export const OrderIdParamsSchema = z.object({
 });
 
 export const UpdateOrderStatusSchema = z.object({
-  status: z.enum(["pending", "paid", "fulfilled", "refunded"]),
+  status: z.enum(["pending", "paid", "fulfilled", "refund_pending", "refunded"]),
   note: z.string().optional(),
 }).strict();
 

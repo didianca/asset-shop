@@ -29,6 +29,11 @@ describe("UpdateOrderStatusSchema", () => {
     expect(result.success).toBe(true);
   });
 
+  it("accepts refund_pending as a target status", () => {
+    const result = UpdateOrderStatusSchema.safeParse({ status: "refund_pending" });
+    expect(result.success).toBe(true);
+  });
+
   it("rejects extra fields", () => {
     const result = UpdateOrderStatusSchema.safeParse({ status: "paid", extra: true });
     expect(result.success).toBe(false);

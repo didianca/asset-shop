@@ -1,8 +1,9 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen } from "@testing-library/react";
 import { renderWithRouter } from "../../helpers";
 import CustomerDashboard from "../../../src/pages/dashboard/CustomerDashboard";
 import * as ordersApi from "../../../src/api/orders.api";
+import { useAuthStore } from "../../../src/stores/authStore";
 
 vi.mock("../../../src/api/orders.api", () => ({
   getOrders: vi.fn(),
@@ -12,12 +13,30 @@ vi.mock("../../../src/api/orders.api", () => ({
 }));
 
 describe("CustomerDashboard", () => {
+  beforeEach(() => {
+    useAuthStore.setState({
+      user: { id: "u1", role: "customer", email: "a@b.com", firstName: "A", lastName: "B", status: "active" },
+      isAuthenticated: true,
+      token: "tok",
+    });
+  });
+
   it("renders heading", async () => {
     vi.mocked(ordersApi.getOrders).mockResolvedValueOnce({
       data: { orders: [], total: 0 },
     } as never);
     renderWithRouter(<CustomerDashboard />);
     expect(screen.getByText("My Orders")).toBeInTheDocument();
+  });
+
+  it("fetches only the current user's orders", async () => {
+    vi.mocked(ordersApi.getOrders).mockResolvedValueOnce({
+      data: { orders: [], total: 0 },
+    } as never);
+    renderWithRouter(<CustomerDashboard />);
+    expect(ordersApi.getOrders).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: "u1" }),
+    );
   });
 
   it("shows orders when loaded", async () => {

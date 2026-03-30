@@ -1,6 +1,7 @@
 # Asset Shop
 
 E-commerce platform built as a monorepo with microservices.
+https://asset-shop.com/
 
 ## Stack
 

@@ -96,6 +96,9 @@ import { z } from "zod";
  *           type: number
  *         discountPercent:
  *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *           nullable: true
  *         isActive:
  *           type: boolean
  *         tags:

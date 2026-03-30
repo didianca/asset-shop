@@ -22,19 +22,6 @@ const makeProduct = <T extends object>(overrides: T): { price: number; previewKe
 });
 
 beforeAll(async () => {
-  const stale = await prisma.user.findMany({ where: { email: { in: [ADMIN_EMAIL, CUSTOMER_EMAIL] } } });
-  if (stale.length > 0) {
-    const ids = stale.map((u) => u.id);
-    await prisma.payment.deleteMany({ where: { order: { userId: { in: ids } } } });
-    await prisma.orderStatusHistory.deleteMany({ where: { order: { userId: { in: ids } } } });
-    await prisma.orderItem.deleteMany({ where: { order: { userId: { in: ids } } } });
-    await prisma.order.deleteMany({ where: { userId: { in: ids } } });
-    await prisma.cartItem.deleteMany({ where: { cart: { userId: { in: ids } } } });
-    await prisma.cart.deleteMany({ where: { userId: { in: ids } } });
-    await prisma.product.deleteMany({ where: { createdBy: { in: ids } } });
-    await prisma.user.deleteMany({ where: { id: { in: ids } } });
-  }
-
   const admin = await prisma.user.create({
     data: { email: ADMIN_EMAIL, passwordHash: "x", firstName: "Admin", lastName: "Test", role: "admin", status: "active" },
   });

@@ -43,20 +43,6 @@ async function createOrder(token: string, productId: string): Promise<string> {
 }
 
 beforeAll(async () => {
-  // Defensive cleanup — handles dirty DB from a previous interrupted run
-  const stale = await prisma.user.findMany({ where: { email: { in: [ADMIN_EMAIL, CUSTOMER_EMAIL, CUSTOMER2_EMAIL] } } });
-  if (stale.length > 0) {
-    const ids = stale.map((u) => u.id);
-    await prisma.notification.deleteMany({ where: { userId: { in: ids } } });
-    await prisma.payment.deleteMany({ where: { order: { userId: { in: ids } } } });
-    await prisma.orderStatusHistory.deleteMany({ where: { order: { userId: { in: ids } } } });
-    await prisma.orderItem.deleteMany({ where: { order: { userId: { in: ids } } } });
-    await prisma.order.deleteMany({ where: { userId: { in: ids } } });
-    await prisma.cartItem.deleteMany({ where: { cart: { userId: { in: ids } } } });
-    await prisma.cart.deleteMany({ where: { userId: { in: ids } } });
-    await prisma.user.deleteMany({ where: { id: { in: ids } } });
-  }
-
   const admin = await prisma.user.create({
     data: { email: ADMIN_EMAIL, passwordHash: "x", firstName: "Admin", lastName: "Test", role: "admin", status: "active" },
   });
@@ -336,6 +322,29 @@ describe("POST /orders/:id/refund", () => {
     await prisma.order.update({ where: { id: orderId }, data: { status: "paid" } });
 
     mockSendRefundConfirmationEmail.mockRejectedValue(new Error("SES unavailable"));
+
+    const res = await request(app)
+      .post(`/api/orders/${orderId}/refund`)
+      .set("Authorization", `Bearer ${customerToken}`)
+      .send({ note: "Changed my mind" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe("refunded");
+  });
+
+  // TypeScript strict mode types `catch (err)` as `unknown`, requiring an `err instanceof Error`
+  // check before accessing `.message`. The false branch (non-Error throwable) is unreachable in
+  // practice since the email library always throws Error instances, but must be covered.
+
+  it("still returns 200 when email throws a non-Error", async () => {
+    const product = await prisma.product.create({
+      data: makeProduct({ name: "RR Email NonError", slug: `${SLUG_PREFIX}email-non-err` }),
+    });
+    const orderId = await createOrder(customerToken, product.id);
+    await prisma.order.update({ where: { id: orderId }, data: { status: "paid" } });
+
+    // eslint-disable-next-line @typescript-eslint/only-throw-error
+    mockSendRefundConfirmationEmail.mockRejectedValue("email failed");
 
     const res = await request(app)
       .post(`/api/orders/${orderId}/refund`)

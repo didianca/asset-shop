@@ -61,21 +61,6 @@ async function createOrderWithPayment(token: string, productId: string): Promise
 }
 
 beforeAll(async () => {
-  // Defensive cleanup — handles dirty DB from a previous interrupted run
-  const stale = await prisma.user.findMany({ where: { email: { in: [ADMIN_EMAIL, CUSTOMER_EMAIL] } } });
-  if (stale.length > 0) {
-    const ids = stale.map((u) => u.id);
-    await prisma.notification.deleteMany({ where: { userId: { in: ids } } });
-    await prisma.payment.deleteMany({ where: { order: { userId: { in: ids } } } });
-    await prisma.orderStatusHistory.deleteMany({ where: { order: { userId: { in: ids } } } });
-    await prisma.orderItem.deleteMany({ where: { order: { userId: { in: ids } } } });
-    await prisma.order.deleteMany({ where: { userId: { in: ids } } });
-    await prisma.cartItem.deleteMany({ where: { cart: { userId: { in: ids } } } });
-    await prisma.cart.deleteMany({ where: { userId: { in: ids } } });
-    await prisma.product.deleteMany({ where: { createdBy: { in: ids } } });
-    await prisma.user.deleteMany({ where: { id: { in: ids } } });
-  }
-
   const admin = await prisma.user.create({
     data: { email: ADMIN_EMAIL, passwordHash: "x", firstName: "Admin", lastName: "Test", role: "admin", status: "active" },
   });
@@ -504,6 +489,104 @@ describe("POST /payments/webhook", () => {
     });
 
     vi.spyOn(prisma.payment, "update").mockRejectedValueOnce(new Error("DB connection lost"));
+
+    const res = await request(app)
+      .post("/api/payments/webhook")
+      .set("stripe-signature", "valid_sig")
+      .set("Content-Type", "application/json")
+      .send(JSON.stringify({ type: "payment_intent.payment_failed" }));
+
+    expect(res.status).toBe(500);
+  });
+
+  // TypeScript strict mode types `catch (err)` as `unknown`, requiring an `err instanceof Error`
+  // check before accessing `.message`. The false branch (non-Error throwable) is unreachable in
+  // practice since Stripe and Prisma always throw Error instances, but must be covered.
+
+  it("returns 400 when signature verification throws a non-Error", async () => {
+    mockConstructEvent.mockImplementation(() => {
+      // eslint-disable-next-line @typescript-eslint/only-throw-error
+      throw "bad signature string";
+    });
+
+    const res = await request(app)
+      .post("/api/payments/webhook")
+      .set("stripe-signature", "bad_sig")
+      .set("Content-Type", "application/json")
+      .send(JSON.stringify({ type: "test" }));
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe("Invalid signature");
+  });
+
+  it("re-throws and returns 500 when capture transaction throws a non-Error", async () => {
+    const product = await prisma.product.create({
+      data: makeProduct({ name: "HW TX NonError", slug: `${SLUG_PREFIX}tx-non-error` }),
+    });
+    await createOrderWithPayment(customerToken, product.id);
+
+    mockConstructEvent.mockReturnValue({
+      type: "payment_intent.succeeded",
+      data: { object: { id: "pi_webhook_test" } },
+    });
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    vi.spyOn(prisma as any, "$transaction").mockRejectedValueOnce("connection lost");
+
+    const res = await request(app)
+      .post("/api/payments/webhook")
+      .set("stripe-signature", "valid_sig")
+      .set("Content-Type", "application/json")
+      .send(JSON.stringify({ type: "payment_intent.succeeded" }));
+
+    expect(res.status).toBe(500);
+  });
+
+  it("still returns 200 when confirmation email throws a non-Error", async () => {
+    // Create order and payment directly — avoids $transaction spy leaking from previous test
+    // into the POST /api/orders call inside createOrderWithPayment.
+    const product = await prisma.product.create({
+      data: makeProduct({ name: "HW Email NonError", slug: `${SLUG_PREFIX}email-non-error` }),
+    });
+    const order = await prisma.order.create({
+      data: {
+        userId: customerId,
+        totalAmount: 10,
+        items: { create: [{ productId: product.id, unitPrice: 10 }] },
+      },
+    });
+    await prisma.payment.create({
+      data: { orderId: order.id, amount: 10, status: "pending", provider: "stripe", providerReference: "pi_webhook_test" },
+    });
+
+    mockSendOrderConfirmationEmail.mockRejectedValue("email failed");
+    mockConstructEvent.mockReturnValue({
+      type: "payment_intent.succeeded",
+      data: { object: { id: "pi_webhook_test" } },
+    });
+
+    const res = await request(app)
+      .post("/api/payments/webhook")
+      .set("stripe-signature", "valid_sig")
+      .set("Content-Type", "application/json")
+      .send(JSON.stringify({ type: "payment_intent.succeeded" }));
+
+    expect(res.status).toBe(200);
+    expect(res.body.message).toBe("Payment captured");
+  });
+
+  it("re-throws and returns 500 when payment-failed update throws a non-Error", async () => {
+    const product = await prisma.product.create({
+      data: makeProduct({ name: "HW Update NonError", slug: `${SLUG_PREFIX}update-non-error` }),
+    });
+    await createOrderWithPayment(customerToken, product.id);
+
+    mockConstructEvent.mockReturnValue({
+      type: "payment_intent.payment_failed",
+      data: { object: { id: "pi_webhook_test" } },
+    });
+
+    vi.spyOn(prisma.payment, "update").mockRejectedValueOnce("update failed");
 
     const res = await request(app)
       .post("/api/payments/webhook")

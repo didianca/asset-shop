@@ -6,9 +6,11 @@ import prisma from "../../../db.js";
 import { authConfig } from "../../auth/auth.config.js";
 
 const mockSendRefundConfirmationEmail = vi.hoisted(() => vi.fn());
+const mockSendRefundDeniedEmail = vi.hoisted(() => vi.fn());
 
 vi.mock("../../../lib/email.js", () => ({
   sendRefundConfirmationEmail: mockSendRefundConfirmationEmail,
+  sendRefundDeniedEmail: mockSendRefundDeniedEmail,
 }));
 
 const SLUG_PREFIX = "uos-test-";
@@ -59,6 +61,8 @@ beforeAll(async () => {
 beforeEach(async () => {
   mockSendRefundConfirmationEmail.mockReset();
   mockSendRefundConfirmationEmail.mockResolvedValue(undefined);
+  mockSendRefundDeniedEmail.mockReset();
+  mockSendRefundDeniedEmail.mockResolvedValue(undefined);
 
   await prisma.notification.deleteMany({ where: { userId: { in: [customerId, adminId] } } });
   await prisma.payment.deleteMany({ where: { order: { userId: { in: [customerId, adminId] } } } });
@@ -335,6 +339,71 @@ describe("PATCH /orders/:id/status", () => {
     expect(res.status).toBe(200);
     expect(res.body.status).toBe("fulfilled");
     expect(mockSendRefundConfirmationEmail).not.toHaveBeenCalled();
+  });
+
+  it("sends refund denied email when denying refund", async () => {
+    const product = await prisma.product.create({
+      data: makeProduct({ name: "UOS DenyEmail", slug: `${SLUG_PREFIX}deny-email` }),
+    });
+    const orderId = await createOrder(customerToken, product.id);
+    await prisma.order.update({ where: { id: orderId }, data: { status: "refund_pending" } });
+    await prisma.orderStatusHistory.create({
+      data: { orderId, status: "refund_pending", note: "Product not as described", changedBy: customerId },
+    });
+
+    await request(app)
+      .patch(`/api/orders/${orderId}/status`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ status: "paid", note: "Refund denied per policy" });
+
+    expect(mockSendRefundDeniedEmail).toHaveBeenCalledOnce();
+    const [toEmail, deniedArg] = mockSendRefundDeniedEmail.mock.calls[0]!;
+    expect(toEmail).toBe(CUSTOMER_EMAIL);
+    expect(deniedArg.orderId).toBe(orderId);
+    expect(deniedArg.customerNote).toBe("Product not as described");
+    expect(deniedArg.adminNote).toBe("Refund denied per policy");
+  });
+
+  it("creates a notification when denying refund", async () => {
+    const product = await prisma.product.create({
+      data: makeProduct({ name: "UOS DenyNotif", slug: `${SLUG_PREFIX}deny-notif` }),
+    });
+    const orderId = await createOrder(customerToken, product.id);
+    await prisma.order.update({ where: { id: orderId }, data: { status: "refund_pending" } });
+    await prisma.orderStatusHistory.create({
+      data: { orderId, status: "refund_pending", note: "Reason", changedBy: customerId },
+    });
+
+    await request(app)
+      .patch(`/api/orders/${orderId}/status`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ status: "paid", note: "Not eligible" });
+
+    const notification = await prisma.notification.findFirst({
+      where: { userId: customerId, type: "refund_denied" },
+    });
+    expect(notification).not.toBeNull();
+    expect(notification!.title).toBe("Your refund request has been denied");
+  });
+
+  it("still returns 200 when email throws during refund denial", async () => {
+    mockSendRefundDeniedEmail.mockRejectedValue(new Error("SES unavailable"));
+    const product = await prisma.product.create({
+      data: makeProduct({ name: "UOS DenyErr", slug: `${SLUG_PREFIX}deny-err` }),
+    });
+    const orderId = await createOrder(customerToken, product.id);
+    await prisma.order.update({ where: { id: orderId }, data: { status: "refund_pending" } });
+    await prisma.orderStatusHistory.create({
+      data: { orderId, status: "refund_pending", note: "Reason", changedBy: customerId },
+    });
+
+    const res = await request(app)
+      .patch(`/api/orders/${orderId}/status`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ status: "paid" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe("paid");
   });
 
   it("rejects direct paid -> refunded (must go through refund_pending)", async () => {

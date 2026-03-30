@@ -192,8 +192,7 @@ cd infra && npm run synth -- --bootstrap         # bootstrap CDK (one-time per a
 3. Set it in `infra/.env` and redeploy so migrations run.
 
 ### Gotchas
-- **Ephemeral IP** — Fargate public IP changes on task restart. Update the Stripe webhook URL after each deploy.
-- **No ALB** — traffic goes directly to the Fargate task's public IP.
+- **Stripe does not work on localhost** — Stripe webhooks require a publicly reachable URL. When running locally via `docker-compose up`, the API is only available at `localhost:3000`, which Stripe cannot reach. Payment flows that depend on webhook delivery (e.g. confirming a PaymentIntent, processing refunds) will not complete locally. To test Stripe end-to-end, deploy to a publicly accessible environment or use the [Stripe CLI](https://docs.stripe.com/stripe-cli) to forward webhook events to your local machine.
 
 ## Adding Dependencies
 

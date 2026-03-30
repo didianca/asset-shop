@@ -31,7 +31,7 @@ export default function BundleForm({
   const [slug, setSlug] = useState(bundle?.slug ?? "");
   const [description, setDescription] = useState(bundle?.description ?? "");
   const [discountPercent, setDiscountPercent] = useState(
-    bundle?.discountPercent?.toString() ?? "",
+    bundle?.discountPercent ? bundle.discountPercent.toString() : "",
   );
   const [isActive, setIsActive] = useState(bundle?.isActive ?? true);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(

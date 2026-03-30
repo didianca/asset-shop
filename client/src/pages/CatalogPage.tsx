@@ -92,9 +92,9 @@ export default function CatalogPage() {
 
       if (filters.inBundle && !p.bundle) return false;
 
-      if (filters.bundleId && p.bundle?.id !== filters.bundleId) return false;
+      return !(filters.bundleId && p.bundle?.id !== filters.bundleId);
 
-      return true;
+
     });
 
     const sorted = [...filtered];

@@ -159,7 +159,7 @@ export const CreateProductSchema = z.object({
   slug: z.string().min(1),
   description: z.string().optional(),
   price: z.number().positive(),
-  discountPercent: z.number().int().min(0).max(100).optional(),
+  discountPercent: z.number().int().min(1).max(100).optional(),
   tags: z.array(z.string()).optional(),
   isBundle: z.boolean().optional(),
   bundleId: z.string().uuid().optional(),
@@ -173,7 +173,7 @@ export const UpdateProductSchema = z.object({
   slug: z.string().min(1),
   description: z.string().nullable(),
   price: z.number().positive(),
-  discountPercent: z.number().int().min(0).max(100).nullable(),
+  discountPercent: z.number().int().min(1).max(100).nullable(),
   isActive: z.boolean(),
   tags: z.array(z.string()),
 }).strict();

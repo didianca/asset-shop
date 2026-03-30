@@ -122,7 +122,7 @@ export const CreateBundleSchema = z.object({
   name: z.string().min(1),
   slug: z.string().min(1),
   description: z.string().optional(),
-  discountPercent: z.number().int().min(0).max(100).optional(),
+  discountPercent: z.number().int().min(1).max(100).optional(),
   productIds: z.array(z.string().uuid()).optional(),
 }).strict();
 
@@ -130,7 +130,7 @@ export const UpdateBundleSchema = z.object({
   name: z.string().min(1),
   slug: z.string().min(1),
   description: z.string().nullable(),
-  discountPercent: z.number().int().min(0).max(100).nullable(),
+  discountPercent: z.number().int().min(1).max(100).nullable(),
   isActive: z.boolean(),
   productIds: z.array(z.string().uuid()),
 }).strict();

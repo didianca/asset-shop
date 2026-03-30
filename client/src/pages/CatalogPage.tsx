@@ -23,9 +23,9 @@ export default function CatalogPage() {
   const [filters, setFilters] = useState<CatalogFilters>(defaultFilters);
 
   useEffect(() => {
-    if (products.length === 0) fetchProducts();
-    if (tags.length === 0) fetchTags();
-  }, [products.length, tags.length, fetchProducts, fetchTags]);
+    fetchProducts();
+    fetchTags();
+  }, [fetchProducts, fetchTags]);
 
   const handleFilterChange = useCallback(
     <K extends keyof CatalogFilters>(key: K, value: CatalogFilters[K]) => {

@@ -8,7 +8,7 @@ import Button from "../../components/ui/Button";
 import Spinner from "../../components/ui/Spinner";
 
 export default function AdminProductsPage() {
-  const { products, isLoading, fetchProducts } = useProductStore();
+  const { products, isLoading, fetchProducts, fetchTags } = useProductStore();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<
     ProductResponse | undefined
@@ -32,6 +32,7 @@ export default function AdminProductsPage() {
     setIsFormOpen(false);
     setEditingProduct(undefined);
     fetchProducts();
+    fetchTags();
   };
 
   if (isLoading) {

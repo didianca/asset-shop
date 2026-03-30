@@ -76,6 +76,10 @@ Physical products have inventory. Digital assets do not — selling the same fil
 ### No Shipping Addresses
 Digital assets are delivered via email (signed S3 download link). No physical address is needed at any point in the order flow.
 
+## SES Sandbox Limitation
+
+AWS SES starts in **sandbox mode**, which only allows sending to **verified email addresses**. Every email used to register must first be added to the [SES verified identities list](https://console.aws.amazon.com/ses/home#/verified-identities) in the AWS console. If a user registers with an unverified email, the API returns `503` with a message explaining the limitation. See the [root README](../README.md#ses-verified-identities) for setup steps.
+
 ## Environment Variables & Config
 
 Each service owns a `<service>.config.ts` file that centralises all environment variable access for that service using [`env-var`](https://www.npmjs.com/package/env-var). Shared utilities (e.g. `lib/email.ts`) have their own config file alongside them.
@@ -84,6 +88,7 @@ Each service owns a `<service>.config.ts` file that centralises all environment 
 |---|---|
 | `.env` | `DATABASE_URL` |
 | `src/services/auth/auth.config.ts` | `JWT_SECRET` |
+| `src/lib/app.config.ts` | `APP_URL` (optional — CORS origin) |
 | `src/lib/email.config.ts` | `AWS_REGION`, `AWS_SES_ACCESS_KEY`, `AWS_SES_SECRET_ACCESS_KEY`, `SES_FROM_EMAIL`, `API_URL` |
 | `src/services/payment/payment.config.ts` | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` |
 | `src/services/upload/upload.config.ts` | `AWS_S3_ACCESS_KEY`, `AWS_S3_SECRET_ACCESS_KEY`, `AWS_S3_REGION`, `S3_BUCKET_NAME` |

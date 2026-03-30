@@ -28,6 +28,12 @@ import prisma from "../../../db.js";
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/MessageResponse'
+ *       429:
+ *         description: Too many verification attempts
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/MessageResponse'
  */
 export async function verifyEmailHandler(
   req: Request<object, object, object, { token: string }>,

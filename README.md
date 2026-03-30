@@ -27,6 +27,10 @@ E-commerce platform built as a monorepo with microservices.
 | AWS S3 | Asset file storage (original + watermarked previews) |
 | Sharp | Image processing — watermark generation at upload time |
 | Multer | Multipart file upload handling |
+| file-type | Magic-byte validation for uploaded files |
+| Helmet | Security headers (HSTS, X-Frame-Options, CSP, etc.) |
+| cors | Cross-Origin Resource Sharing configuration |
+| express-rate-limit | Rate limiting on auth endpoints |
 | Vitest + Supertest | Testing |
 | Swagger / OpenAPI | API documentation |
 | tsx | Dev server with hot reload |
@@ -88,6 +92,19 @@ cp api/src/services/order/.env.example api/src/services/order/.env       # Order
 cp api/src/services/payment/.env.example api/src/services/payment/.env   # Stripe keys
 cp api/src/services/upload/.env.example api/src/services/upload/.env     # S3 keys
 ```
+
+### SES Verified Identities
+
+AWS SES in **sandbox mode** (the default for new accounts) only allows sending email to **verified identities**. Before a user can register, their email address must be added to the SES verified identities list in the AWS console:
+
+1. Open the [SES console → Verified identities](https://console.aws.amazon.com/ses/home#/verified-identities)
+2. Click **Create identity** → choose **Email address**
+3. Enter the email address and click **Create identity**
+4. The owner of that email will receive a verification link — they must click it before the address can receive mail
+
+This applies to **both** the sender (`SES_FROM_EMAIL`) **and** every recipient. If a user tries to register with an unverified email, the API will return a `503` error explaining the issue.
+
+> To remove this restriction, request **production access** in the SES console. Once approved, SES can send to any address without pre-verification.
 
 ### Start all services
 

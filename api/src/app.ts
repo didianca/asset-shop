@@ -24,6 +24,9 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+      "script-src": ["'self'", "https://js.stripe.com"],
+      "connect-src": ["'self'", "https://api.stripe.com"],
+      "frame-src": ["https://js.stripe.com"],
       "img-src": ["'self'", appConfig.s3Origin].filter(Boolean) as string[],
     },
   },

@@ -153,7 +153,7 @@ export async function requestRefundHandler(
   } catch (err) {
     console.error("[requestRefund] Failed to send refund confirmation email", {
       orderId: id,
-      error: err instanceof Error ? err.message : err,
+      error: String(err),
     });
   }
 

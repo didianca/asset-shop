@@ -47,7 +47,7 @@ export async function handleWebhookHandler(
   console.info("[webhook] Incoming request", {
     hasSignature: !!signature,
     contentType: req.headers["content-type"],
-    bodySize: Buffer.isBuffer(req.body) ? req.body.length : undefined,
+    bodySize: (req.body as Buffer)?.length,
   });
 
   if (!signature) {
@@ -67,7 +67,7 @@ export async function handleWebhookHandler(
     );
   } catch (err) {
     console.error("[webhook] Signature verification failed", {
-      error: err instanceof Error ? err.message : err,
+      error: String(err),
     });
     res.status(400).json({ message: "Invalid signature" });
     return;
@@ -143,7 +143,7 @@ export async function handleWebhookHandler(
       console.error("[webhook:succeeded] Transaction failed", {
         paymentId: payment.id,
         orderId: payment.orderId,
-        error: err instanceof Error ? err.message : err,
+        error: String(err),
       });
       throw err;
     }
@@ -218,7 +218,7 @@ export async function handleWebhookHandler(
       console.error("[webhook:succeeded] Failed to fulfill order after payment", {
         paymentId: payment.id,
         orderId: payment.orderId,
-        error: err instanceof Error ? err.message : err,
+        error: String(err),
       });
     }
 
@@ -261,7 +261,7 @@ export async function handleWebhookHandler(
       console.error("[webhook:failed] DB update failed", {
         paymentId: payment.id,
         orderId: payment.orderId,
-        error: err instanceof Error ? err.message : err,
+        error: String(err),
       });
       throw err;
     }

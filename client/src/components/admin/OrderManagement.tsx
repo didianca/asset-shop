@@ -246,6 +246,18 @@ export default function OrderManagement() {
                     <StatusBadge status={order.status} />
                   </td>
                   <td className="py-3">
+                    {order.status === "refund_pending" && (() => {
+                      const customerNote = order.statusHistory
+                        .find((h) => h.status === "refund_pending")?.note;
+                      return customerNote ? (
+                        <div className="mb-2 rounded bg-orange-50 px-2 py-1.5">
+                          <p className="text-xs font-medium text-orange-800">
+                            Customer&apos;s reason
+                          </p>
+                          <p className="text-sm text-orange-900">{customerNote}</p>
+                        </div>
+                      ) : null;
+                    })()}
                     <div className="flex gap-2">
                       {nextStatus && (
                         <Button

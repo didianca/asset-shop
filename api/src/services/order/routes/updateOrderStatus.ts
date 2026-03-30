@@ -2,7 +2,7 @@ import type { Request, Response } from "express";
 import prisma from "../../../db.js";
 import type { UpdateOrderStatusBody } from "../order.types.js";
 import { isValidTransition, isWithinRefundWindow, formatOrder } from "../utils.js";
-import { sendRefundConfirmationEmail } from "../../../lib/email.js";
+import { sendRefundConfirmationEmail, sendRefundDeniedEmail } from "../../../lib/email.js";
 
 const orderInclude = {
   items: {
@@ -166,6 +166,46 @@ export async function updateOrderStatusHandler(
       });
     } catch (err) {
       console.error("[updateOrderStatus] Failed to send refund confirmation email", {
+        orderId: id,
+        error: String(err),
+      });
+    }
+  }
+
+  // When admin denies a refund, email the customer and create a notification.
+  const isDenial =
+    order.status === "refund_pending" &&
+    (status === "paid" || status === "fulfilled");
+
+  if (isDenial) {
+    try {
+      const items = updated!.items.map((item) => ({
+        productName: item.product.name,
+        unitPrice: Number(item.unitPrice).toFixed(2),
+      }));
+
+      const customerNote = order.statusHistory
+        .find((h) => h.status === "refund_pending")?.note ?? "";
+
+      await sendRefundDeniedEmail(updated!.user!.email, {
+        orderId: id,
+        totalAmount: Number(updated!.totalAmount).toFixed(2),
+        customerNote,
+        adminNote: note ?? "",
+        items,
+      });
+
+      await prisma.notification.create({
+        data: {
+          userId: order.userId,
+          type: "refund_denied",
+          title: "Your refund request has been denied",
+          message: `Your refund request of $${Number(updated!.totalAmount).toFixed(2)} was not approved.${note ? ` Reason: ${note}` : ""}`,
+          metadata: { orderId: id },
+        },
+      });
+    } catch (err) {
+      console.error("[updateOrderStatus] Failed to send refund denied email", {
         orderId: id,
         error: String(err),
       });

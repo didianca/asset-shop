@@ -54,6 +54,7 @@ enum NotificationType {
   payment_failed    // payment capture failed
   refund_requested  // customer requested a refund, admin notified
   order_refunded    // admin approved refund, customer notified
+  refund_denied     // admin denied refund, customer notified
 }
 
 // ============================================================

@@ -12,6 +12,10 @@ import {
   refundConfirmationHtml,
   type RefundConfirmationData,
 } from "./templates/refundConfirmation.js";
+import {
+  refundDeniedHtml,
+  type RefundDeniedData,
+} from "./templates/refundDenied.js";
 import { verificationEmailHtml } from "./templates/verificationEmail.js";
 
 // SESClient is initialised once and reused across the app.
@@ -94,6 +98,43 @@ export async function sendRefundConfirmationEmail(
       },
       Body: {
         Html: { Data: refundConfirmationHtml(refund), Charset: "UTF-8" },
+        Text: { Data: text, Charset: "UTF-8" },
+      },
+    },
+  };
+
+  await sesClient.send(new SendEmailCommand(params));
+}
+
+// Sends a refund denied email notifying the user their refund request was rejected.
+export async function sendRefundDeniedEmail(
+  toEmail: string,
+  data: RefundDeniedData
+): Promise<void> {
+  const text = [
+    "Your Asset Shop refund request has been denied.",
+    "",
+    `Order ID: ${data.orderId}`,
+    `Your Reason: ${data.customerNote}`,
+    ...(data.adminNote ? [`Admin Note: ${data.adminNote}`] : []),
+    "",
+    "--- Items ---",
+    ...data.items.map((item) => `${item.productName}  $${item.unitPrice}`),
+    `Order Total  $${data.totalAmount}`,
+    "",
+    "If you have questions, please reply to this email.",
+  ].join("\n");
+
+  const params: SendEmailCommandInput = {
+    Source: emailConfig.sesFromEmail,
+    Destination: { ToAddresses: [toEmail] },
+    Message: {
+      Subject: {
+        Data: `Your refund request for order #${data.orderId.slice(0, 8).toUpperCase()} has been denied`,
+        Charset: "UTF-8",
+      },
+      Body: {
+        Html: { Data: refundDeniedHtml(data), Charset: "UTF-8" },
         Text: { Data: text, Charset: "UTF-8" },
       },
     },

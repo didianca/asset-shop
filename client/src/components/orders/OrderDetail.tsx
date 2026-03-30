@@ -12,12 +12,23 @@ interface OrderDetailProps {
   order: OrderResponse;
   onBack: () => void;
   onRefund?: (note: string) => Promise<void>;
+  onApproveRefund?: () => Promise<void>;
+  onDenyRefund?: (note: string) => Promise<void>;
 }
 
-export default function OrderDetail({ order, onBack, onRefund }: OrderDetailProps) {
+export default function OrderDetail({
+  order,
+  onBack,
+  onRefund,
+  onApproveRefund,
+  onDenyRefund,
+}: OrderDetailProps) {
   const [showRefundForm, setShowRefundForm] = useState(false);
   const [refundNote, setRefundNote] = useState("");
   const [isRefunding, setIsRefunding] = useState(false);
+  const [denyNote, setDenyNote] = useState("");
+  const [isApproving, setIsApproving] = useState(false);
+  const [isDenying, setIsDenying] = useState(false);
   const addToast = useUiStore((s) => s.addToast);
 
   const handleRefund = async () => {
@@ -36,6 +47,41 @@ export default function OrderDetail({ order, onBack, onRefund }: OrderDetailProp
       setIsRefunding(false);
     }
   };
+
+  const handleApprove = async () => {
+    if (!onApproveRefund) return;
+    setIsApproving(true);
+    try {
+      await onApproveRefund();
+    } catch (err) {
+      const axiosError = err as AxiosError<ApiError>;
+      addToast(
+        axiosError.response?.data?.message ?? "Failed to approve refund",
+        "error",
+      );
+    } finally {
+      setIsApproving(false);
+    }
+  };
+
+  const handleDeny = async () => {
+    if (!onDenyRefund) return;
+    setIsDenying(true);
+    try {
+      await onDenyRefund(denyNote.trim());
+    } catch (err) {
+      const axiosError = err as AxiosError<ApiError>;
+      addToast(
+        axiosError.response?.data?.message ?? "Failed to deny refund",
+        "error",
+      );
+    } finally {
+      setIsDenying(false);
+    }
+  };
+
+  const customerRefundNote = order.statusHistory
+    .find((h) => h.status === "refund_pending")?.note;
 
   return (
     <div className="space-y-6">
@@ -104,6 +150,56 @@ export default function OrderDetail({ order, onBack, onRefund }: OrderDetailProp
             <p>Amount: {formatPrice(order.payment.amount)}</p>
             <p>Status: {order.payment.status}</p>
             <p>Provider: {order.payment.provider}</p>
+          </div>
+        </Card>
+      )}
+
+      {(onApproveRefund || onDenyRefund) && (
+        <Card className="p-6">
+          <h3 className="mb-2 font-semibold text-gray-900">Refund Review</h3>
+          {customerRefundNote && (
+            <div className="mb-4 rounded-lg bg-orange-50 p-3">
+              <p className="mb-1 text-xs font-medium text-orange-800">
+                Customer&apos;s reason
+              </p>
+              <p className="text-sm text-orange-900">{customerRefundNote}</p>
+            </div>
+          )}
+          {onDenyRefund && (
+            <>
+              <label className="mb-1 block text-sm font-medium text-gray-700">
+                Reason for denial (optional)
+              </label>
+              <textarea
+                className="mb-4 w-full rounded-lg border border-gray-300 p-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                rows={2}
+                placeholder="Enter reason for denial..."
+                value={denyNote}
+                onChange={(e) => setDenyNote(e.target.value)}
+              />
+            </>
+          )}
+          <div className="flex gap-2">
+            {onApproveRefund && (
+              <Button
+                variant="outline"
+                size="sm"
+                isLoading={isApproving}
+                onClick={handleApprove}
+              >
+                Approve Refund
+              </Button>
+            )}
+            {onDenyRefund && (
+              <Button
+                variant="danger"
+                size="sm"
+                isLoading={isDenying}
+                onClick={handleDeny}
+              >
+                Deny Refund
+              </Button>
+            )}
           </div>
         </Card>
       )}

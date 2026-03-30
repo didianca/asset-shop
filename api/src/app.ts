@@ -24,7 +24,7 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       ...helmet.contentSecurityPolicy.getDefaultDirectives(),
-      "img-src": ["'self'", "https://*.s3.*.amazonaws.com"],
+      "img-src": ["'self'", appConfig.s3Origin].filter(Boolean) as string[],
     },
   },
 }));

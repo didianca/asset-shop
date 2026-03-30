@@ -12,14 +12,23 @@ import { useState } from "react";
 import { AxiosError } from "axios";
 
 const NEXT_STATUS: Partial<
-  Record<OrderStatus, "paid" | "fulfilled" | "refunded">
+  Record<OrderStatus, "paid" | "fulfilled">
 > = {
   pending: "paid",
   paid: "fulfilled",
-  refund_pending: "refunded",
 };
 
 const REFUNDABLE_STATUSES: OrderStatus[] = ["paid", "fulfilled"];
+
+function previousStatus(order: OrderResponse): "paid" | "fulfilled" {
+  const history = order.statusHistory;
+  for (let i = history.length - 1; i >= 0; i--) {
+    if (history[i].status === "paid" || history[i].status === "fulfilled") {
+      return history[i].status as "paid" | "fulfilled";
+    }
+  }
+  return "paid";
+}
 
 export default function OrderManagement() {
   const {
@@ -39,6 +48,9 @@ export default function OrderManagement() {
   const [refundTarget, setRefundTarget] = useState<OrderResponse | null>(null);
   const [refundNote, setRefundNote] = useState("");
   const [isRefunding, setIsRefunding] = useState(false);
+  const [denyTarget, setDenyTarget] = useState<OrderResponse | null>(null);
+  const [denyNote, setDenyNote] = useState("");
+  const [isDenying, setIsDenying] = useState(false);
   const addToast = useUiStore((s) => s.addToast);
 
   const handleTransition = async (order: { id: string; status: OrderStatus }) => {
@@ -85,6 +97,47 @@ export default function OrderManagement() {
     }
   };
 
+  const handleApproveRefund = async (order: OrderResponse) => {
+    setUpdatingId(order.id);
+    try {
+      await ordersApi.updateOrderStatus(order.id, { status: "refunded" });
+      addToast("Refund approved", "success");
+      await fetchOrders();
+    } catch (err) {
+      const axiosError = err as AxiosError<ApiError>;
+      addToast(
+        axiosError.response?.data?.message ?? "Failed to approve refund",
+        "error",
+      );
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const handleDenyRefund = async () => {
+    if (!denyTarget) return;
+
+    setIsDenying(true);
+    try {
+      await ordersApi.updateOrderStatus(denyTarget.id, {
+        status: previousStatus(denyTarget),
+        note: denyNote.trim() || undefined,
+      });
+      addToast("Refund denied", "success");
+      setDenyTarget(null);
+      setDenyNote("");
+      await fetchOrders();
+    } catch (err) {
+      const axiosError = err as AxiosError<ApiError>;
+      addToast(
+        axiosError.response?.data?.message ?? "Failed to deny refund",
+        "error",
+      );
+    } finally {
+      setIsDenying(false);
+    }
+  };
+
   if (selectedOrder) {
     return (
       <OrderDetail
@@ -101,6 +154,31 @@ export default function OrderManagement() {
                   note,
                 });
                 addToast("Order refunded", "success");
+                clearSelection();
+                await fetchOrders();
+              }
+            : undefined
+        }
+        onApproveRefund={
+          selectedOrder.status === "refund_pending"
+            ? async () => {
+                await ordersApi.updateOrderStatus(selectedOrder.id, {
+                  status: "refunded",
+                });
+                addToast("Refund approved", "success");
+                clearSelection();
+                await fetchOrders();
+              }
+            : undefined
+        }
+        onDenyRefund={
+          selectedOrder.status === "refund_pending"
+            ? async (note) => {
+                await ordersApi.updateOrderStatus(selectedOrder.id, {
+                  status: previousStatus(selectedOrder),
+                  note: note || undefined,
+                });
+                addToast("Refund denied", "success");
                 clearSelection();
                 await fetchOrders();
               }
@@ -169,7 +247,7 @@ export default function OrderManagement() {
                   </td>
                   <td className="py-3">
                     <div className="flex gap-2">
-                      {nextStatus && nextStatus !== "refunded" && (
+                      {nextStatus && (
                         <Button
                           size="sm"
                           variant="outline"
@@ -187,6 +265,25 @@ export default function OrderManagement() {
                         >
                           Refund
                         </Button>
+                      )}
+                      {order.status === "refund_pending" && (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            isLoading={updatingId === order.id}
+                            onClick={() => handleApproveRefund(order)}
+                          >
+                            Approve
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="danger"
+                            onClick={() => setDenyTarget(order)}
+                          >
+                            Deny
+                          </Button>
+                        </>
                       )}
                     </div>
                   </td>
@@ -248,6 +345,67 @@ export default function OrderManagement() {
                 onClick={handleRefund}
               >
                 Confirm Refund
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {denyTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+            <h3 className="mb-2 text-lg font-semibold text-gray-900">
+              Deny Refund
+            </h3>
+            <p className="mb-4 text-sm text-gray-600">
+              Order {denyTarget.id.slice(0, 8)}... &mdash;{" "}
+              {formatPrice(denyTarget.totalAmount)}
+              {denyTarget.user && (
+                <span>
+                  {" "}for {denyTarget.user.firstName} {denyTarget.user.lastName}
+                </span>
+              )}
+            </p>
+            {(() => {
+              const customerNote = denyTarget.statusHistory
+                .find((h) => h.status === "refund_pending")?.note;
+              return customerNote ? (
+                <div className="mb-4 rounded-lg bg-orange-50 p-3">
+                  <p className="mb-1 text-xs font-medium text-orange-800">
+                    Customer&apos;s reason
+                  </p>
+                  <p className="text-sm text-orange-900">{customerNote}</p>
+                </div>
+              ) : null;
+            })()}
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              Reason for denial (optional)
+            </label>
+            <textarea
+              className="mb-4 w-full rounded-lg border border-gray-300 p-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              rows={3}
+              placeholder="Enter reason for denial..."
+              value={denyNote}
+              onChange={(e) => setDenyNote(e.target.value)}
+            />
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setDenyTarget(null);
+                  setDenyNote("");
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="danger"
+                size="sm"
+                isLoading={isDenying}
+                onClick={handleDenyRefund}
+              >
+                Confirm Denial
               </Button>
             </div>
           </div>

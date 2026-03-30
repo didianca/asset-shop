@@ -14,6 +14,7 @@ type ProductWithRelations = {
   description: string | null;
   price: { toString(): string } | number;
   discountPercent: number | null;
+  isBundle: boolean;
   isActive: boolean;
   createdAt: Date;
   previewKey: string;
@@ -29,6 +30,7 @@ type ProductResponse = {
   description: string | null;
   price: number;
   discountPercent: number | null;
+  isBundle: boolean;
   isActive: boolean;
   tags: string[];
   previewKey: string;
@@ -47,6 +49,7 @@ export function formatProduct(product: ProductWithRelations): ProductResponse {
     description: product.description,
     price: Number(product.price),
     discountPercent: product.discountPercent,
+    isBundle: product.isBundle,
     isActive: product.isActive,
     tags: product.tags.map((pt) => pt.tag.name),
     previewKey: product.previewKey,

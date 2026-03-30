@@ -28,6 +28,10 @@ describe("isValidTransition", () => {
     expect(isValidTransition("paid", "fulfilled")).toBe(true);
   });
 
+  it("allows paid -> refunded", () => {
+    expect(isValidTransition("paid", "refunded")).toBe(true);
+  });
+
   it("allows fulfilled -> refunded", () => {
     expect(isValidTransition("fulfilled", "refunded")).toBe(true);
   });
@@ -135,5 +139,23 @@ describe("formatOrder", () => {
       changedBy: "user-1",
       createdAt: new Date("2026-01-01"),
     });
+  });
+
+  it("includes user info when present", () => {
+    const orderWithUser = {
+      ...baseOrder,
+      user: { email: "john@example.com", firstName: "John", lastName: "Doe" },
+    };
+    const result = formatOrder(orderWithUser);
+    expect(result.user).toEqual({
+      email: "john@example.com",
+      firstName: "John",
+      lastName: "Doe",
+    });
+  });
+
+  it("omits user field when not present", () => {
+    const result = formatOrder(baseOrder);
+    expect(result.user).toBeUndefined();
   });
 });

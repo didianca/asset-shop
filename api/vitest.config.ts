@@ -4,18 +4,20 @@ export default defineConfig({
   test: {
     globals: true,
     include: [
-      "tests/**/*.test.ts",
+      "src/tests/**/*.test.ts",
       "src/lib/**/tests/**/*.test.ts",
       "src/middleware/**/tests/**/*.test.ts",
       "src/services/**/tests/**/*.test.ts",
     ],
     setupFiles: [
+      "./src/tests/setup.ts",
       "./src/services/auth/tests/setup.ts",
       "./src/services/product/tests/setup.ts",
       "./src/services/cart/tests/setup.ts",
       "./src/services/order/tests/setup.ts",
       "./src/services/payment/tests/setup.ts",
       "./src/services/upload/tests/setup.ts",
+      "./src/services/bundle/tests/setup.ts",
     ],
     coverage: {
       provider: "v8",

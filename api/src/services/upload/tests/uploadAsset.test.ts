@@ -126,4 +126,26 @@ describe("POST /upload", () => {
     expect(res.status).toBe(200);
     expect(res.body.assetKey).toContain("webp-test.webp");
   });
+
+  it("derives extension from mimetype when filename has no extension", async () => {
+    const res = await request(app)
+      .post("/api/upload?slug=no-ext-test")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .attach("file", Buffer.from("fake-image"), { filename: "noextension", contentType: "image/png" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.assetKey).toBe("assets/no-ext-test.png");
+    expect(res.body.previewKey).toBe("previews/no-ext-test.png");
+  });
+
+  it("falls back to 400x400 when image metadata has no width or height", async () => {
+    mockSharpMetadata.mockResolvedValueOnce({});
+
+    const res = await request(app)
+      .post("/api/upload?slug=no-dim-test")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .attach("file", Buffer.from("fake-image"), { filename: "asset.png", contentType: "image/png" });
+
+    expect(res.status).toBe(200);
+  });
 });

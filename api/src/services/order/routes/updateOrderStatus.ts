@@ -13,6 +13,7 @@ const orderInclude = {
   },
   statusHistory: { orderBy: { createdAt: "asc" as const } },
   payment: true,
+  user: { select: { email: true, firstName: true, lastName: true } },
 } as const;
 
 /**
@@ -22,7 +23,7 @@ const orderInclude = {
  *     summary: Update order status (admin only)
  *     description: |
  *       Transitions an order's status. Valid transitions:
- *       pending → paid, paid → fulfilled, fulfilled → refunded (within 30 days), refunded → pending.
+ *       pending → paid, paid → fulfilled, paid → refunded, fulfilled → refunded (within 30 days), refunded → pending.
  *     tags:
  *       - Orders
  *     security:
@@ -49,7 +50,7 @@ const orderInclude = {
  *             schema:
  *               $ref: '#/components/schemas/OrderResponse'
  *       400:
- *         description: Invalid status transition or refund window expired
+ *         description: Validation error, invalid status transition, or refund window expired
  *         content:
  *           application/json:
  *             schema:
@@ -113,6 +114,13 @@ export async function updateOrderStatusHandler(
     await tx.orderStatusHistory.create({
       data: { orderId: id, status, note: note ?? null, changedBy: adminId },
     });
+
+    if (status === "refunded") {
+      await tx.payment.updateMany({
+        where: { orderId: id },
+        data: { status: "refunded" },
+      });
+    }
 
     return tx.order.findUnique({
       where: { id },

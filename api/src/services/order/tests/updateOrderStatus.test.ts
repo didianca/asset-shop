@@ -172,6 +172,50 @@ describe("PATCH /orders/:id/status", () => {
     expect(res.body.statusHistory).toHaveLength(3);
   });
 
+  it("transitions paid -> refunded", async () => {
+    const product = await prisma.product.create({
+      data: makeProduct({ name: "UOS Paid Refund", slug: `${SLUG_PREFIX}paid-refund` }),
+    });
+    const orderId = await createOrder(customerToken, product.id);
+
+    await request(app)
+      .patch(`/api/orders/${orderId}/status`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ status: "paid" });
+
+    const res = await request(app)
+      .patch(`/api/orders/${orderId}/status`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ status: "refunded", note: "Customer requested refund" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe("refunded");
+    expect(res.body.statusHistory).toHaveLength(3);
+    expect(res.body.statusHistory[2].status).toBe("refunded");
+    expect(res.body.statusHistory[2].note).toBe("Customer requested refund");
+  });
+
+  it("updates payment status to refunded when order is refunded", async () => {
+    const product = await prisma.product.create({
+      data: makeProduct({ name: "UOS PayRefund", slug: `${SLUG_PREFIX}pay-refund` }),
+    });
+    const orderId = await createOrder(customerToken, product.id);
+
+    await prisma.order.update({ where: { id: orderId }, data: { status: "paid" } });
+    await prisma.payment.create({
+      data: { orderId, amount: 10, status: "captured", provider: "stripe", providerReference: "pi_test_refund" },
+    });
+
+    const res = await request(app)
+      .patch(`/api/orders/${orderId}/status`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ status: "refunded", note: "Admin refund" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe("refunded");
+    expect(res.body.payment.status).toBe("refunded");
+  });
+
   it("transitions fulfilled -> refunded within 30 days", async () => {
     const product = await prisma.product.create({
       data: makeProduct({ name: "UOS Refund", slug: `${SLUG_PREFIX}refund` }),

@@ -72,12 +72,15 @@ app.use(
   }
 );
 
-// --- Static file serving (production) ---
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const clientDir = path.join(__dirname, "../client");
-app.use(express.static(clientDir));
-app.get("/{*path}", (_req, res) => {
-  res.sendFile(path.join(clientDir, "index.html"));
-});
+// --- Static file serving (production only) ---
+// In dev the Vite dev server serves the client; Express only serves it in production.
+if (process.env.NODE_ENV === "production") {
+  const __dirname = path.dirname(fileURLToPath(import.meta.url));
+  const clientDir = path.join(__dirname, "../client");
+  app.use(express.static(clientDir));
+  app.get("/{*path}", (_req, res) => {
+    res.sendFile(path.join(clientDir, "index.html"));
+  });
+}
 
 export default app;

@@ -36,6 +36,16 @@ describe("auth.api", () => {
       await authApi.verifyEmail("abc123");
       expect(apiClient.get).toHaveBeenCalledWith("/auth/verify", {
         params: { token: "abc123" },
+        signal: undefined,
+      });
+    });
+
+    it("forwards abort signal to the request", async () => {
+      const controller = new AbortController();
+      await authApi.verifyEmail("abc123", controller.signal);
+      expect(apiClient.get).toHaveBeenCalledWith("/auth/verify", {
+        params: { token: "abc123" },
+        signal: controller.signal,
       });
     });
   });

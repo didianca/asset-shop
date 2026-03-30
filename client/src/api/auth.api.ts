@@ -9,8 +9,9 @@ export function login(body: LoginBody) {
   return apiClient.post<{ token: string }>("/auth/login", body);
 }
 
-export function verifyEmail(token: string) {
+export function verifyEmail(token: string, signal?: AbortSignal) {
   return apiClient.get<{ message: string }>("/auth/verify", {
     params: { token },
+    signal,
   });
 }

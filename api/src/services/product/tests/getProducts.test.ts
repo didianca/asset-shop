@@ -31,12 +31,10 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   await prisma.product.deleteMany({ where: { slug: { startsWith: SLUG_PREFIX } } });
-  await prisma.bundle.deleteMany({ where: { slug: { startsWith: SLUG_PREFIX } } });
 });
 
 afterAll(async () => {
   await prisma.product.deleteMany({ where: { slug: { startsWith: SLUG_PREFIX } } });
-  await prisma.bundle.deleteMany({ where: { slug: { startsWith: SLUG_PREFIX } } });
   await prisma.user.deleteMany({ where: { email: ADMIN_EMAIL } });
   await prisma.$disconnect();
 });
@@ -83,19 +81,6 @@ describe("GET /products", () => {
     expect(slugs).not.toContain(`${SLUG_PREFIX}inactive`);
   });
 
-  it("excludes bundle products", async () => {
-    await prisma.product.create({
-      data: makeProduct({ name: "GPS Bundle Product", slug: `${SLUG_PREFIX}bundle`, price: 30, isBundle: true }),
-    });
-
-    const res = await request(app)
-      .get("/api/products")
-      .set("Authorization", `Bearer ${adminToken}`);
-
-    const slugs = res.body.map((p: { slug: string }) => p.slug);
-    expect(slugs).not.toContain(`${SLUG_PREFIX}bundle`);
-  });
-
   it("returns products with tags and urls included", async () => {
     const product = await prisma.product.create({
       data: makeProduct({ name: "GPS Rich Product", slug: `${SLUG_PREFIX}rich`, price: 25 }),
@@ -112,40 +97,6 @@ describe("GET /products", () => {
     expect(found.previewUrl).toContain("previews/gps-preview.jpg");
 
     await prisma.tag.delete({ where: { slug: "gps-tag-one" } });
-  });
-
-  it("returns bundle as null when product has no bundle", async () => {
-    await prisma.product.create({
-      data: makeProduct({ name: "GPS No Bundle", slug: `${SLUG_PREFIX}no-bundle` }),
-    });
-
-    const res = await request(app)
-      .get("/api/products")
-      .set("Authorization", `Bearer ${adminToken}`);
-
-    const found = res.body.find((p: { slug: string }) => p.slug === `${SLUG_PREFIX}no-bundle`);
-    expect(found.bundle).toBeNull();
-  });
-
-  it("returns bundle object when product belongs to a bundle", async () => {
-    const bundle = await prisma.bundle.create({
-      data: { name: "GPS Test Bundle", slug: `${SLUG_PREFIX}bundle-parent`, discountPercent: 15, createdBy: adminId },
-    });
-    await prisma.product.create({
-      data: makeProduct({ name: "GPS Bundled Product", slug: `${SLUG_PREFIX}bundled`, bundleId: bundle.id }),
-    });
-
-    const res = await request(app)
-      .get("/api/products")
-      .set("Authorization", `Bearer ${adminToken}`);
-
-    const found = res.body.find((p: { slug: string }) => p.slug === `${SLUG_PREFIX}bundled`);
-    expect(found.bundle).toEqual({
-      id: bundle.id,
-      name: "GPS Test Bundle",
-      slug: `${SLUG_PREFIX}bundle-parent`,
-      discountPercent: 15,
-    });
   });
 
   it("returns products ordered by createdAt descending", async () => {

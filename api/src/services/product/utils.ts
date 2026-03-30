@@ -1,12 +1,5 @@
 import { getPublicUrl, findKeyByPrefix } from "../upload/s3.js";
 
-type BundleResponse = {
-  id: string;
-  name: string;
-  slug: string;
-  discountPercent: number | null;
-};
-
 type ProductWithRelations = {
   id: string;
   name: string;
@@ -14,13 +7,11 @@ type ProductWithRelations = {
   description: string | null;
   price: { toString(): string } | number;
   discountPercent: number | null;
-  isBundle: boolean;
   isActive: boolean;
   createdAt: Date;
   previewKey: string;
   assetKey: string;
   tags: { tag: { name: string } }[];
-  bundle: { id: string; name: string; slug: string; discountPercent: number | null } | null;
 };
 
 type ProductResponse = {
@@ -30,14 +21,12 @@ type ProductResponse = {
   description: string | null;
   price: number;
   discountPercent: number | null;
-  isBundle: boolean;
   isActive: boolean;
   tags: string[];
   previewKey: string;
   assetKey: string;
   previewUrl: string;
   assetUrl: string;
-  bundle: BundleResponse | null;
   createdAt: Date;
 };
 
@@ -49,16 +38,12 @@ export function formatProduct(product: ProductWithRelations): ProductResponse {
     description: product.description,
     price: Number(product.price),
     discountPercent: product.discountPercent,
-    isBundle: product.isBundle,
     isActive: product.isActive,
     tags: product.tags.map((pt) => pt.tag.name),
     previewKey: product.previewKey,
     assetKey: product.assetKey,
     previewUrl: getPublicUrl(product.previewKey),
     assetUrl: getPublicUrl(product.assetKey),
-    bundle: product.bundle
-      ? { id: product.bundle.id, name: product.bundle.name, slug: product.bundle.slug, discountPercent: product.bundle.discountPercent }
-      : null,
     createdAt: product.createdAt,
   };
 }

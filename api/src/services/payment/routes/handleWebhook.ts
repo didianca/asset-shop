@@ -157,7 +157,7 @@ export async function handleWebhookHandler(
           user: { select: { id: true, email: true } },
           items: {
             include: {
-              product: { select: { name: true, assetKey: true, isBundle: true, bundleId: true } },
+              product: { select: { name: true, assetKey: true } },
             },
           },
         },
@@ -165,29 +165,13 @@ export async function handleWebhookHandler(
 
       if (orderWithDetails) {
         const SEVEN_DAYS = 7 * 24 * 3600;
-        const items = (await Promise.all(
-          orderWithDetails.items.map(async (item) => {
-            if (item.product.isBundle && item.product.bundleId) {
-              // Bundle purchased — send download links for all member products, not the bundle row itself
-              const memberProducts = await prisma.product.findMany({
-                where: { bundleId: item.product.bundleId, isBundle: false, isActive: true },
-                select: { name: true, assetKey: true },
-              });
-              return Promise.all(
-                memberProducts.map(async (member) => ({
-                  productName: member.name,
-                  unitPrice: (Number(item.unitPrice) / memberProducts.length).toFixed(2),
-                  downloadUrl: await getPresignedUrl(member.assetKey, SEVEN_DAYS),
-                }))
-              );
-            }
-            return {
-              productName: item.product.name,
-              unitPrice: Number(item.unitPrice).toFixed(2),
-              downloadUrl: await getPresignedUrl(item.product.assetKey, SEVEN_DAYS),
-            };
-          })
-        )).flat();
+        const items = await Promise.all(
+          orderWithDetails.items.map(async (item) => ({
+            productName: item.product.name,
+            unitPrice: Number(item.unitPrice).toFixed(2),
+            downloadUrl: await getPresignedUrl(item.product.assetKey, SEVEN_DAYS),
+          }))
+        );
 
         await sendOrderConfirmationEmail(orderWithDetails.user.email, {
           id: orderWithDetails.id,

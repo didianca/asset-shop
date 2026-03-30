@@ -1,13 +1,11 @@
-import { useState, useEffect, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import type {
   ProductResponse,
   CreateProductBody,
   UpdateProductBody,
-  BundleResponse,
   ApiError,
 } from "../../types/api";
 import * as productsApi from "../../api/products.api";
-import * as bundlesApi from "../../api/bundles.api";
 import * as uploadApi from "../../api/upload.api";
 import { useUiStore } from "../../stores/uiStore";
 import Input from "../ui/Input";
@@ -33,21 +31,14 @@ export default function ProductForm({
   const [description, setDescription] = useState(product?.description ?? "");
   const [price, setPrice] = useState(product?.price?.toString() ?? "");
   const [discountPercent, setDiscountPercent] = useState(
-    product?.discountPercent?.toString() ?? "",
+    product?.discountPercent ? product.discountPercent.toString() : "",
   );
   const [tags, setTags] = useState(product?.tags?.join(", ") ?? "");
   const [isActive, setIsActive] = useState(product?.isActive ?? true);
-  const [isBundle, setIsBundle] = useState(product?.isBundle ?? false);
-  const [bundleId, setBundleId] = useState(product?.bundle?.id ?? "");
-  const [bundles, setBundles] = useState<BundleResponse[]>([]);
   const [file, setFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
-
-  useEffect(() => {
-    bundlesApi.getBundles().then((res) => setBundles(res.data)).catch(() => {});
-  }, []);
 
   const handleNameChange = (value: string) => {
     setName(value);
@@ -89,9 +80,7 @@ export default function ProductForm({
           slug,
           description: description || null,
           price: parseFloat(price),
-          discountPercent: discountPercent
-            ? parseFloat(discountPercent)
-            : null,
+          discountPercent: parseFloat(discountPercent) || null,
           tags: parsedTags,
           isActive,
         };
@@ -103,12 +92,8 @@ export default function ProductForm({
           slug,
           description: description || undefined,
           price: parseFloat(price),
-          discountPercent: discountPercent
-            ? parseFloat(discountPercent)
-            : undefined,
+          discountPercent: parseFloat(discountPercent) || undefined,
           tags: parsedTags.length > 0 ? parsedTags : undefined,
-          isBundle: isBundle || undefined,
-          bundleId: !isBundle && bundleId ? bundleId : undefined,
         };
         await productsApi.createProduct(body);
         addToast("Product created", "success");
@@ -197,47 +182,6 @@ export default function ProductForm({
         onChange={(e) => setTags(e.target.value)}
         placeholder="dark, minimalist, 4K"
       />
-
-      {!isEdit && (
-        <div className="space-y-3 rounded-lg border border-gray-200 p-3">
-          <label className="flex items-center gap-2 text-sm text-gray-700">
-            <input
-              type="checkbox"
-              checked={isBundle}
-              onChange={(e) => {
-                setIsBundle(e.target.checked);
-                if (e.target.checked) setBundleId("");
-              }}
-              className="rounded border-gray-300"
-            />
-            This product IS a bundle
-          </label>
-
-          {!isBundle && (
-            <div>
-              <label
-                htmlFor="bundleId"
-                className="mb-1 block text-sm font-medium text-gray-700"
-              >
-                Assign to bundle
-              </label>
-              <select
-                id="bundleId"
-                value={bundleId}
-                onChange={(e) => setBundleId(e.target.value)}
-                className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-              >
-                <option value="">None</option>
-                {bundles.map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {b.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-        </div>
-      )}
 
       {!isEdit && (
         <div>

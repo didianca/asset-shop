@@ -28,7 +28,6 @@ const product = {
   tags: ["icons", "design"],
   previewUrl: "https://example.com/icons.jpg",
   assetUrl: "https://example.com/icons.zip",
-  bundle: null,
   isActive: true,
   createdBy: "admin-1",
   createdAt: "2026-01-01T00:00:00Z",

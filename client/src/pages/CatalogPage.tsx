@@ -7,15 +7,11 @@ import CatalogToolbar, {
 } from "../components/products/CatalogToolbar";
 import Spinner from "../components/ui/Spinner";
 import { calculateEffectivePrice } from "../lib/utils";
-import { getBundles } from "../api/bundles.api";
-import type { BundleResponse } from "../types/api";
 
 const defaultFilters: CatalogFilters = {
   search: "",
   sort: "newest",
   onSale: false,
-  inBundle: false,
-  bundleId: "",
   minPrice: "",
   maxPrice: "",
 };
@@ -25,12 +21,10 @@ export default function CatalogPage() {
     useProductStore();
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [filters, setFilters] = useState<CatalogFilters>(defaultFilters);
-  const [bundles, setBundles] = useState<BundleResponse[]>([]);
 
   useEffect(() => {
     if (products.length === 0) fetchProducts();
     if (tags.length === 0) fetchTags();
-    getBundles().then((res) => setBundles(res.data)).catch(() => {});
   }, [products.length, tags.length, fetchProducts, fetchTags]);
 
   const handleFilterChange = useCallback(
@@ -50,8 +44,6 @@ export default function CatalogPage() {
     filters.search !== "" ||
     filters.sort !== "newest" ||
     filters.onSale ||
-    filters.inBundle ||
-    filters.bundleId !== "" ||
     filters.minPrice !== "" ||
     filters.maxPrice !== "";
 
@@ -90,11 +82,7 @@ export default function CatalogPage() {
         return false;
       }
 
-      if (filters.inBundle && !p.bundle) return false;
-
-      return !(filters.bundleId && p.bundle?.id !== filters.bundleId);
-
-
+      return true;
     });
 
     const sorted = [...filtered];
@@ -145,7 +133,6 @@ export default function CatalogPage() {
 
       <CatalogToolbar
         filters={filters}
-        bundles={bundles}
         onChange={handleFilterChange}
         onClear={handleClearFilters}
         hasActiveFilters={hasActiveFilters}

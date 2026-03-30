@@ -15,7 +15,6 @@ const makeProduct = (overrides?: Partial<ProductResponse>): ProductResponse => (
   tags: ["dark", "minimalist"],
   previewUrl: "https://example.com/preview.jpg",
   assetUrl: "https://example.com/asset.zip",
-  bundle: null,
   createdAt: "2026-01-01T00:00:00Z",
   ...overrides,
 });
@@ -53,17 +52,6 @@ describe("ProductCard", () => {
       />,
     );
     expect(screen.getByText("+2")).toBeInTheDocument();
-  });
-
-  it("shows bundle badge when product has a bundle", () => {
-    renderWithRouter(
-      <ProductCard
-        product={makeProduct({
-          bundle: { id: "b1", name: "Bundle", slug: "bundle", discountPercent: 10 },
-        })}
-      />,
-    );
-    expect(screen.getByText("Bundle")).toBeInTheDocument();
   });
 
   it("links to the product detail page", () => {

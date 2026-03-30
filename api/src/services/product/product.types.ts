@@ -26,7 +26,7 @@ import { z } from "zod";
  *           example: 19.99
  *         discountPercent:
  *           type: integer
- *           minimum: 0
+ *           minimum: 1
  *           maximum: 100
  *           example: 10
  *         tags:
@@ -34,14 +34,6 @@ import { z } from "zod";
  *           items:
  *             type: string
  *           example: ["dark", "minimalist"]
- *         isBundle:
- *           type: boolean
- *           description: Mark this product as the purchasable bundle product. Mutually exclusive with bundleId.
- *           example: false
- *         bundleId:
- *           type: string
- *           format: uuid
- *           description: Assign this product to an existing bundle. Mutually exclusive with isBundle.
  *     UpdateProductBody:
  *       type: object
  *       additionalProperties: false
@@ -65,7 +57,7 @@ import { z } from "zod";
  *           type: number
  *         discountPercent:
  *           type: integer
- *           minimum: 0
+ *           minimum: 1
  *           maximum: 100
  *           nullable: true
  *         isActive:
@@ -83,14 +75,12 @@ import { z } from "zod";
  *         - description
  *         - price
  *         - discountPercent
- *         - isBundle
  *         - isActive
  *         - tags
  *         - previewKey
  *         - assetKey
  *         - previewUrl
  *         - assetUrl
- *         - bundle
  *         - createdAt
  *       properties:
  *         id:
@@ -106,8 +96,6 @@ import { z } from "zod";
  *           type: number
  *         discountPercent:
  *           type: integer
- *         isBundle:
- *           type: boolean
  *         isActive:
  *           type: boolean
  *         tags:
@@ -126,20 +114,6 @@ import { z } from "zod";
  *         assetUrl:
  *           type: string
  *           format: uri
- *         bundle:
- *           nullable: true
- *           type: object
- *           properties:
- *             id:
- *               type: string
- *               format: uuid
- *             name:
- *               type: string
- *             slug:
- *               type: string
- *             discountPercent:
- *               type: integer
- *               nullable: true
  *         createdAt:
  *           type: string
  *           format: date-time
@@ -161,12 +135,7 @@ export const CreateProductSchema = z.object({
   price: z.number().positive(),
   discountPercent: z.number().int().min(1).max(100).optional(),
   tags: z.array(z.string()).optional(),
-  isBundle: z.boolean().optional(),
-  bundleId: z.string().uuid().optional(),
-}).strict().refine(
-  (data) => !(data.isBundle && data.bundleId),
-  { message: "isBundle and bundleId are mutually exclusive", path: ["bundleId"] },
-);
+}).strict();
 
 export const UpdateProductSchema = z.object({
   name: z.string().min(1),

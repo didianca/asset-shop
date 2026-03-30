@@ -12,7 +12,6 @@ export const ROUTES = {
   ADMIN: "/admin",
   ADMIN_PRODUCTS: "/admin/products",
   ADMIN_ORDERS: "/admin/orders",
-  ADMIN_BUNDLES: "/admin/bundles",
 } as const;
 
 export const ORDER_STATUS_CONFIG = {

@@ -13,7 +13,7 @@ beforeEach(() => {
   mockSend.mockReset();
 });
 
-const makeOrder = <T extends object>(overrides: T) => ({
+const makeOrder = <T extends object>(overrides: T): { id: string; createdAt: Date; totalAmount: string; items: { productName: string; unitPrice: string; downloadUrl: string }[] } & T => ({
   id: "11111111-2222-3333-4444-555555555555",
   createdAt: new Date("2026-01-15T12:00:00Z"),
   totalAmount: "29.99",
@@ -24,7 +24,7 @@ const makeOrder = <T extends object>(overrides: T) => ({
   ...overrides,
 });
 
-const makeRefund = <T extends object>(overrides: T) => ({
+const makeRefund = <T extends object>(overrides: T): { orderId: string; totalAmount: string; note: string; items: { productName: string; unitPrice: string }[] } & T => ({
   orderId: "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
   totalAmount: "29.99",
   note: "Not what I expected",

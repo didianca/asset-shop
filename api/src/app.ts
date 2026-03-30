@@ -10,7 +10,7 @@ import cartRouter from "./services/cart/routes/index.js";
 import orderRouter from "./services/order/routes/index.js";
 import paymentRouter from "./services/payment/routes/index.js";
 import uploadRouter from "./services/upload/routes/index.js";
-import bundleRouter from "./services/bundle/routes/index.js";
+
 import { handleWebhookHandler } from "./services/payment/routes/handleWebhook.js";
 
 const app = express();
@@ -52,7 +52,6 @@ apiRouter.use("/cart", cartRouter);
 apiRouter.use("/orders", orderRouter);
 apiRouter.use("/payments", paymentRouter);
 apiRouter.use("/upload", uploadRouter);
-apiRouter.use("/bundles", bundleRouter);
 
 app.use("/api", apiRouter);
 

@@ -15,7 +15,6 @@ vi.mock("../utils.js", async (importOriginal) => {
 
 const SLUG_PREFIX = "cp-test-";
 const TAG_PREFIX = "cp-tag-";
-const BUNDLE_SLUG_PREFIX = "cp-bundle-";
 const ADMIN_EMAIL = "admin@createproduct.test";
 const CUSTOMER_EMAIL = "customer@createproduct.test";
 
@@ -46,13 +45,11 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   await prisma.product.deleteMany({ where: { slug: { startsWith: SLUG_PREFIX } } });
-  await prisma.bundle.deleteMany({ where: { slug: { startsWith: BUNDLE_SLUG_PREFIX } } });
   await prisma.tag.deleteMany({ where: { slug: { startsWith: TAG_PREFIX } } });
 });
 
 afterAll(async () => {
   await prisma.product.deleteMany({ where: { slug: { startsWith: SLUG_PREFIX } } });
-  await prisma.bundle.deleteMany({ where: { slug: { startsWith: BUNDLE_SLUG_PREFIX } } });
   await prisma.tag.deleteMany({ where: { slug: { startsWith: TAG_PREFIX } } });
   await prisma.user.deleteMany({ where: { email: { in: [ADMIN_EMAIL, CUSTOMER_EMAIL] } } });
   await prisma.$disconnect();
@@ -93,6 +90,14 @@ describe("POST /products", () => {
       .post("/api/products")
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ ...validProduct, discountPercent: 101 });
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 400 for discountPercent of 0", async () => {
+    const res = await request(app)
+      .post("/api/products")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ ...validProduct, discountPercent: 0 });
     expect(res.status).toBe(400);
   });
 
@@ -222,66 +227,4 @@ describe("POST /products", () => {
     vi.restoreAllMocks();
   });
 
-  it("returns isBundle: false in the response by default", async () => {
-    const res = await request(app)
-      .post("/api/products")
-      .set("Authorization", `Bearer ${adminToken}`)
-      .send(validProduct);
-
-    expect(res.status).toBe(201);
-    expect(res.body.isBundle).toBe(false);
-  });
-
-  it("creates a bundle product when isBundle is true", async () => {
-    const res = await request(app)
-      .post("/api/products")
-      .set("Authorization", `Bearer ${adminToken}`)
-      .send({ ...validProduct, isBundle: true });
-
-    expect(res.status).toBe(201);
-    expect(res.body.isBundle).toBe(true);
-
-    const product = await prisma.product.findUnique({ where: { slug: validProduct.slug } });
-    expect(product?.isBundle).toBe(true);
-  });
-
-  it("assigns the product to a bundle when bundleId is provided", async () => {
-    const bundle = await prisma.bundle.create({
-      data: { name: "CP Test Bundle", slug: `${BUNDLE_SLUG_PREFIX}assign`, createdBy: adminId },
-    });
-
-    const res = await request(app)
-      .post("/api/products")
-      .set("Authorization", `Bearer ${adminToken}`)
-      .send({ ...validProduct, bundleId: bundle.id });
-
-    expect(res.status).toBe(201);
-    expect(res.body.bundle).toMatchObject({ id: bundle.id, name: bundle.name });
-
-    const product = await prisma.product.findUnique({ where: { slug: validProduct.slug } });
-    expect(product?.bundleId).toBe(bundle.id);
-  });
-
-  it("returns 400 when bundleId does not refer to an existing bundle", async () => {
-    const res = await request(app)
-      .post("/api/products")
-      .set("Authorization", `Bearer ${adminToken}`)
-      .send({ ...validProduct, bundleId: "00000000-0000-0000-0000-000000000000" });
-
-    expect(res.status).toBe(400);
-    expect(res.body.message).toContain("Bundle not found");
-  });
-
-  it("returns 400 when both isBundle and bundleId are set", async () => {
-    const bundle = await prisma.bundle.create({
-      data: { name: "CP Exclusive Bundle", slug: `${BUNDLE_SLUG_PREFIX}exclusive`, createdBy: adminId },
-    });
-
-    const res = await request(app)
-      .post("/api/products")
-      .set("Authorization", `Bearer ${adminToken}`)
-      .send({ ...validProduct, isBundle: true, bundleId: bundle.id });
-
-    expect(res.status).toBe(400);
-  });
 });

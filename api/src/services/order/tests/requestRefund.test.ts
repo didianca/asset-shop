@@ -20,7 +20,6 @@ const NONEXISTENT_ID = "00000000-0000-0000-0000-000000000000";
 let adminId: string;
 let customerId: string;
 let customer2Id: string;
-let adminToken: string;
 let customerToken: string;
 let customer2Token: string;
 
@@ -62,7 +61,6 @@ beforeAll(async () => {
     data: { email: ADMIN_EMAIL, passwordHash: "x", firstName: "Admin", lastName: "Test", role: "admin", status: "active" },
   });
   adminId = admin.id;
-  adminToken = jwt.sign({ id: admin.id, role: "admin", status: "active" }, authConfig.jwtSecret, { expiresIn: "1h" });
 
   const customer = await prisma.user.create({
     data: { email: CUSTOMER_EMAIL, passwordHash: "x", firstName: "Customer", lastName: "Test", role: "customer", status: "active" },

@@ -13,15 +13,12 @@ export interface CatalogFilters {
   search: string;
   sort: SortOption;
   onSale: boolean;
-  inBundle: boolean;
-  bundleId: string;
   minPrice: string;
   maxPrice: string;
 }
 
 interface CatalogToolbarProps {
   filters: CatalogFilters;
-  bundles: { id: string; name: string }[];
   onChange: <K extends keyof CatalogFilters>(
     key: K,
     value: CatalogFilters[K],
@@ -33,7 +30,6 @@ interface CatalogToolbarProps {
 
 export default function CatalogToolbar({
   filters,
-  bundles,
   onChange,
   onClear,
   hasActiveFilters,
@@ -72,30 +68,6 @@ export default function CatalogToolbar({
             <option value="name-desc">Name: Z–A</option>
           </select>
         </div>
-
-        {bundles.length > 0 && (
-          <div>
-            <label
-              htmlFor="bundle"
-              className="mb-1 block text-sm font-medium text-gray-700"
-            >
-              Bundle
-            </label>
-            <select
-              id="bundle"
-              value={filters.bundleId}
-              onChange={(e) => onChange("bundleId", e.target.value)}
-              className="block rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm transition-colors focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            >
-              <option value="">All bundles</option>
-              {bundles.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
 
         {children}
 
@@ -142,23 +114,6 @@ export default function CatalogToolbar({
             onChange={(e) => onChange("onSale", e.target.checked)}
           />
           On Sale
-        </label>
-
-        <label
-          className={cn(
-            "flex cursor-pointer items-center gap-2 rounded-full px-3 py-2 text-sm font-medium transition-colors",
-            filters.inBundle
-              ? "bg-indigo-100 text-indigo-800"
-              : "bg-gray-100 text-gray-700 hover:bg-gray-200",
-          )}
-        >
-          <input
-            type="checkbox"
-            className="sr-only"
-            checked={filters.inBundle}
-            onChange={(e) => onChange("inBundle", e.target.checked)}
-          />
-          In Bundle
         </label>
 
         {hasActiveFilters && (

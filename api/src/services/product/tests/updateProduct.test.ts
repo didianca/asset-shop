@@ -129,6 +129,14 @@ describe("PUT /products/:id", () => {
     expect(res.body.discountPercent).toBe(10);
   });
 
+  it("returns 400 for discountPercent of 0", async () => {
+    const res = await request(app)
+      .put(`/api/products/${NONEXISTENT_ID}`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ ...validUpdate, discountPercent: 0 });
+    expect(res.status).toBe(400);
+  });
+
   it("sets isActive to false when isActive is false", async () => {
     const product = await prisma.product.create({
       data: makeProduct({ name: "UP Deactivate", slug: `${SLUG_PREFIX}deactivate` }),

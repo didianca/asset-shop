@@ -18,12 +18,14 @@ export default function LoginForm() {
 
   const login = useAuthStore((s) => s.login);
   const fetchCart = useCartStore((s) => s.fetchCart);
+  const resetCart = useCartStore((s) => s.reset);
   const addToast = useUiStore((s) => s.addToast);
   const navigate = useNavigate();
   const location = useLocation();
 
-  const from = (location.state as { from?: { pathname: string } })?.from
-    ?.pathname ?? ROUTES.HOME;
+  const state = location.state as { from?: { pathname: string }; registered?: boolean } | null;
+  const from = state?.from?.pathname ?? ROUTES.HOME;
+  const justRegistered = state?.registered ?? false;
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -33,6 +35,7 @@ export default function LoginForm() {
     try {
       const { data } = await authApi.login({ email, password });
       login(data.token);
+      resetCart();
       await fetchCart();
       addToast("Logged in successfully", "success");
       navigate(from, { replace: true });
@@ -46,6 +49,17 @@ export default function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {justRegistered && (
+        <div className="rounded-lg bg-green-50 p-4">
+          <h3 className="font-medium text-green-800">
+            Registration successful!
+          </h3>
+          <p className="mt-1 text-sm text-green-700">
+            Check your email to verify your account before logging in.
+          </p>
+        </div>
+      )}
+
       {error && (
         <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
           {error}

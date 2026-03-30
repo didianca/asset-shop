@@ -8,11 +8,13 @@ import Button from "../ui/Button";
 export default function Header() {
   const { isAuthenticated, user, logout } = useAuthStore();
   const cartItemCount = useCartStore((s) => s.items.length);
+  const resetCart = useCartStore((s) => s.reset);
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
+    resetCart();
     navigate(ROUTES.LOGIN);
   };
 

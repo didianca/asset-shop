@@ -1,9 +1,9 @@
 import { render, type RenderOptions } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, type MemoryRouterProps } from "react-router-dom";
 import type { ReactElement, ReactNode } from "react";
 
 interface WrapperOptions {
-  initialEntries?: string[];
+  initialEntries?: MemoryRouterProps["initialEntries"];
 }
 
 function createWrapper({ initialEntries = ["/"] }: WrapperOptions = {}) {

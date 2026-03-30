@@ -53,4 +53,16 @@ describe("VerifyEmailPage", () => {
       screen.getByRole("button", { name: "Register Again" }),
     ).toBeInTheDocument();
   });
+
+  it("passes an AbortSignal to verifyEmail", () => {
+    vi.mocked(authApi.verifyEmail).mockReturnValue(new Promise(() => {}));
+    renderWithRouter(<VerifyEmailPage />, {
+      initialEntries: ["/verify-email?token=abc"],
+    });
+    expect(authApi.verifyEmail).toHaveBeenCalledWith(
+      "abc",
+      expect.any(AbortSignal),
+    );
+  });
+
 });

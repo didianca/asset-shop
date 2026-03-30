@@ -107,7 +107,7 @@ export async function sendVerificationEmail(
   toEmail: string,
   token: string
 ): Promise<void> {
-  const verificationUrl = `${emailConfig.apiUrl}/verify-email?token=${token}`;
+  const verificationUrl = `${emailConfig.appUrl}/verify-email?token=${token}`;
 
   const params: SendEmailCommandInput = {
     Source: emailConfig.sesFromEmail,

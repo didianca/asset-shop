@@ -11,4 +11,9 @@ export const emailConfig = {
   get awsSesSecretAccessKey(): string { return env.get("AWS_SES_SECRET_ACCESS_KEY").required().asString(); },
   get sesFromEmail(): string { return env.get("SES_FROM_EMAIL").required().asString(); },
   get apiUrl(): string { return env.get("API_URL").required().asString(); },
+  get appUrl(): string {
+    const val = env.get("APP_URL").asString();
+    if (val) return val;
+    return env.get("API_URL").required().asString();
+  },
 };

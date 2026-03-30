@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import * as authApi from "../../api/auth.api";
 import { ROUTES } from "../../lib/constants";
 import Input from "../ui/Input";
@@ -15,7 +15,7 @@ export default function RegisterForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
-  const [success, setSuccess] = useState(false);
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -25,7 +25,7 @@ export default function RegisterForm() {
 
     try {
       await authApi.register({ email, password, firstName, lastName });
-      setSuccess(true);
+      navigate(ROUTES.LOGIN, { state: { registered: true }, replace: true });
     } catch (err) {
       const axiosError = err as AxiosError<ApiError>;
       const data = axiosError.response?.data;
@@ -35,27 +35,6 @@ export default function RegisterForm() {
       setIsLoading(false);
     }
   };
-
-  if (success) {
-    return (
-      <div className="space-y-4 text-center">
-        <div className="rounded-lg bg-green-50 p-4">
-          <h3 className="font-medium text-green-800">
-            Registration successful!
-          </h3>
-          <p className="mt-1 text-sm text-green-700">
-            Check your email to verify your account before logging in.
-          </p>
-        </div>
-        <Link
-          to={ROUTES.LOGIN}
-          className="inline-block text-sm font-medium text-indigo-600 hover:text-indigo-500"
-        >
-          Go to Login
-        </Link>
-      </div>
-    );
-  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">

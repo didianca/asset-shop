@@ -23,18 +23,23 @@ export default function VerifyEmailPage() {
       return;
     }
 
+    const controller = new AbortController();
+
     authApi
-      .verifyEmail(token)
+      .verifyEmail(token, controller.signal)
       .then(({ data }) => {
         setStatus("success");
         setMessage(data.message);
       })
       .catch((err: AxiosError<ApiError>) => {
+        if (controller.signal.aborted) return;
         setStatus("error");
         setMessage(
           err.response?.data?.message ?? "Verification failed. The link may have expired.",
         );
       });
+
+    return () => { controller.abort(); };
   }, [token]);
 
   return (

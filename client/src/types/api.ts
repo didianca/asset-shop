@@ -33,6 +33,7 @@ export interface ProductResponse {
   description: string | null;
   price: number;
   discountPercent: number | null;
+  isBundle: boolean;
   isActive: boolean;
   tags: string[];
   previewKey: string;
@@ -55,6 +56,8 @@ export interface CreateProductBody {
   price: number;
   discountPercent?: number;
   tags?: string[];
+  isBundle?: boolean;
+  bundleId?: string;
 }
 
 export interface UpdateProductBody {
@@ -107,6 +110,12 @@ export interface PaymentSummary {
   createdAt: string;
 }
 
+export interface OrderUser {
+  email: string;
+  firstName: string;
+  lastName: string;
+}
+
 export interface OrderResponse {
   id: string;
   userId: string;
@@ -115,6 +124,7 @@ export interface OrderResponse {
   items: OrderItemResponse[];
   statusHistory: StatusHistoryEntry[];
   payment: PaymentSummary | null;
+  user?: OrderUser;
   createdAt: string;
   updatedAt: string;
 }
@@ -129,6 +139,10 @@ export interface OrderListResponse {
 export interface UpdateOrderStatusBody {
   status: "paid" | "fulfilled" | "refunded";
   note?: string;
+}
+
+export interface RefundRequestBody {
+  note: string;
 }
 
 export interface CreatePaymentResponse {
@@ -150,4 +164,42 @@ export interface PaymentResponse {
 export interface ApiError {
   message: string;
   errors?: Record<string, string[]>;
+}
+
+export interface BundleProductResponse {
+  id: string;
+  name: string;
+  slug: string;
+  price: number;
+  discountPercent: number | null;
+  previewKey: string;
+  previewUrl: string;
+}
+
+export interface BundleResponse {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  discountPercent: number | null;
+  isActive: boolean;
+  products: BundleProductResponse[];
+  createdAt: string;
+}
+
+export interface CreateBundleBody {
+  name: string;
+  slug: string;
+  description?: string;
+  discountPercent?: number;
+  productIds?: string[];
+}
+
+export interface UpdateBundleBody {
+  name: string;
+  slug: string;
+  description: string | null;
+  discountPercent: number | null;
+  isActive: boolean;
+  productIds: string[];
 }

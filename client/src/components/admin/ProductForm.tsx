@@ -1,11 +1,14 @@
-import { useState, type FormEvent } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 import type {
   ProductResponse,
   CreateProductBody,
   UpdateProductBody,
+  BundleResponse,
   ApiError,
 } from "../../types/api";
 import * as productsApi from "../../api/products.api";
+import * as bundlesApi from "../../api/bundles.api";
+import * as uploadApi from "../../api/upload.api";
 import { useUiStore } from "../../stores/uiStore";
 import Input from "../ui/Input";
 import Button from "../ui/Button";
@@ -34,9 +37,17 @@ export default function ProductForm({
   );
   const [tags, setTags] = useState(product?.tags?.join(", ") ?? "");
   const [isActive, setIsActive] = useState(product?.isActive ?? true);
+  const [isBundle, setIsBundle] = useState(product?.isBundle ?? false);
+  const [bundleId, setBundleId] = useState(product?.bundle?.id ?? "");
+  const [bundles, setBundles] = useState<BundleResponse[]>([]);
+  const [file, setFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
+
+  useEffect(() => {
+    bundlesApi.getBundles().then((res) => setBundles(res.data)).catch(() => {});
+  }, []);
 
   const handleNameChange = (value: string) => {
     setName(value);
@@ -62,6 +73,16 @@ export default function ProductForm({
       .filter(Boolean);
 
     try {
+      if (!isEdit && !file) {
+        setError("Please select an asset file to upload");
+        setIsLoading(false);
+        return;
+      }
+
+      if (!isEdit && file) {
+        await uploadApi.uploadAsset(slug, file);
+      }
+
       if (isEdit && product) {
         const body: UpdateProductBody = {
           name,
@@ -86,6 +107,8 @@ export default function ProductForm({
             ? parseFloat(discountPercent)
             : undefined,
           tags: parsedTags.length > 0 ? parsedTags : undefined,
+          isBundle: isBundle || undefined,
+          bundleId: !isBundle && bundleId ? bundleId : undefined,
         };
         await productsApi.createProduct(body);
         addToast("Product created", "success");
@@ -174,6 +197,95 @@ export default function ProductForm({
         onChange={(e) => setTags(e.target.value)}
         placeholder="dark, minimalist, 4K"
       />
+
+      {!isEdit && (
+        <div className="space-y-3 rounded-lg border border-gray-200 p-3">
+          <label className="flex items-center gap-2 text-sm text-gray-700">
+            <input
+              type="checkbox"
+              checked={isBundle}
+              onChange={(e) => {
+                setIsBundle(e.target.checked);
+                if (e.target.checked) setBundleId("");
+              }}
+              className="rounded border-gray-300"
+            />
+            This product IS a bundle
+          </label>
+
+          {!isBundle && (
+            <div>
+              <label
+                htmlFor="bundleId"
+                className="mb-1 block text-sm font-medium text-gray-700"
+              >
+                Assign to bundle
+              </label>
+              <select
+                id="bundleId"
+                value={bundleId}
+                onChange={(e) => setBundleId(e.target.value)}
+                className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              >
+                <option value="">None</option>
+                {bundles.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
+      )}
+
+      {!isEdit && (
+        <div>
+          <span className="mb-1 block text-sm font-medium text-gray-700">
+            Asset file <span className="text-red-500">*</span>
+          </span>
+          <label
+            htmlFor="file"
+            className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-center transition hover:border-indigo-400 hover:bg-indigo-50"
+          >
+            <svg
+              className="mb-2 h-8 w-8 text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"
+              />
+            </svg>
+            {file ? (
+              <span className="text-sm font-medium text-indigo-600">
+                {file.name}
+              </span>
+            ) : (
+              <>
+                <span className="text-sm font-medium text-gray-700">
+                  Click to upload
+                </span>
+                <span className="mt-0.5 text-xs text-gray-400">
+                  PNG, JPG, or WebP
+                </span>
+              </>
+            )}
+            <input
+              id="file"
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+              className="sr-only"
+              required
+            />
+          </label>
+        </div>
+      )}
 
       {isEdit && (
         <label className="flex items-center gap-2 text-sm text-gray-700">

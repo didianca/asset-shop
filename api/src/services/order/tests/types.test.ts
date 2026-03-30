@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { OrderIdParamsSchema, UpdateOrderStatusSchema, GetOrdersQuerySchema } from "../order.types.js";
+import { OrderIdParamsSchema, UpdateOrderStatusSchema, GetOrdersQuerySchema, RefundRequestSchema } from "../order.types.js";
 
 describe("OrderIdParamsSchema", () => {
   it("accepts a valid UUID", () => {
@@ -70,6 +70,38 @@ describe("GetOrdersQuerySchema", () => {
 
   it("rejects invalid userId", () => {
     const result = GetOrdersQuerySchema.safeParse({ userId: "not-a-uuid" });
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("RefundRequestSchema", () => {
+  it("accepts a valid note", () => {
+    const result = RefundRequestSchema.safeParse({ note: "Product not as described" });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects missing note", () => {
+    const result = RefundRequestSchema.safeParse({});
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects empty note", () => {
+    const result = RefundRequestSchema.safeParse({ note: "" });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects note exceeding 500 characters", () => {
+    const result = RefundRequestSchema.safeParse({ note: "x".repeat(501) });
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts note at max length (500 characters)", () => {
+    const result = RefundRequestSchema.safeParse({ note: "x".repeat(500) });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects extra fields", () => {
+    const result = RefundRequestSchema.safeParse({ note: "Reason", extra: true });
     expect(result.success).toBe(false);
   });
 });

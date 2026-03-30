@@ -7,3 +7,5 @@ api/coverage
 .gitignore
 *.md
 infra
+api/src/**/*.test.ts
+api/src/**/tests

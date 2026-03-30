@@ -1,5 +1,5 @@
 import type { ProductResponse } from "../../types/api";
-import { formatPrice } from "../../lib/utils";
+import { formatPrice, calculateEffectivePrice } from "../../lib/utils";
 import Badge from "../ui/Badge";
 import Button from "../ui/Button";
 
@@ -47,8 +47,17 @@ export default function ProductTable({ products, onEdit }: ProductTableProps) {
                   </div>
                 </div>
               </td>
-              <td className="py-3 text-gray-900">
-                {formatPrice(product.price)}
+              <td className="py-3">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-gray-900">
+                    {formatPrice(calculateEffectivePrice(product.price, product.discountPercent))}
+                  </span>
+                  {product.discountPercent ? (
+                    <span className="text-xs text-gray-400 line-through">
+                      {formatPrice(product.price)}
+                    </span>
+                  ) : null}
+                </div>
               </td>
               <td className="py-3">
                 {product.discountPercent ? (

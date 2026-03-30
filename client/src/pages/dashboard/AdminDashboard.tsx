@@ -25,6 +25,14 @@ export default function AdminDashboard() {
             </p>
           </Card>
         </Link>
+        <Link to={ROUTES.ADMIN_BUNDLES}>
+          <Card className="p-6 transition-shadow hover:shadow-md">
+            <h2 className="text-lg font-semibold text-gray-900">Bundles</h2>
+            <p className="mt-1 text-sm text-gray-500">
+              Create and manage product bundles
+            </p>
+          </Card>
+        </Link>
       </div>
     </div>
   );

@@ -31,10 +31,12 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   await prisma.product.deleteMany({ where: { slug: { startsWith: SLUG_PREFIX } } });
+  await prisma.bundle.deleteMany({ where: { slug: { startsWith: SLUG_PREFIX } } });
 });
 
 afterAll(async () => {
   await prisma.product.deleteMany({ where: { slug: { startsWith: SLUG_PREFIX } } });
+  await prisma.bundle.deleteMany({ where: { slug: { startsWith: SLUG_PREFIX } } });
   await prisma.user.deleteMany({ where: { email: ADMIN_EMAIL } });
   await prisma.$disconnect();
 });
@@ -144,9 +146,6 @@ describe("GET /products", () => {
       slug: `${SLUG_PREFIX}bundle-parent`,
       discountPercent: 15,
     });
-
-    await prisma.product.deleteMany({ where: { bundleId: bundle.id } });
-    await prisma.bundle.delete({ where: { id: bundle.id } });
   });
 
   it("returns products ordered by createdAt descending", async () => {

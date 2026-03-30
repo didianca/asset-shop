@@ -25,6 +25,12 @@ import { formatProduct } from "../utils.js";
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/ProductResponse'
+ *       400:
+ *         description: Invalid product ID
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ValidationErrorResponse'
  *       401:
  *         description: Authentication required
  *         content:

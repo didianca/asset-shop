@@ -27,6 +27,9 @@ const AdminProductsPage = lazy(
 const AdminOrdersPage = lazy(
   () => import("./pages/dashboard/AdminOrdersPage"),
 );
+const AdminBundlesPage = lazy(
+  () => import("./pages/dashboard/AdminBundlesPage"),
+);
 
 function PageLoader() {
   return (
@@ -147,6 +150,14 @@ const router = createBrowserRouter([
                 element: (
                   <Suspense fallback={<PageLoader />}>
                     <AdminOrdersPage />
+                  </Suspense>
+                ),
+              },
+              {
+                path: "/admin/bundles",
+                element: (
+                  <Suspense fallback={<PageLoader />}>
+                    <AdminBundlesPage />
                   </Suspense>
                 ),
               },

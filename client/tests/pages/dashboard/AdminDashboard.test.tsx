@@ -26,4 +26,12 @@ describe("AdminDashboard", () => {
       screen.getByText("View and manage customer orders"),
     ).toBeInTheDocument();
   });
+
+  it("renders bundles card", () => {
+    renderWithRouter(<AdminDashboard />);
+    expect(screen.getByText("Bundles")).toBeInTheDocument();
+    expect(
+      screen.getByText("Create and manage product bundles"),
+    ).toBeInTheDocument();
+  });
 });

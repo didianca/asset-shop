@@ -257,4 +257,23 @@ describe("GET /orders", () => {
     expect(res.status).toBe(400);
     expect(res.body.message).toBe("Invalid query parameters");
   });
+
+  it("includes user info in order response", async () => {
+    const product = await prisma.product.create({
+      data: makeProduct({ name: "GO User Info", slug: `${SLUG_PREFIX}user-info` }),
+    });
+    await createOrderForUser(customerToken, product.id);
+
+    const res = await request(app)
+      .get("/api/orders")
+      .set("Authorization", `Bearer ${adminToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.orders.length).toBeGreaterThanOrEqual(1);
+    const order = res.body.orders.find((o: { userId: string }) => o.userId === customerId);
+    expect(order.user).toBeDefined();
+    expect(order.user.email).toBe(CUSTOMER_EMAIL);
+    expect(order.user.firstName).toBe("Customer");
+    expect(order.user.lastName).toBe("Test");
+  });
 });

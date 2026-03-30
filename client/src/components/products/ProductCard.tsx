@@ -59,7 +59,7 @@ export default function ProductCard({ product }: ProductCardProps) {
 
           {product.bundle && (
             <Badge className="mt-2 bg-indigo-100 text-indigo-800">
-              Bundle
+              {product.bundle.name}
             </Badge>
           )}
         </div>

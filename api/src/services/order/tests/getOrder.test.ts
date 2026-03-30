@@ -172,6 +172,23 @@ describe("GET /orders/:id", () => {
     expect(t0).toBeLessThanOrEqual(t1);
   });
 
+  it("includes user info in order response", async () => {
+    const product = await prisma.product.create({
+      data: makeProduct({ name: "GOR User Info", slug: `${SLUG_PREFIX}user-info` }),
+    });
+    const orderId = await createOrderForUser(customerToken, product.id);
+
+    const res = await request(app)
+      .get(`/api/orders/${orderId}`)
+      .set("Authorization", `Bearer ${adminToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.user).toBeDefined();
+    expect(res.body.user.email).toBe(CUSTOMER_EMAIL);
+    expect(res.body.user.firstName).toBe("Customer");
+    expect(res.body.user.lastName).toBe("Test");
+  });
+
   it("includes payment info when present", async () => {
     const product = await prisma.product.create({
       data: makeProduct({ name: "GOR Payment", slug: `${SLUG_PREFIX}payment` }),

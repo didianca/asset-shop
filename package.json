@@ -4,6 +4,10 @@
   "private": true,
   "workspaces": [
     "api",
-    "client"
-  ]
+    "client",
+    "infra"
+  ],
+  "scripts": {
+    "deploy": "cd infra && npm run deploy"
+  }
 }

@@ -3,6 +3,7 @@ import type {
   OrderResponse,
   OrderListResponse,
   UpdateOrderStatusBody,
+  RefundRequestBody,
 } from "../types/api";
 
 export function createOrder() {
@@ -23,4 +24,8 @@ export function getOrder(id: string) {
 
 export function updateOrderStatus(id: string, body: UpdateOrderStatusBody) {
   return apiClient.patch<OrderResponse>(`/orders/${id}/status`, body);
+}
+
+export function requestRefund(id: string, body: RefundRequestBody) {
+  return apiClient.post<OrderResponse>(`/orders/${id}/refund`, body);
 }

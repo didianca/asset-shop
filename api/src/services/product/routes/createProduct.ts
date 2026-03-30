@@ -58,8 +58,16 @@ export async function createProductHandler(
   req: Request<object, object, CreateProductBody>,
   res: Response
 ): Promise<void> {
-  const { name, slug, description, price, discountPercent, tags } = req.body;
+  const { name, slug, description, price, discountPercent, tags, isBundle, bundleId } = req.body;
   const createdBy = req.user!.id;
+
+  if (bundleId) {
+    const bundle = await prisma.bundle.findUnique({ where: { id: bundleId } });
+    if (!bundle) {
+      res.status(400).json({ message: "Bundle not found" });
+      return;
+    }
+  }
 
   const keys = await resolveKeysFromSlug(slug);
   if (!keys) {
@@ -71,7 +79,12 @@ export async function createProductHandler(
   try {
     const product = await prisma.$transaction(async (tx) => {
       const created = await tx.product.create({
-        data: { name, slug, description: description ?? null, price, discountPercent: discountPercent ?? null, previewKey, assetKey, createdBy },
+        data: {
+          name, slug, description: description ?? null, price,
+          discountPercent: discountPercent ?? null, previewKey, assetKey, createdBy,
+          isBundle: isBundle ?? false,
+          bundleId: bundleId ?? null,
+        },
       });
 
       if (tags && tags.length > 0) {

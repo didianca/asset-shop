@@ -91,8 +91,9 @@ export function effectivePrice(price: number, discountPercent: number | null): n
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
   pending: ["paid"],
-  paid: ["fulfilled", "refunded"],
-  fulfilled: ["refunded"],
+  paid: ["fulfilled", "refund_pending"],
+  fulfilled: ["refund_pending"],
+  refund_pending: ["refunded", "paid", "fulfilled"],
   refunded: ["pending"],
 };
 

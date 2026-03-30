@@ -35,10 +35,11 @@ enum UserStatus {
 }
 
 enum OrderStatus {
-  pending    // order created, payment not yet received
-  paid       // payment captured, triggers email delivery
-  fulfilled  // download link emailed to customer
-  refunded   // customer refunded within 30-day window
+  pending         // order created, payment not yet received
+  paid            // payment captured, triggers email delivery
+  fulfilled       // download link emailed to customer
+  refund_pending  // customer requested refund, awaiting admin review
+  refunded        // admin approved refund within 30-day window
 }
 
 enum PaymentStatus {
@@ -49,9 +50,10 @@ enum PaymentStatus {
 }
 
 enum NotificationType {
-  order_fulfilled  // payment captured + download link sent
-  payment_failed   // payment capture failed
-  order_refunded   // refund processed
+  order_fulfilled   // payment captured + download link sent
+  payment_failed    // payment capture failed
+  refund_requested  // customer requested a refund, admin notified
+  order_refunded    // admin approved refund, customer notified
 }
 
 // ============================================================

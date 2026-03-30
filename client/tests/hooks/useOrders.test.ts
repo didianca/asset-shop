@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor, act } from "@testing-library/react";
 import { useOrders } from "../../src/hooks/useOrders";
 import * as ordersApi from "../../src/api/orders.api";
+import { useAuthStore } from "../../src/stores/authStore";
 
 vi.mock("../../src/api/orders.api", () => ({
   getOrders: vi.fn(),
@@ -25,6 +26,11 @@ const makeOrder = (overrides: Record<string, unknown>) => ({
 
 describe("useOrders", () => {
   beforeEach(() => {
+    useAuthStore.setState({
+      user: { id: "u1", role: "customer", email: "a@b.com", firstName: "A", lastName: "B", status: "active" },
+      isAuthenticated: true,
+      token: "tok",
+    });
     vi.mocked(ordersApi.getOrders).mockResolvedValue({
       data: { orders: [], total: 0 },
     } as never);
@@ -53,6 +59,26 @@ describe("useOrders", () => {
     });
 
     expect(ordersApi.getOrders).toHaveBeenCalledWith({ page: 1, limit: 20 });
+  });
+
+  it("passes userId when myOrders is true", async () => {
+    const { result } = renderHook(() => useOrders({ myOrders: true }));
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(ordersApi.getOrders).toHaveBeenCalledWith({ page: 1, limit: 10, userId: "u1" });
+  });
+
+  it("does not pass userId when myOrders is false", async () => {
+    const { result } = renderHook(() => useOrders({ myOrders: false }));
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(ordersApi.getOrders).toHaveBeenCalledWith({ page: 1, limit: 10 });
   });
 
   it("selects an order by id", async () => {

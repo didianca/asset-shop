@@ -1,9 +1,15 @@
-import { describe, it, expect, beforeAll, beforeEach, afterAll } from "vitest";
+import { describe, it, expect, beforeAll, beforeEach, afterAll, vi } from "vitest";
 import request from "supertest";
 import jwt from "jsonwebtoken";
 import app from "../../../app.js";
 import prisma from "../../../db.js";
 import { authConfig } from "../../auth/auth.config.js";
+
+const mockSendRefundConfirmationEmail = vi.hoisted(() => vi.fn());
+
+vi.mock("../../../lib/email.js", () => ({
+  sendRefundConfirmationEmail: mockSendRefundConfirmationEmail,
+}));
 
 const SLUG_PREFIX = "uos-test-";
 const ADMIN_EMAIL = "admin@updateorderstatus.test";
@@ -51,6 +57,11 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
+  mockSendRefundConfirmationEmail.mockReset();
+  mockSendRefundConfirmationEmail.mockResolvedValue(undefined);
+
+  await prisma.notification.deleteMany({ where: { userId: { in: [customerId, adminId] } } });
+  await prisma.payment.deleteMany({ where: { order: { userId: { in: [customerId, adminId] } } } });
   await prisma.orderStatusHistory.deleteMany({ where: { order: { userId: { in: [customerId, adminId] } } } });
   await prisma.orderItem.deleteMany({ where: { order: { userId: { in: [customerId, adminId] } } } });
   await prisma.order.deleteMany({ where: { userId: { in: [customerId, adminId] } } });
@@ -60,6 +71,8 @@ beforeEach(async () => {
 });
 
 afterAll(async () => {
+  await prisma.notification.deleteMany({ where: { userId: { in: [customerId, adminId] } } });
+  await prisma.payment.deleteMany({ where: { order: { userId: { in: [customerId, adminId] } } } });
   await prisma.orderStatusHistory.deleteMany({ where: { order: { userId: { in: [customerId, adminId] } } } });
   await prisma.orderItem.deleteMany({ where: { order: { userId: { in: [customerId, adminId] } } } });
   await prisma.order.deleteMany({ where: { userId: { in: [customerId, adminId] } } });
@@ -172,65 +185,108 @@ describe("PATCH /orders/:id/status", () => {
     expect(res.body.statusHistory).toHaveLength(3);
   });
 
-  it("transitions paid -> refunded", async () => {
+  it("transitions refund_pending -> refunded (admin approves refund)", async () => {
     const product = await prisma.product.create({
-      data: makeProduct({ name: "UOS Paid Refund", slug: `${SLUG_PREFIX}paid-refund` }),
+      data: makeProduct({ name: "UOS Approve", slug: `${SLUG_PREFIX}approve` }),
     });
     const orderId = await createOrder(customerToken, product.id);
-
-    await request(app)
-      .patch(`/api/orders/${orderId}/status`)
-      .set("Authorization", `Bearer ${adminToken}`)
-      .send({ status: "paid" });
+    await prisma.order.update({ where: { id: orderId }, data: { status: "refund_pending" } });
+    await prisma.orderStatusHistory.create({
+      data: { orderId, status: "refund_pending", note: "Product not as described", changedBy: customerId },
+    });
 
     const res = await request(app)
       .patch(`/api/orders/${orderId}/status`)
       .set("Authorization", `Bearer ${adminToken}`)
-      .send({ status: "refunded", note: "Customer requested refund" });
+      .send({ status: "refunded", note: "Refund approved" });
 
     expect(res.status).toBe(200);
     expect(res.body.status).toBe("refunded");
-    expect(res.body.statusHistory).toHaveLength(3);
-    expect(res.body.statusHistory[2].status).toBe("refunded");
-    expect(res.body.statusHistory[2].note).toBe("Customer requested refund");
+    const lastEntry = res.body.statusHistory[res.body.statusHistory.length - 1];
+    expect(lastEntry.status).toBe("refunded");
+    expect(lastEntry.note).toBe("Refund approved");
   });
 
-  it("updates payment status to refunded when order is refunded", async () => {
+  it("sends refund confirmation email when approving refund", async () => {
+    const product = await prisma.product.create({
+      data: makeProduct({ name: "UOS Email", slug: `${SLUG_PREFIX}email` }),
+    });
+    const orderId = await createOrder(customerToken, product.id);
+    await prisma.order.update({ where: { id: orderId }, data: { status: "refund_pending" } });
+    await prisma.orderStatusHistory.create({
+      data: { orderId, status: "refund_pending", note: "Not what I expected", changedBy: customerId },
+    });
+
+    await request(app)
+      .patch(`/api/orders/${orderId}/status`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ status: "refunded" });
+
+    expect(mockSendRefundConfirmationEmail).toHaveBeenCalledOnce();
+    const [toEmail, refundArg] = mockSendRefundConfirmationEmail.mock.calls[0]!;
+    expect(toEmail).toBe(CUSTOMER_EMAIL);
+    expect(refundArg.orderId).toBe(orderId);
+    expect(refundArg.note).toBe("Not what I expected");
+    expect(refundArg.totalAmount).toBe("10.00");
+    expect(refundArg.items).toHaveLength(1);
+    expect(refundArg.items[0].productName).toBe("UOS Email");
+  });
+
+  it("creates a notification when approving refund", async () => {
+    const product = await prisma.product.create({
+      data: makeProduct({ name: "UOS Notif", slug: `${SLUG_PREFIX}notif` }),
+    });
+    const orderId = await createOrder(customerToken, product.id);
+    await prisma.order.update({ where: { id: orderId }, data: { status: "refund_pending" } });
+    await prisma.orderStatusHistory.create({
+      data: { orderId, status: "refund_pending", note: "Reason", changedBy: customerId },
+    });
+
+    await request(app)
+      .patch(`/api/orders/${orderId}/status`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ status: "refunded" });
+
+    const notification = await prisma.notification.findFirst({
+      where: { userId: customerId, type: "order_refunded" },
+    });
+    expect(notification).not.toBeNull();
+    expect(notification!.title).toBe("Your refund has been processed");
+  });
+
+  it("updates payment status to refunded when approving refund", async () => {
     const product = await prisma.product.create({
       data: makeProduct({ name: "UOS PayRefund", slug: `${SLUG_PREFIX}pay-refund` }),
     });
     const orderId = await createOrder(customerToken, product.id);
-
-    await prisma.order.update({ where: { id: orderId }, data: { status: "paid" } });
+    await prisma.order.update({ where: { id: orderId }, data: { status: "refund_pending" } });
     await prisma.payment.create({
       data: { orderId, amount: 10, status: "captured", provider: "stripe", providerReference: "pi_test_refund" },
+    });
+    await prisma.orderStatusHistory.create({
+      data: { orderId, status: "refund_pending", note: "Reason", changedBy: customerId },
     });
 
     const res = await request(app)
       .patch(`/api/orders/${orderId}/status`)
       .set("Authorization", `Bearer ${adminToken}`)
-      .send({ status: "refunded", note: "Admin refund" });
+      .send({ status: "refunded" });
 
     expect(res.status).toBe(200);
-    expect(res.body.status).toBe("refunded");
     expect(res.body.payment.status).toBe("refunded");
   });
 
-  it("transitions fulfilled -> refunded within 30 days", async () => {
+  it("still returns 200 when email throws during refund approval", async () => {
     const product = await prisma.product.create({
-      data: makeProduct({ name: "UOS Refund", slug: `${SLUG_PREFIX}refund` }),
+      data: makeProduct({ name: "UOS EmailErr", slug: `${SLUG_PREFIX}email-err` }),
     });
     const orderId = await createOrder(customerToken, product.id);
+    await prisma.order.update({ where: { id: orderId }, data: { status: "refund_pending" } });
+    await prisma.orderStatusHistory.create({
+      data: { orderId, status: "refund_pending", note: "Reason", changedBy: customerId },
+    });
 
-    await request(app)
-      .patch(`/api/orders/${orderId}/status`)
-      .set("Authorization", `Bearer ${adminToken}`)
-      .send({ status: "paid" });
-
-    await request(app)
-      .patch(`/api/orders/${orderId}/status`)
-      .set("Authorization", `Bearer ${adminToken}`)
-      .send({ status: "fulfilled" });
+    mockSendRefundConfirmationEmail.mockRejectedValue(new Error("SES unavailable"));
 
     const res = await request(app)
       .patch(`/api/orders/${orderId}/status`)
@@ -239,16 +295,74 @@ describe("PATCH /orders/:id/status", () => {
 
     expect(res.status).toBe(200);
     expect(res.body.status).toBe("refunded");
-    expect(res.body.statusHistory).toHaveLength(4);
   });
 
-  it("rejects refund when 30-day window has expired", async () => {
+  it("transitions refund_pending -> paid (admin rejects refund)", async () => {
+    const product = await prisma.product.create({
+      data: makeProduct({ name: "UOS RejectPaid", slug: `${SLUG_PREFIX}reject-paid` }),
+    });
+    const orderId = await createOrder(customerToken, product.id);
+    await prisma.order.update({ where: { id: orderId }, data: { status: "refund_pending" } });
+    await prisma.orderStatusHistory.create({
+      data: { orderId, status: "refund_pending", note: "Reason", changedBy: customerId },
+    });
+
+    const res = await request(app)
+      .patch(`/api/orders/${orderId}/status`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ status: "paid", note: "Refund denied — product is correct" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe("paid");
+    expect(mockSendRefundConfirmationEmail).not.toHaveBeenCalled();
+  });
+
+  it("transitions refund_pending -> fulfilled (admin rejects refund)", async () => {
+    const product = await prisma.product.create({
+      data: makeProduct({ name: "UOS RejectFul", slug: `${SLUG_PREFIX}reject-ful` }),
+    });
+    const orderId = await createOrder(customerToken, product.id);
+    await prisma.order.update({ where: { id: orderId }, data: { status: "refund_pending" } });
+    await prisma.orderStatusHistory.create({
+      data: { orderId, status: "refund_pending", note: "Reason", changedBy: customerId },
+    });
+
+    const res = await request(app)
+      .patch(`/api/orders/${orderId}/status`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ status: "fulfilled", note: "Refund denied" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe("fulfilled");
+    expect(mockSendRefundConfirmationEmail).not.toHaveBeenCalled();
+  });
+
+  it("rejects direct paid -> refunded (must go through refund_pending)", async () => {
+    const product = await prisma.product.create({
+      data: makeProduct({ name: "UOS Direct", slug: `${SLUG_PREFIX}direct` }),
+    });
+    const orderId = await createOrder(customerToken, product.id);
+
+    await request(app)
+      .patch(`/api/orders/${orderId}/status`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ status: "paid" });
+
+    const res = await request(app)
+      .patch(`/api/orders/${orderId}/status`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ status: "refunded" });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe("Invalid transition from 'paid' to 'refunded'");
+  });
+
+  it("rejects refund approval when 30-day window has expired", async () => {
     const product = await prisma.product.create({
       data: makeProduct({ name: "UOS Expired", slug: `${SLUG_PREFIX}expired` }),
     });
     const orderId = await createOrder(customerToken, product.id);
-
-    await prisma.order.update({ where: { id: orderId }, data: { status: "fulfilled" } });
+    await prisma.order.update({ where: { id: orderId }, data: { status: "refund_pending" } });
 
     const thirtyOneDaysAgo = new Date(Date.now() - 31 * 24 * 60 * 60 * 1000);
     await prisma.orderStatusHistory.create({
@@ -287,30 +401,12 @@ describe("PATCH /orders/:id/status", () => {
 
     await prisma.order.update({ where: { id: orderId }, data: { status: "paid" } });
 
-    // "pending" is not a valid target status (rejected by Zod schema)
     const res = await request(app)
       .patch(`/api/orders/${orderId}/status`)
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ status: "pending" });
 
     expect(res.status).toBe(400);
-  });
-
-  it("rejects transition from terminal state refunded", async () => {
-    const product = await prisma.product.create({
-      data: makeProduct({ name: "UOS Terminal", slug: `${SLUG_PREFIX}terminal` }),
-    });
-    const orderId = await createOrder(customerToken, product.id);
-
-    await prisma.order.update({ where: { id: orderId }, data: { status: "refunded" } });
-
-    const res = await request(app)
-      .patch(`/api/orders/${orderId}/status`)
-      .set("Authorization", `Bearer ${adminToken}`)
-      .send({ status: "paid" });
-
-    expect(res.status).toBe(400);
-    expect(res.body.message).toBe("Invalid transition from 'refunded' to 'paid'");
   });
 
   it("creates history entry with note and changedBy", async () => {

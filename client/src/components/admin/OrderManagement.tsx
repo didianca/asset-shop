@@ -16,7 +16,7 @@ const NEXT_STATUS: Partial<
 > = {
   pending: "paid",
   paid: "fulfilled",
-  fulfilled: "refunded",
+  refund_pending: "refunded",
 };
 
 const REFUNDABLE_STATUSES: OrderStatus[] = ["paid", "fulfilled"];

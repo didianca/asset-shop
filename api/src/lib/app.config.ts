@@ -4,5 +4,7 @@ const { from } = envVar;
 const env = from(process.env);
 
 export const appConfig = {
-  get corsOrigin(): string | undefined { return env.get("APP_URL").asString(); },
+  get corsOrigin(): string | false {
+    return env.get("APP_URL").asString() || false;
+  },
 };

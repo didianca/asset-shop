@@ -18,6 +18,7 @@ export const ORDER_STATUS_CONFIG = {
   pending: { label: "Pending", color: "bg-yellow-100 text-yellow-800" },
   paid: { label: "Paid", color: "bg-blue-100 text-blue-800" },
   fulfilled: { label: "Fulfilled", color: "bg-green-100 text-green-800" },
+  refund_pending: { label: "Refund Pending", color: "bg-orange-100 text-orange-800" },
   refunded: { label: "Refunded", color: "bg-red-100 text-red-800" },
 } as const;
 

@@ -15,7 +15,7 @@ export default function AdminProductsPage() {
   >();
 
   useEffect(() => {
-    fetchProducts();
+    fetchProducts({ includeInactive: true });
   }, [fetchProducts]);
 
   const handleCreate = () => {
@@ -31,7 +31,7 @@ export default function AdminProductsPage() {
   const handleSuccess = () => {
     setIsFormOpen(false);
     setEditingProduct(undefined);
-    fetchProducts();
+    fetchProducts({ includeInactive: true });
     fetchTags();
   };
 

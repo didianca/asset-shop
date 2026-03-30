@@ -20,9 +20,16 @@ const app = express();
 const apiRouter = express.Router();
 
 // Stripe webhook needs raw body for signature verification — must be before express.json()
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+      "img-src": ["'self'", "https://*.s3.*.amazonaws.com"],
+    },
+  },
+}));
 app.use(cors({
-  origin: appConfig.corsOrigin || false,
+  origin: appConfig.corsOrigin,
   credentials: true,
 }));
 
@@ -83,13 +90,19 @@ app.use(
 
 // --- Static file serving (production only) ---
 // In dev the Vite dev server serves the client; Express only serves it in production.
-if (process.env.NODE_ENV === "production") {
+// Extracted so tests can call it without relying on NODE_ENV at module-load time.
+export function enableStaticServing(): void {
   const __dirname = path.dirname(fileURLToPath(import.meta.url));
   const clientDir = path.join(__dirname, "../client");
   app.use(express.static(clientDir));
   app.get("/{*path}", (_req, res) => {
     res.sendFile(path.join(clientDir, "index.html"));
   });
+}
+
+/* v8 ignore next 3 -- module-level guard; enableStaticServing() is tested directly */
+if (process.env.NODE_ENV === "production") {
+  enableStaticServing();
 }
 
 export default app;

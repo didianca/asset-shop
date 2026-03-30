@@ -5,8 +5,10 @@ import type {
   UpdateProductBody,
 } from "../types/api";
 
-export function getProducts() {
-  return apiClient.get<ProductResponse[]>("/products");
+export function getProducts(params?: { includeInactive?: boolean }) {
+  return apiClient.get<ProductResponse[]>("/products", {
+    params: params?.includeInactive ? { includeInactive: "true" } : undefined,
+  });
 }
 
 export function getProduct(id: string) {

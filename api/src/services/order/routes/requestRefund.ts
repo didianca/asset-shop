@@ -2,7 +2,6 @@ import type { Request, Response } from "express";
 import prisma from "../../../db.js";
 import type { RefundRequestBody } from "../order.types.js";
 import { isValidTransition, isWithinRefundWindow, formatOrder } from "../utils.js";
-import { sendRefundConfirmationEmail } from "../../../lib/email.js";
 
 const orderInclude = {
   items: {
@@ -25,6 +24,7 @@ const orderInclude = {
  *     description: |
  *       Customers can request a refund for their own paid or fulfilled orders.
  *       A reason (note) is required. The 30-day refund window is enforced for fulfilled orders.
+ *       The order is moved to `refund_pending` until an admin reviews and confirms the refund.
  *     tags:
  *       - Orders
  *     security:
@@ -45,7 +45,7 @@ const orderInclude = {
  *             $ref: '#/components/schemas/RefundRequestBody'
  *     responses:
  *       200:
- *         description: Refund processed
+ *         description: Refund request submitted for admin review
  *         content:
  *           application/json:
  *             schema:
@@ -90,8 +90,8 @@ export async function requestRefundHandler(
     return;
   }
 
-  if (!isValidTransition(order.status, "refunded")) {
-    res.status(400).json({ message: `Cannot refund an order with status '${order.status}'` });
+  if (!isValidTransition(order.status, "refund_pending")) {
+    res.status(400).json({ message: `Cannot request refund for an order with status '${order.status}'` });
     return;
   }
 
@@ -106,56 +106,18 @@ export async function requestRefundHandler(
   const updated = await prisma.$transaction(async (tx) => {
     await tx.order.update({
       where: { id },
-      data: { status: "refunded" },
+      data: { status: "refund_pending" },
     });
 
     await tx.orderStatusHistory.create({
-      data: { orderId: id, status: "refunded", note, changedBy: userId },
+      data: { orderId: id, status: "refund_pending", note, changedBy: userId },
     });
-
-    if (order.payment) {
-      await tx.payment.update({
-        where: { id: order.payment.id },
-        data: { status: "refunded" },
-      });
-    }
 
     return tx.order.findUnique({
       where: { id },
       include: orderInclude,
     });
   });
-
-  // Send refund confirmation email and create notification.
-  // Errors are logged but do not affect the 200 response.
-  try {
-    const items = updated!.items.map((item) => ({
-      productName: item.product.name,
-      unitPrice: Number(item.unitPrice).toFixed(2),
-    }));
-
-    await sendRefundConfirmationEmail(updated!.user!.email, {
-      orderId: id,
-      totalAmount: Number(updated!.totalAmount).toFixed(2),
-      note,
-      items,
-    });
-
-    await prisma.notification.create({
-      data: {
-        userId: order.userId,
-        type: "order_refunded",
-        title: "Your refund has been processed",
-        message: `Your refund of $${Number(updated!.totalAmount).toFixed(2)} has been approved and is on its way.`,
-        metadata: { orderId: id },
-      },
-    });
-  } catch (err) {
-    console.error("[requestRefund] Failed to send refund confirmation email", {
-      orderId: id,
-      error: String(err),
-    });
-  }
 
   res.status(200).json(formatOrder(updated!));
 }

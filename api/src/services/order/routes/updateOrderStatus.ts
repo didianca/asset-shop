@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import prisma from "../../../db.js";
 import type { UpdateOrderStatusBody } from "../order.types.js";
 import { isValidTransition, isWithinRefundWindow, formatOrder } from "../utils.js";
+import { sendRefundConfirmationEmail } from "../../../lib/email.js";
 
 const orderInclude = {
   items: {
@@ -23,7 +24,11 @@ const orderInclude = {
  *     summary: Update order status (admin only)
  *     description: |
  *       Transitions an order's status. Valid transitions:
- *       pending → paid, paid → fulfilled, paid → refunded, fulfilled → refunded (within 30 days), refunded → pending.
+ *       pending → paid, paid → fulfilled, paid → refund_pending, fulfilled → refund_pending,
+ *       refund_pending → refunded (approve), refund_pending → paid/fulfilled (reject),
+ *       refunded → pending.
+ *       When approving a refund (refund_pending → refunded), the customer is emailed
+ *       and a notification is created.
  *     tags:
  *       - Orders
  *     security:
@@ -84,7 +89,10 @@ export async function updateOrderStatusHandler(
 
   const order = await prisma.order.findUnique({
     where: { id },
-    include: { statusHistory: { orderBy: { createdAt: "asc" } } },
+    include: {
+      statusHistory: { orderBy: { createdAt: "asc" } },
+      payment: true,
+    },
   });
 
   if (!order) {
@@ -127,6 +135,42 @@ export async function updateOrderStatusHandler(
       include: orderInclude,
     });
   });
+
+  // When admin approves a refund, email the customer and create a notification.
+  // Errors are logged but do not affect the 200 response.
+  if (status === "refunded" && order.status === "refund_pending") {
+    try {
+      const items = updated!.items.map((item) => ({
+        productName: item.product.name,
+        unitPrice: Number(item.unitPrice).toFixed(2),
+      }));
+
+      const refundNote = order.statusHistory
+        .find((h) => h.status === "refund_pending")?.note ?? "";
+
+      await sendRefundConfirmationEmail(updated!.user!.email, {
+        orderId: id,
+        totalAmount: Number(updated!.totalAmount).toFixed(2),
+        note: refundNote,
+        items,
+      });
+
+      await prisma.notification.create({
+        data: {
+          userId: order.userId,
+          type: "order_refunded",
+          title: "Your refund has been processed",
+          message: `Your refund of $${Number(updated!.totalAmount).toFixed(2)} has been approved and is on its way.`,
+          metadata: { orderId: id },
+        },
+      });
+    } catch (err) {
+      console.error("[updateOrderStatus] Failed to send refund confirmation email", {
+        orderId: id,
+        error: String(err),
+      });
+    }
+  }
 
   res.status(200).json(formatOrder(updated!));
 }

@@ -7,7 +7,7 @@ import { useUiStore } from "../stores/uiStore";
 import * as ordersApi from "../api/orders.api";
 import * as paymentsApi from "../api/payments.api";
 import { ROUTES } from "../lib/constants";
-import { formatPrice } from "../lib/utils";
+import { formatPrice, calculateEffectivePrice } from "../lib/utils";
 import CheckoutForm from "../components/checkout/CheckoutForm";
 import Button from "../components/ui/Button";
 import Spinner from "../components/ui/Spinner";
@@ -78,7 +78,9 @@ export default function CheckoutPage() {
               className="flex justify-between text-sm text-gray-600"
             >
               <span>{item.name}</span>
-              <span>{formatPrice(item.price)}</span>
+              <span>
+                {formatPrice(calculateEffectivePrice(item.price, item.discountPercent))}
+              </span>
             </div>
           ))}
           <div className="border-t border-gray-200 pt-2">

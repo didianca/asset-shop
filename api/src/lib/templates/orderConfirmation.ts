@@ -41,7 +41,7 @@ export function orderConfirmationHtml(order: OrderConfirmationData): string {
     .join("");
 
   return `<!DOCTYPE html>
-<html>
+<html lang="en">
 <head><meta charset="UTF-8"></head>
 <body style="font-family:Arial,sans-serif;background:#f4f4f4;margin:0;padding:0;">
   <div style="max-width:600px;margin:32px auto;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">

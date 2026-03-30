@@ -41,13 +41,13 @@ afterAll(async () => {
 
 describe("GET /products", () => {
   it("returns 401 without a token", async () => {
-    const res = await request(app).get("/products");
+    const res = await request(app).get("/api/products");
     expect(res.status).toBe(401);
   });
 
   it("returns 200 with an empty array when no products exist", async () => {
     const res = await request(app)
-      .get("/products")
+      .get("/api/products")
       .set("Authorization", `Bearer ${adminToken}`);
 
     expect(res.status).toBe(200);
@@ -60,7 +60,7 @@ describe("GET /products", () => {
     });
 
     const res = await request(app)
-      .get("/products")
+      .get("/api/products")
       .set("Authorization", `Bearer ${adminToken}`);
 
     expect(res.status).toBe(200);
@@ -74,24 +74,11 @@ describe("GET /products", () => {
     });
 
     const res = await request(app)
-      .get("/products")
+      .get("/api/products")
       .set("Authorization", `Bearer ${adminToken}`);
 
     const slugs = res.body.map((p: { slug: string }) => p.slug);
     expect(slugs).not.toContain(`${SLUG_PREFIX}inactive`);
-  });
-
-  it("excludes bundle products", async () => {
-    await prisma.product.create({
-      data: makeProduct({ name: "GPS Bundle Product", slug: `${SLUG_PREFIX}bundle`, price: 30, isBundle: true }),
-    });
-
-    const res = await request(app)
-      .get("/products")
-      .set("Authorization", `Bearer ${adminToken}`);
-
-    const slugs = res.body.map((p: { slug: string }) => p.slug);
-    expect(slugs).not.toContain(`${SLUG_PREFIX}bundle`);
   });
 
   it("returns products with tags and urls included", async () => {
@@ -102,7 +89,7 @@ describe("GET /products", () => {
     await prisma.productTag.create({ data: { productId: product.id, tagId: tag.id } });
 
     const res = await request(app)
-      .get("/products")
+      .get("/api/products")
       .set("Authorization", `Bearer ${adminToken}`);
 
     const found = res.body.find((p: { slug: string }) => p.slug === `${SLUG_PREFIX}rich`);
@@ -110,43 +97,6 @@ describe("GET /products", () => {
     expect(found.previewUrl).toContain("previews/gps-preview.jpg");
 
     await prisma.tag.delete({ where: { slug: "gps-tag-one" } });
-  });
-
-  it("returns bundle as null when product has no bundle", async () => {
-    await prisma.product.create({
-      data: makeProduct({ name: "GPS No Bundle", slug: `${SLUG_PREFIX}no-bundle` }),
-    });
-
-    const res = await request(app)
-      .get("/products")
-      .set("Authorization", `Bearer ${adminToken}`);
-
-    const found = res.body.find((p: { slug: string }) => p.slug === `${SLUG_PREFIX}no-bundle`);
-    expect(found.bundle).toBeNull();
-  });
-
-  it("returns bundle object when product belongs to a bundle", async () => {
-    const bundle = await prisma.bundle.create({
-      data: { name: "GPS Test Bundle", slug: `${SLUG_PREFIX}bundle-parent`, discountPercent: 15, createdBy: adminId },
-    });
-    await prisma.product.create({
-      data: makeProduct({ name: "GPS Bundled Product", slug: `${SLUG_PREFIX}bundled`, bundleId: bundle.id }),
-    });
-
-    const res = await request(app)
-      .get("/products")
-      .set("Authorization", `Bearer ${adminToken}`);
-
-    const found = res.body.find((p: { slug: string }) => p.slug === `${SLUG_PREFIX}bundled`);
-    expect(found.bundle).toEqual({
-      id: bundle.id,
-      name: "GPS Test Bundle",
-      slug: `${SLUG_PREFIX}bundle-parent`,
-      discountPercent: 15,
-    });
-
-    await prisma.product.deleteMany({ where: { bundleId: bundle.id } });
-    await prisma.bundle.delete({ where: { id: bundle.id } });
   });
 
   it("returns products ordered by createdAt descending", async () => {
@@ -158,7 +108,7 @@ describe("GET /products", () => {
     });
 
     const res = await request(app)
-      .get("/products")
+      .get("/api/products")
       .set("Authorization", `Bearer ${adminToken}`);
 
     const slugs = res.body

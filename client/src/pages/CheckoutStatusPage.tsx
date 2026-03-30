@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { loadStripe } from "@stripe/stripe-js";
+import { useCartStore } from "../stores/cartStore";
 import { ROUTES } from "../lib/constants";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
@@ -16,6 +17,7 @@ export default function CheckoutStatusPage() {
   const [searchParams] = useSearchParams();
   const clientSecret = searchParams.get("payment_intent_client_secret");
   const [result, setResult] = useState<PaymentResult>("loading");
+  const reset = useCartStore((s) => s.reset);
 
   useEffect(() => {
     if (!clientSecret || !stripePromise) {
@@ -32,6 +34,7 @@ export default function CheckoutStatusPage() {
         switch (paymentIntent?.status) {
           case "succeeded":
             setResult("succeeded");
+            reset();
             break;
           case "processing":
             setResult("processing");
@@ -41,7 +44,7 @@ export default function CheckoutStatusPage() {
         }
       });
     });
-  }, [clientSecret]);
+  }, [clientSecret, reset]);
 
   return (
     <div className="flex justify-center pt-10">

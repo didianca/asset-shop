@@ -65,10 +65,10 @@ These are intentional deviations from standard e-commerce patterns, made to fit 
 ### No Order Cancellation
 Standard e-commerce supports cancelling orders between placement and fulfillment. For digital assets, payment capture and delivery happen near-instantaneously — there is no window in which a cancellation is meaningful. Instead, customers can request a **refund within 30 days** of fulfillment if they have a valid reason (e.g. broken or misrepresented asset).
 
-### Bundles and Tags Instead of Categories
-Standard e-commerce uses hierarchical product categories. For a digital art platform where all products are images, categories add no value. Instead:
-- **Tags** — handle discovery and filtering (e.g. `dark`, `minimalist`, `4K`, `portrait`)
-- **Bundles** — group related assets together with an optional discount, replacing the concept of a product collection
+### Tags Instead of Categories
+Standard e-commerce uses hierarchical product categories. For a digital art platform where all products are images, categories add no value. Instead, **tags** handle discovery and filtering (e.g. `dark`, `minimalist`, `4K`, `portrait`).
+
+The database schema also includes a `bundles` table and bundle-related columns on `products`, designed to let admins group assets into discounted collections. Bundle support is fully designed but deferred from the initial release — see the [project plan](../plan.md#next-steps--bundle-support) for details.
 
 ### No Stock Quantity
 Physical products have inventory. Digital assets do not — selling the same file to 1000 customers costs nothing extra and depletes nothing. The `stock_quantity` field is omitted entirely.

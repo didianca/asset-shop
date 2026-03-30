@@ -37,18 +37,16 @@ const makeProduct = <T extends object>(overrides: T): { price: number; previewKe
 
 async function createOrder(token: string, productId: string): Promise<string> {
   await request(app)
-    .post("/cart/items")
+    .post("/api/cart/items")
     .set("Authorization", `Bearer ${token}`)
     .send({ productIds: [productId] });
   const res = await request(app)
-    .post("/orders")
+    .post("/api/orders")
     .set("Authorization", `Bearer ${token}`);
   return res.body.id as string;
 }
 
 beforeAll(async () => {
-  await prisma.user.deleteMany({ where: { email: { in: [ADMIN_EMAIL, CUSTOMER_EMAIL, CUSTOMER2_EMAIL] } } });
-
   const admin = await prisma.user.create({
     data: { email: ADMIN_EMAIL, passwordHash: "x", firstName: "Admin", lastName: "Test", role: "admin", status: "active" },
   });
@@ -98,14 +96,14 @@ afterAll(async () => {
 describe("POST /payments", () => {
   it("returns 401 without a token", async () => {
     const res = await request(app)
-      .post("/payments")
+      .post("/api/payments")
       .send({ orderId: NONEXISTENT_ID });
     expect(res.status).toBe(401);
   });
 
   it("returns 400 for missing orderId", async () => {
     const res = await request(app)
-      .post("/payments")
+      .post("/api/payments")
       .set("Authorization", `Bearer ${customerToken}`)
       .send({});
     expect(res.status).toBe(400);
@@ -113,7 +111,7 @@ describe("POST /payments", () => {
 
   it("returns 400 for invalid orderId", async () => {
     const res = await request(app)
-      .post("/payments")
+      .post("/api/payments")
       .set("Authorization", `Bearer ${customerToken}`)
       .send({ orderId: "not-a-uuid" });
     expect(res.status).toBe(400);
@@ -121,7 +119,7 @@ describe("POST /payments", () => {
 
   it("returns 404 for non-existent order", async () => {
     const res = await request(app)
-      .post("/payments")
+      .post("/api/payments")
       .set("Authorization", `Bearer ${customerToken}`)
       .send({ orderId: NONEXISTENT_ID });
     expect(res.status).toBe(404);
@@ -135,7 +133,7 @@ describe("POST /payments", () => {
     const orderId = await createOrder(customer2Token, product.id);
 
     const res = await request(app)
-      .post("/payments")
+      .post("/api/payments")
       .set("Authorization", `Bearer ${customerToken}`)
       .send({ orderId });
     expect(res.status).toBe(404);
@@ -149,7 +147,7 @@ describe("POST /payments", () => {
     await prisma.order.update({ where: { id: orderId }, data: { status: "paid" } });
 
     const res = await request(app)
-      .post("/payments")
+      .post("/api/payments")
       .set("Authorization", `Bearer ${customerToken}`)
       .send({ orderId });
     expect(res.status).toBe(400);
@@ -166,7 +164,7 @@ describe("POST /payments", () => {
     });
 
     const res = await request(app)
-      .post("/payments")
+      .post("/api/payments")
       .set("Authorization", `Bearer ${customerToken}`)
       .send({ orderId });
     expect(res.status).toBe(409);
@@ -180,7 +178,7 @@ describe("POST /payments", () => {
     const orderId = await createOrder(customerToken, product.id);
 
     const res = await request(app)
-      .post("/payments")
+      .post("/api/payments")
       .set("Authorization", `Bearer ${customerToken}`)
       .send({ orderId });
 
@@ -210,7 +208,7 @@ describe("POST /payments", () => {
 
     await expect(
       request(app)
-        .post("/payments")
+        .post("/api/payments")
         .set("Authorization", `Bearer ${customerToken}`)
         .send({ orderId })
     ).resolves.toMatchObject({ status: 500 });

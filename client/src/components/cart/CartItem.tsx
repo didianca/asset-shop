@@ -18,7 +18,7 @@ export default function CartItem({ item }: CartItemProps) {
     item.price,
     item.discountPercent,
   );
-  const hasDiscount = item.discountPercent && item.discountPercent > 0;
+  const hasDiscount = (item.discountPercent ?? 0) > 0;
 
   const handleRemove = async () => {
     setIsRemoving(true);

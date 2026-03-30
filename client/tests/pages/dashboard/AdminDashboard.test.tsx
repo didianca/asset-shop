@@ -26,4 +26,5 @@ describe("AdminDashboard", () => {
       screen.getByText("View and manage customer orders"),
     ).toBeInTheDocument();
   });
+
 });

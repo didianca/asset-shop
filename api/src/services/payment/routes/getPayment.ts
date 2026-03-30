@@ -27,6 +27,12 @@ import { formatPayment } from "../utils.js";
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/PaymentResponse'
+ *       400:
+ *         description: Invalid order ID
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ValidationErrorResponse'
  *       401:
  *         description: Authentication required
  *         content:

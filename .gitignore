@@ -3,6 +3,7 @@ dist
 coverage
 .env
 *.local
+cdk.out/
 .claude/
 .idea/
 PLAN.md

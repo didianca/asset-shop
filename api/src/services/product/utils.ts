@@ -1,12 +1,5 @@
 import { getPublicUrl, findKeyByPrefix } from "../upload/s3.js";
 
-type BundleResponse = {
-  id: string;
-  name: string;
-  slug: string;
-  discountPercent: number | null;
-};
-
 type ProductWithRelations = {
   id: string;
   name: string;
@@ -19,7 +12,6 @@ type ProductWithRelations = {
   previewKey: string;
   assetKey: string;
   tags: { tag: { name: string } }[];
-  bundle: { id: string; name: string; slug: string; discountPercent: number | null } | null;
 };
 
 type ProductResponse = {
@@ -35,7 +27,6 @@ type ProductResponse = {
   assetKey: string;
   previewUrl: string;
   assetUrl: string;
-  bundle: BundleResponse | null;
   createdAt: Date;
 };
 
@@ -53,9 +44,6 @@ export function formatProduct(product: ProductWithRelations): ProductResponse {
     assetKey: product.assetKey,
     previewUrl: getPublicUrl(product.previewKey),
     assetUrl: getPublicUrl(product.assetKey),
-    bundle: product.bundle
-      ? { id: product.bundle.id, name: product.bundle.name, slug: product.bundle.slug, discountPercent: product.bundle.discountPercent }
-      : null,
     createdAt: product.createdAt,
   };
 }

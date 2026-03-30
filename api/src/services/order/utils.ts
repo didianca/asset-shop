@@ -26,6 +26,12 @@ type PaymentRecord = {
   createdAt: Date;
 } | null;
 
+type OrderUser = {
+  email: string;
+  firstName: string;
+  lastName: string;
+};
+
 type OrderWithDetails = {
   id: string;
   userId: string;
@@ -34,6 +40,7 @@ type OrderWithDetails = {
   items: OrderItemWithProduct[];
   statusHistory: StatusHistoryEntry[];
   payment: PaymentRecord;
+  user?: OrderUser;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -44,6 +51,12 @@ type OrderItemResponse = {
   slug: string;
   unitPrice: number;
   previewUrl: string;
+};
+
+type OrderResponseUser = {
+  email: string;
+  firstName: string;
+  lastName: string;
 };
 
 type OrderResponse = {
@@ -66,6 +79,7 @@ type OrderResponse = {
     provider: string;
     createdAt: Date;
   } | null;
+  user?: OrderResponseUser;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -77,7 +91,7 @@ export function effectivePrice(price: number, discountPercent: number | null): n
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
   pending: ["paid"],
-  paid: ["fulfilled"],
+  paid: ["fulfilled", "refunded"],
   fulfilled: ["refunded"],
   refunded: ["pending"],
 };
@@ -118,7 +132,7 @@ export function formatOrder(order: OrderWithDetails): OrderResponse {
       }
     : null;
 
-  return {
+  const response: OrderResponse = {
     id: order.id,
     userId: order.userId,
     status: order.status,
@@ -129,4 +143,14 @@ export function formatOrder(order: OrderWithDetails): OrderResponse {
     createdAt: order.createdAt,
     updatedAt: order.updatedAt,
   };
+
+  if (order.user) {
+    response.user = {
+      email: order.user.email,
+      firstName: order.user.firstName,
+      lastName: order.user.lastName,
+    };
+  }
+
+  return response;
 }

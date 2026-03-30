@@ -1,3 +1,5 @@
+import path from "path";
+import { fileURLToPath } from "url";
 import express from "express";
 import swaggerUi from "swagger-ui-express";
 import { swaggerSpec } from "./swagger.js";
@@ -8,22 +10,27 @@ import cartRouter from "./services/cart/routes/index.js";
 import orderRouter from "./services/order/routes/index.js";
 import paymentRouter from "./services/payment/routes/index.js";
 import uploadRouter from "./services/upload/routes/index.js";
+
 import { handleWebhookHandler } from "./services/payment/routes/handleWebhook.js";
 
 const app = express();
+const apiRouter = express.Router();
 
 // Stripe webhook needs raw body for signature verification — must be before express.json()
-app.post("/payments/webhook", express.raw({ type: "application/json" }), handleWebhookHandler);
+app.post("/api/payments/webhook", express.raw({ type: "application/json" }), handleWebhookHandler);
 
 app.use(express.json());
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+// --- API routes (mounted at /api) ---
+
+apiRouter.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Public routes — no authentication required
-app.use("/auth", authRouter);
+apiRouter.use("/auth", authRouter);
 
 /**
  * @openapi
- * /health:
+ * /api/health:
  *   get:
  *     summary: Health check
  *     responses:
@@ -33,20 +40,22 @@ app.use("/auth", authRouter);
  *             schema:
  *               $ref: '#/components/schemas/HealthResponse'
  */
-app.get("/health", (req, res) => {
+apiRouter.get("/health", (req, res) => {
   res.status(200).json({ status: "ok", message: "Testing API" });
 });
 
 // All routes defined below this line require authentication
-app.use(authenticate);
+apiRouter.use(authenticate);
 
-app.use("/products", productRouter);
-app.use("/cart", cartRouter);
-app.use("/orders", orderRouter);
-app.use("/payments", paymentRouter);
-app.use("/upload", uploadRouter);
+apiRouter.use("/products", productRouter);
+apiRouter.use("/cart", cartRouter);
+apiRouter.use("/orders", orderRouter);
+apiRouter.use("/payments", paymentRouter);
+apiRouter.use("/upload", uploadRouter);
 
-// Handle malformed JSON bodies
+app.use("/api", apiRouter);
+
+// Handle malformed JSON bodies — must be on app since express.json() is app-level
 // TODO: move to util func
 app.use(
   (
@@ -62,5 +71,13 @@ app.use(
     next(err);
   }
 );
+
+// --- Static file serving (production) ---
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const clientDir = path.join(__dirname, "../client");
+app.use(express.static(clientDir));
+app.get("/{*path}", (_req, res) => {
+  res.sendFile(path.join(clientDir, "index.html"));
+});
 
 export default app;

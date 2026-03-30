@@ -6,6 +6,7 @@ import type {
   ApiError,
 } from "../../types/api";
 import * as productsApi from "../../api/products.api";
+import * as uploadApi from "../../api/upload.api";
 import { useUiStore } from "../../stores/uiStore";
 import Input from "../ui/Input";
 import Button from "../ui/Button";
@@ -30,10 +31,11 @@ export default function ProductForm({
   const [description, setDescription] = useState(product?.description ?? "");
   const [price, setPrice] = useState(product?.price?.toString() ?? "");
   const [discountPercent, setDiscountPercent] = useState(
-    product?.discountPercent?.toString() ?? "",
+    product?.discountPercent ? product.discountPercent.toString() : "",
   );
   const [tags, setTags] = useState(product?.tags?.join(", ") ?? "");
   const [isActive, setIsActive] = useState(product?.isActive ?? true);
+  const [file, setFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
@@ -62,15 +64,23 @@ export default function ProductForm({
       .filter(Boolean);
 
     try {
+      if (!isEdit && !file) {
+        setError("Please select an asset file to upload");
+        setIsLoading(false);
+        return;
+      }
+
+      if (!isEdit && file) {
+        await uploadApi.uploadAsset(slug, file);
+      }
+
       if (isEdit && product) {
         const body: UpdateProductBody = {
           name,
           slug,
           description: description || null,
           price: parseFloat(price),
-          discountPercent: discountPercent
-            ? parseFloat(discountPercent)
-            : null,
+          discountPercent: parseFloat(discountPercent) || null,
           tags: parsedTags,
           isActive,
         };
@@ -82,9 +92,7 @@ export default function ProductForm({
           slug,
           description: description || undefined,
           price: parseFloat(price),
-          discountPercent: discountPercent
-            ? parseFloat(discountPercent)
-            : undefined,
+          discountPercent: parseFloat(discountPercent) || undefined,
           tags: parsedTags.length > 0 ? parsedTags : undefined,
         };
         await productsApi.createProduct(body);
@@ -174,6 +182,54 @@ export default function ProductForm({
         onChange={(e) => setTags(e.target.value)}
         placeholder="dark, minimalist, 4K"
       />
+
+      {!isEdit && (
+        <div>
+          <span className="mb-1 block text-sm font-medium text-gray-700">
+            Asset file <span className="text-red-500">*</span>
+          </span>
+          <label
+            htmlFor="file"
+            className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-center transition hover:border-indigo-400 hover:bg-indigo-50"
+          >
+            <svg
+              className="mb-2 h-8 w-8 text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"
+              />
+            </svg>
+            {file ? (
+              <span className="text-sm font-medium text-indigo-600">
+                {file.name}
+              </span>
+            ) : (
+              <>
+                <span className="text-sm font-medium text-gray-700">
+                  Click to upload
+                </span>
+                <span className="mt-0.5 text-xs text-gray-400">
+                  PNG, JPG, or WebP
+                </span>
+              </>
+            )}
+            <input
+              id="file"
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+              className="sr-only"
+              required
+            />
+          </label>
+        </div>
+      )}
 
       {isEdit && (
         <label className="flex items-center gap-2 text-sm text-gray-700">

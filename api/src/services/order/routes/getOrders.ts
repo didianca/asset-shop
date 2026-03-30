@@ -13,6 +13,7 @@ const orderInclude = {
   },
   statusHistory: { orderBy: { createdAt: "asc" as const } },
   payment: true,
+  user: { select: { email: true, firstName: true, lastName: true } },
 } as const;
 
 /**

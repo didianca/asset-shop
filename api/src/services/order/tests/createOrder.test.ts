@@ -22,8 +22,6 @@ const makeProduct = <T extends object>(overrides: T): { price: number; previewKe
 });
 
 beforeAll(async () => {
-  await prisma.user.deleteMany({ where: { email: { in: [ADMIN_EMAIL, CUSTOMER_EMAIL] } } });
-
   const admin = await prisma.user.create({
     data: { email: ADMIN_EMAIL, passwordHash: "x", firstName: "Admin", lastName: "Test", role: "admin", status: "active" },
   });
@@ -58,20 +56,20 @@ afterAll(async () => {
 
 async function addToCart(productIds: string[], token: string): Promise<void> {
   await request(app)
-    .post("/cart/items")
+    .post("/api/cart/items")
     .set("Authorization", `Bearer ${token}`)
     .send({ productIds });
 }
 
 describe("POST /orders", () => {
   it("returns 401 without a token", async () => {
-    const res = await request(app).post("/orders");
+    const res = await request(app).post("/api/orders");
     expect(res.status).toBe(401);
   });
 
   it("returns 400 when user has no cart", async () => {
     const res = await request(app)
-      .post("/orders")
+      .post("/api/orders")
       .set("Authorization", `Bearer ${customerToken}`);
     expect(res.status).toBe(400);
     expect(res.body.message).toBe("Cart is empty");
@@ -81,7 +79,7 @@ describe("POST /orders", () => {
     await prisma.cart.create({ data: { userId: customerId } });
 
     const res = await request(app)
-      .post("/orders")
+      .post("/api/orders")
       .set("Authorization", `Bearer ${customerToken}`);
     expect(res.status).toBe(400);
     expect(res.body.message).toBe("Cart is empty");
@@ -94,7 +92,7 @@ describe("POST /orders", () => {
     await addToCart([product.id], customerToken);
 
     const res = await request(app)
-      .post("/orders")
+      .post("/api/orders")
       .set("Authorization", `Bearer ${customerToken}`);
 
     expect(res.status).toBe(201);
@@ -128,7 +126,7 @@ describe("POST /orders", () => {
     await addToCart([p1.id, p2.id], customerToken);
 
     const res = await request(app)
-      .post("/orders")
+      .post("/api/orders")
       .set("Authorization", `Bearer ${customerToken}`);
 
     expect(res.status).toBe(201);
@@ -148,7 +146,7 @@ describe("POST /orders", () => {
     await addToCart([product.id], customerToken);
 
     const res = await request(app)
-      .post("/orders")
+      .post("/api/orders")
       .set("Authorization", `Bearer ${customerToken}`);
 
     expect(res.status).toBe(201);
@@ -163,12 +161,12 @@ describe("POST /orders", () => {
     await addToCart([product.id], customerToken);
 
     const orderRes = await request(app)
-      .post("/orders")
+      .post("/api/orders")
       .set("Authorization", `Bearer ${customerToken}`);
     expect(orderRes.status).toBe(201);
 
     const cartRes = await request(app)
-      .get("/cart")
+      .get("/api/cart")
       .set("Authorization", `Bearer ${customerToken}`);
     expect(cartRes.body.items).toHaveLength(0);
   });
@@ -180,7 +178,7 @@ describe("POST /orders", () => {
     await addToCart([product.id], customerToken);
 
     const res = await request(app)
-      .post("/orders")
+      .post("/api/orders")
       .set("Authorization", `Bearer ${customerToken}`);
 
     expect(res.status).toBe(201);
@@ -197,13 +195,13 @@ describe("POST /orders", () => {
 
     await addToCart([product.id], customerToken);
     const first = await request(app)
-      .post("/orders")
+      .post("/api/orders")
       .set("Authorization", `Bearer ${customerToken}`);
     expect(first.status).toBe(201);
 
     await addToCart([product.id], customerToken);
     const second = await request(app)
-      .post("/orders")
+      .post("/api/orders")
       .set("Authorization", `Bearer ${customerToken}`);
     expect(second.status).toBe(201);
     expect(second.body.id).not.toBe(first.body.id);
@@ -219,7 +217,7 @@ describe("POST /orders", () => {
 
     await expect(
       request(app)
-        .post("/orders")
+        .post("/api/orders")
         .set("Authorization", `Bearer ${customerToken}`)
     ).resolves.toMatchObject({ status: 500 });
 

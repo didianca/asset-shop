@@ -39,12 +39,6 @@ export interface ProductResponse {
   assetKey: string;
   previewUrl: string;
   assetUrl: string;
-  bundle: {
-    id: string;
-    name: string;
-    slug: string;
-    discountPercent: number | null;
-  } | null;
   createdAt: string;
 }
 
@@ -107,6 +101,12 @@ export interface PaymentSummary {
   createdAt: string;
 }
 
+export interface OrderUser {
+  email: string;
+  firstName: string;
+  lastName: string;
+}
+
 export interface OrderResponse {
   id: string;
   userId: string;
@@ -115,6 +115,7 @@ export interface OrderResponse {
   items: OrderItemResponse[];
   statusHistory: StatusHistoryEntry[];
   payment: PaymentSummary | null;
+  user?: OrderUser;
   createdAt: string;
   updatedAt: string;
 }
@@ -129,6 +130,10 @@ export interface OrderListResponse {
 export interface UpdateOrderStatusBody {
   status: "paid" | "fulfilled" | "refunded";
   note?: string;
+}
+
+export interface RefundRequestBody {
+  note: string;
 }
 
 export interface CreatePaymentResponse {
@@ -151,3 +156,5 @@ export interface ApiError {
   message: string;
   errors?: Record<string, string[]>;
 }
+
+

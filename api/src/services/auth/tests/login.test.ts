@@ -47,7 +47,7 @@ afterAll(async () => {
 
 describe("POST /auth/login", () => {
   it("returns 200 with token for active user", async () => {
-    const res = await request(app).post("/auth/login").send({
+    const res = await request(app).post("/api/auth/login").send({
       email: `active${TEST_EMAIL_DOMAIN}`,
       password: PASSWORD,
     });
@@ -57,7 +57,7 @@ describe("POST /auth/login", () => {
   });
 
   it("returns 400 for invalid request body", async () => {
-    const res = await request(app).post("/auth/login").send({
+    const res = await request(app).post("/api/auth/login").send({
       email: "not-an-email",
       password: "",
     });
@@ -67,7 +67,7 @@ describe("POST /auth/login", () => {
   });
 
   it("returns 401 for wrong password", async () => {
-    const res = await request(app).post("/auth/login").send({
+    const res = await request(app).post("/api/auth/login").send({
       email: `active${TEST_EMAIL_DOMAIN}`,
       password: "WrongPassword!",
     });
@@ -76,7 +76,7 @@ describe("POST /auth/login", () => {
   });
 
   it("returns 401 for non-existent email", async () => {
-    const res = await request(app).post("/auth/login").send({
+    const res = await request(app).post("/api/auth/login").send({
       email: `nobody${TEST_EMAIL_DOMAIN}`,
       password: PASSWORD,
     });
@@ -85,7 +85,7 @@ describe("POST /auth/login", () => {
   });
 
   it("returns 403 for pending user", async () => {
-    const res = await request(app).post("/auth/login").send({
+    const res = await request(app).post("/api/auth/login").send({
       email: `pending${TEST_EMAIL_DOMAIN}`,
       password: PASSWORD,
     });
@@ -94,7 +94,7 @@ describe("POST /auth/login", () => {
   });
 
   it("returns 401 for deleted user", async () => {
-    const res = await request(app).post("/auth/login").send({
+    const res = await request(app).post("/api/auth/login").send({
       email: `deleted${TEST_EMAIL_DOMAIN}`,
       password: PASSWORD,
     });

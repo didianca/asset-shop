@@ -28,7 +28,6 @@ const product = {
   tags: ["icons", "design"],
   previewUrl: "https://example.com/icons.jpg",
   assetUrl: "https://example.com/icons.zip",
-  bundle: null,
   isActive: true,
   createdBy: "admin-1",
   createdAt: "2026-01-01T00:00:00Z",
@@ -70,6 +69,16 @@ describe("ProductDetailPage", () => {
   it("renders discount price", () => {
     renderWithSlug("premium-icons");
     expect(screen.getByText("-20%")).toBeInTheDocument();
+  });
+
+  it("does not show discount UI when discountPercent is 0", () => {
+    useProductStore.setState({
+      products: [{ ...product, discountPercent: 0 }],
+      tags: [],
+      isLoading: false,
+    });
+    renderWithSlug("premium-icons");
+    expect(screen.queryByText(/-\d+%/)).not.toBeInTheDocument();
   });
 
   it("renders tags", () => {

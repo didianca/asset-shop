@@ -37,11 +37,11 @@ const makeProduct = <T extends object>(overrides: T): { price: number; previewKe
 
 async function createOrderWithPayment(token: string, productId: string): Promise<string> {
   await request(app)
-    .post("/cart/items")
+    .post("/api/cart/items")
     .set("Authorization", `Bearer ${token}`)
     .send({ productIds: [productId] });
   const orderRes = await request(app)
-    .post("/orders")
+    .post("/api/orders")
     .set("Authorization", `Bearer ${token}`);
   const orderId = orderRes.body.id as string;
 
@@ -98,13 +98,13 @@ afterAll(async () => {
 
 describe("GET /payments/:orderId", () => {
   it("returns 401 without a token", async () => {
-    const res = await request(app).get(`/payments/${NONEXISTENT_ID}`);
+    const res = await request(app).get(`/api/payments/${NONEXISTENT_ID}`);
     expect(res.status).toBe(401);
   });
 
   it("returns 404 when no payment exists for order", async () => {
     const res = await request(app)
-      .get(`/payments/${NONEXISTENT_ID}`)
+      .get(`/api/payments/${NONEXISTENT_ID}`)
       .set("Authorization", `Bearer ${customerToken}`);
     expect(res.status).toBe(404);
     expect(res.body.message).toBe("Payment not found");
@@ -117,7 +117,7 @@ describe("GET /payments/:orderId", () => {
     const orderId = await createOrderWithPayment(customerToken, product.id);
 
     const res = await request(app)
-      .get(`/payments/${orderId}`)
+      .get(`/api/payments/${orderId}`)
       .set("Authorization", `Bearer ${customerToken}`);
 
     expect(res.status).toBe(200);
@@ -134,7 +134,7 @@ describe("GET /payments/:orderId", () => {
     const orderId = await createOrderWithPayment(customer2Token, product.id);
 
     const res = await request(app)
-      .get(`/payments/${orderId}`)
+      .get(`/api/payments/${orderId}`)
       .set("Authorization", `Bearer ${customerToken}`);
     expect(res.status).toBe(404);
   });
@@ -146,7 +146,7 @@ describe("GET /payments/:orderId", () => {
     const orderId = await createOrderWithPayment(customerToken, product.id);
 
     const res = await request(app)
-      .get(`/payments/${orderId}`)
+      .get(`/api/payments/${orderId}`)
       .set("Authorization", `Bearer ${adminToken}`);
 
     expect(res.status).toBe(200);

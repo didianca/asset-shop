@@ -15,7 +15,6 @@ const makeProduct = (overrides?: Partial<ProductResponse>): ProductResponse => (
   tags: ["dark"],
   previewUrl: "https://example.com/preview.jpg",
   assetUrl: "https://example.com/asset.zip",
-  bundle: null,
   createdAt: "2026-01-01T00:00:00Z",
   ...overrides,
 });

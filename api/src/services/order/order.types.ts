@@ -114,6 +114,18 @@ import { z } from "zod";
  *         updatedAt:
  *           type: string
  *           format: date-time
+ *         user:
+ *           description: Included on all order responses except POST /orders (create)
+ *           nullable: true
+ *           type: object
+ *           properties:
+ *             email:
+ *               type: string
+ *               format: email
+ *             firstName:
+ *               type: string
+ *             lastName:
+ *               type: string
  *     UpdateOrderStatusBody:
  *       type: object
  *       additionalProperties: false
@@ -161,3 +173,25 @@ export const GetOrdersQuerySchema = z.object({
 });
 
 export type UpdateOrderStatusBody = z.infer<typeof UpdateOrderStatusSchema>;
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     RefundRequestBody:
+ *       type: object
+ *       additionalProperties: false
+ *       required:
+ *         - note
+ *       properties:
+ *         note:
+ *           type: string
+ *           minLength: 1
+ *           maxLength: 500
+ *           description: Reason for the refund request
+ */
+export const RefundRequestSchema = z.object({
+  note: z.string().min(1, "Refund reason is required").max(500),
+}).strict();
+
+export type RefundRequestBody = z.infer<typeof RefundRequestSchema>;

@@ -1,16 +1,15 @@
-import { describe, it, expect, vi } from "vitest";
-import type { Request, Response, NextFunction } from "express";
+import {describe, expect, it, vi} from "vitest";
+import type {NextFunction, Request, Response} from "express";
 import jwt from "jsonwebtoken";
-import { authenticate, requireAdmin } from "../../../middleware/auth.js";
-import { authConfig } from "../auth.config.js";
-import type { JwtPayload } from "../auth.types.js";
+import {authenticate, requireAdmin} from "../auth.js";
+import {authConfig} from "../../services/auth/auth.config.js";
+import type {JwtPayload} from "../../services/auth/auth.types.js";
 
 function mockRes(): Response {
-  const res = {
+  return {
     status: vi.fn().mockReturnThis(),
     json: vi.fn().mockReturnThis(),
   } as unknown as Response;
-  return res;
 }
 
 function validToken(overrides: Partial<JwtPayload> = {}): string {

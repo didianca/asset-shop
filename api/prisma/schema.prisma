@@ -88,6 +88,8 @@ model User {
 // BUNDLES
 // A bundle groups assets together with an optional discount.
 // The purchasable bundle itself is a Product row with is_bundle = true.
+// NOTE: Bundle UI and API routes are deferred to a future release.
+//       The schema is kept in place so the database remains forward-compatible.
 // ============================================================
 
 model Bundle {

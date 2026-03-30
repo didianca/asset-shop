@@ -71,13 +71,13 @@ afterAll(async () => {
 
 describe("PUT /products/:id", () => {
   it("returns 401 without a token", async () => {
-    const res = await request(app).put(`/products/${NONEXISTENT_ID}`).send(validUpdate);
+    const res = await request(app).put(`/api/products/${NONEXISTENT_ID}`).send(validUpdate);
     expect(res.status).toBe(401);
   });
 
   it("returns 403 for a customer", async () => {
     const res = await request(app)
-      .put(`/products/${NONEXISTENT_ID}`)
+      .put(`/api/products/${NONEXISTENT_ID}`)
       .set("Authorization", `Bearer ${customerToken}`)
       .send(validUpdate);
     expect(res.status).toBe(403);
@@ -86,7 +86,7 @@ describe("PUT /products/:id", () => {
   it("returns 400 for a missing required field", async () => {
     const { price: _price, ...withoutPrice } = validUpdate; // eslint-disable-line @typescript-eslint/no-unused-vars
     const res = await request(app)
-      .put(`/products/${NONEXISTENT_ID}`)
+      .put(`/api/products/${NONEXISTENT_ID}`)
       .set("Authorization", `Bearer ${adminToken}`)
       .send(withoutPrice);
     expect(res.status).toBe(400);
@@ -94,7 +94,7 @@ describe("PUT /products/:id", () => {
 
   it("returns 404 for a non-existent id", async () => {
     const res = await request(app)
-      .put(`/products/${NONEXISTENT_ID}`)
+      .put(`/api/products/${NONEXISTENT_ID}`)
       .set("Authorization", `Bearer ${adminToken}`)
       .send(validUpdate);
     expect(res.status).toBe(404);
@@ -106,7 +106,7 @@ describe("PUT /products/:id", () => {
     });
 
     const res = await request(app)
-      .put(`/products/${product.id}`)
+      .put(`/api/products/${product.id}`)
       .set("Authorization", `Bearer ${adminToken}`)
       .send(validUpdate);
     expect(res.status).toBe(404);
@@ -118,7 +118,7 @@ describe("PUT /products/:id", () => {
     });
 
     const res = await request(app)
-      .put(`/products/${product.id}`)
+      .put(`/api/products/${product.id}`)
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ ...validUpdate, name: "UP Renamed", slug: `${SLUG_PREFIX}renamed`, price: 49.99, description: "Updated description", discountPercent: 10 });
 
@@ -129,13 +129,21 @@ describe("PUT /products/:id", () => {
     expect(res.body.discountPercent).toBe(10);
   });
 
+  it("returns 400 for discountPercent of 0", async () => {
+    const res = await request(app)
+      .put(`/api/products/${NONEXISTENT_ID}`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ ...validUpdate, discountPercent: 0 });
+    expect(res.status).toBe(400);
+  });
+
   it("sets isActive to false when isActive is false", async () => {
     const product = await prisma.product.create({
       data: makeProduct({ name: "UP Deactivate", slug: `${SLUG_PREFIX}deactivate` }),
     });
 
     const res = await request(app)
-      .put(`/products/${product.id}`)
+      .put(`/api/products/${product.id}`)
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ ...validUpdate, isActive: false });
 
@@ -151,7 +159,7 @@ describe("PUT /products/:id", () => {
     await prisma.productTag.create({ data: { productId: product.id, tagId: oldTag.id } });
 
     const res = await request(app)
-      .put(`/products/${product.id}`)
+      .put(`/api/products/${product.id}`)
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ ...validUpdate, tags: [`${TAG_PREFIX}new`] });
 
@@ -168,7 +176,7 @@ describe("PUT /products/:id", () => {
     await prisma.productTag.create({ data: { productId: product.id, tagId: tag.id } });
 
     const res = await request(app)
-      .put(`/products/${product.id}`)
+      .put(`/api/products/${product.id}`)
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ ...validUpdate, tags: [] });
 
@@ -185,7 +193,7 @@ describe("PUT /products/:id", () => {
     });
 
     const res = await request(app)
-      .put(`/products/${productA.id}`)
+      .put(`/api/products/${productA.id}`)
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ ...validUpdate, slug: `${SLUG_PREFIX}b` });
 
@@ -201,7 +209,7 @@ describe("PUT /products/:id", () => {
     });
 
     const res = await request(app)
-      .put(`/products/${product.id}`)
+      .put(`/api/products/${product.id}`)
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ ...validUpdate, slug: `${SLUG_PREFIX}new-slug` });
 
@@ -215,7 +223,7 @@ describe("PUT /products/:id", () => {
     });
 
     const res = await request(app)
-      .put(`/products/${product.id}`)
+      .put(`/api/products/${product.id}`)
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ ...validUpdate, slug: `${SLUG_PREFIX}same-slug` });
 
@@ -233,7 +241,7 @@ describe("PUT /products/:id", () => {
 
     await expect(
       request(app)
-        .put(`/products/${product.id}`)
+        .put(`/api/products/${product.id}`)
         .set("Authorization", `Bearer ${adminToken}`)
         .send(validUpdate)
     ).resolves.toMatchObject({ status: 500 });

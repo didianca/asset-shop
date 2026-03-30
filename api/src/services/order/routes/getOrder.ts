@@ -27,6 +27,12 @@ import { formatOrder } from "../utils.js";
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/OrderResponse'
+ *       400:
+ *         description: Invalid order ID
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ValidationErrorResponse'
  *       401:
  *         description: Authentication required
  *         content:
@@ -57,6 +63,7 @@ export async function getOrderHandler(
     },
     statusHistory: { orderBy: { createdAt: "asc" as const } },
     payment: true,
+    user: { select: { email: true, firstName: true, lastName: true } },
   } as const;
 
   const order = await prisma.order.findUnique({

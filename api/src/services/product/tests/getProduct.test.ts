@@ -42,13 +42,13 @@ afterAll(async () => {
 
 describe("GET /products/:id", () => {
   it("returns 401 without a token", async () => {
-    const res = await request(app).get(`/products/${NONEXISTENT_ID}`);
+    const res = await request(app).get(`/api/products/${NONEXISTENT_ID}`);
     expect(res.status).toBe(401);
   });
 
   it("returns 404 for a non-existent id", async () => {
     const res = await request(app)
-      .get(`/products/${NONEXISTENT_ID}`)
+      .get(`/api/products/${NONEXISTENT_ID}`)
       .set("Authorization", `Bearer ${adminToken}`);
     expect(res.status).toBe(404);
   });
@@ -59,7 +59,7 @@ describe("GET /products/:id", () => {
     });
 
     const res = await request(app)
-      .get(`/products/${product.id}`)
+      .get(`/api/products/${product.id}`)
       .set("Authorization", `Bearer ${adminToken}`);
     expect(res.status).toBe(404);
   });
@@ -70,7 +70,7 @@ describe("GET /products/:id", () => {
     });
 
     const res = await request(app)
-      .get(`/products/${product.id}`)
+      .get(`/api/products/${product.id}`)
       .set("Authorization", `Bearer ${adminToken}`);
 
     expect(res.status).toBe(200);
@@ -87,7 +87,7 @@ describe("GET /products/:id", () => {
     await prisma.productTag.create({ data: { productId: product.id, tagId: tag.id } });
 
     const res = await request(app)
-      .get(`/products/${product.id}`)
+      .get(`/api/products/${product.id}`)
       .set("Authorization", `Bearer ${adminToken}`);
 
     expect(res.status).toBe(200);
@@ -98,40 +98,4 @@ describe("GET /products/:id", () => {
     await prisma.tag.delete({ where: { slug: "gp-tag-one" } });
   });
 
-  it("returns bundle as null when product has no bundle", async () => {
-    const product = await prisma.product.create({
-      data: makeProduct({ name: "GP No Bundle", slug: `${SLUG_PREFIX}no-bundle` }),
-    });
-
-    const res = await request(app)
-      .get(`/products/${product.id}`)
-      .set("Authorization", `Bearer ${adminToken}`);
-
-    expect(res.status).toBe(200);
-    expect(res.body.bundle).toBeNull();
-  });
-
-  it("returns bundle object when product belongs to a bundle", async () => {
-    const bundle = await prisma.bundle.create({
-      data: { name: "GP Test Bundle", slug: `${SLUG_PREFIX}bundle-parent`, discountPercent: 20, createdBy: adminId },
-    });
-    const product = await prisma.product.create({
-      data: makeProduct({ name: "GP Bundled", slug: `${SLUG_PREFIX}bundled`, bundleId: bundle.id }),
-    });
-
-    const res = await request(app)
-      .get(`/products/${product.id}`)
-      .set("Authorization", `Bearer ${adminToken}`);
-
-    expect(res.status).toBe(200);
-    expect(res.body.bundle).toEqual({
-      id: bundle.id,
-      name: "GP Test Bundle",
-      slug: `${SLUG_PREFIX}bundle-parent`,
-      discountPercent: 20,
-    });
-
-    await prisma.product.deleteMany({ where: { bundleId: bundle.id } });
-    await prisma.bundle.delete({ where: { id: bundle.id } });
-  });
 });

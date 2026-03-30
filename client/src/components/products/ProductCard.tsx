@@ -13,7 +13,7 @@ export default function ProductCard({ product }: ProductCardProps) {
     product.price,
     product.discountPercent,
   );
-  const hasDiscount = product.discountPercent && product.discountPercent > 0;
+  const hasDiscount = (product.discountPercent ?? 0) > 0;
 
   return (
     <Link to={`/products/${product.slug}`}>
@@ -57,11 +57,6 @@ export default function ProductCard({ product }: ProductCardProps) {
             </div>
           )}
 
-          {product.bundle && (
-            <Badge className="mt-2 bg-indigo-100 text-indigo-800">
-              Bundle
-            </Badge>
-          )}
         </div>
       </Card>
     </Link>

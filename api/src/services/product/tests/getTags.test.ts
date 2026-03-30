@@ -31,13 +31,13 @@ afterAll(async () => {
 
 describe("GET /products/tags", () => {
   it("returns 401 without a token", async () => {
-    const res = await request(app).get("/products/tags");
+    const res = await request(app).get("/api/products/tags");
     expect(res.status).toBe(401);
   });
 
   it("returns 200 with an empty array when no tags exist", async () => {
     const res = await request(app)
-      .get("/products/tags")
+      .get("/api/products/tags")
       .set("Authorization", `Bearer ${adminToken}`);
 
     expect(res.status).toBe(200);
@@ -53,7 +53,7 @@ describe("GET /products/tags", () => {
     });
 
     const res = await request(app)
-      .get("/products/tags")
+      .get("/api/products/tags")
       .set("Authorization", `Bearer ${adminToken}`);
 
     expect(res.status).toBe(200);
@@ -71,7 +71,7 @@ describe("GET /products/tags", () => {
     });
 
     const res = await request(app)
-      .get("/products/tags")
+      .get("/api/products/tags")
       .set("Authorization", `Bearer ${adminToken}`);
 
     const testTags = (res.body as string[]).filter((t) => t.startsWith(TAG_PREFIX));

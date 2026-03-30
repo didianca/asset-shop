@@ -19,7 +19,6 @@ const makeProduct = (overrides: Record<string, unknown>) => ({
   tags: [],
   previewUrl: "https://example.com/img.jpg",
   assetUrl: "https://example.com/file.zip",
-  bundle: null,
   isActive: true,
   createdBy: "admin-1",
   createdAt: "2026-01-01T00:00:00Z",

@@ -71,7 +71,10 @@ export async function createProductHandler(
   try {
     const product = await prisma.$transaction(async (tx) => {
       const created = await tx.product.create({
-        data: { name, slug, description: description ?? null, price, discountPercent: discountPercent ?? null, previewKey, assetKey, createdBy },
+        data: {
+          name, slug, description: description ?? null, price,
+          discountPercent: discountPercent ?? null, previewKey, assetKey, createdBy,
+        },
       });
 
       if (tags && tags.length > 0) {
@@ -87,7 +90,7 @@ export async function createProductHandler(
 
       return tx.product.findUnique({
         where: { id: created.id },
-        include: { tags: { include: { tag: true } }, bundle: true },
+        include: { tags: { include: { tag: true } } },
       });
     });
 

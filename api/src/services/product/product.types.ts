@@ -26,7 +26,7 @@ import { z } from "zod";
  *           example: 19.99
  *         discountPercent:
  *           type: integer
- *           minimum: 0
+ *           minimum: 1
  *           maximum: 100
  *           example: 10
  *         tags:
@@ -57,7 +57,7 @@ import { z } from "zod";
  *           type: number
  *         discountPercent:
  *           type: integer
- *           minimum: 0
+ *           minimum: 1
  *           maximum: 100
  *           nullable: true
  *         isActive:
@@ -81,7 +81,6 @@ import { z } from "zod";
  *         - assetKey
  *         - previewUrl
  *         - assetUrl
- *         - bundle
  *         - createdAt
  *       properties:
  *         id:
@@ -97,6 +96,9 @@ import { z } from "zod";
  *           type: number
  *         discountPercent:
  *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *           nullable: true
  *         isActive:
  *           type: boolean
  *         tags:
@@ -115,20 +117,6 @@ import { z } from "zod";
  *         assetUrl:
  *           type: string
  *           format: uri
- *         bundle:
- *           nullable: true
- *           type: object
- *           properties:
- *             id:
- *               type: string
- *               format: uuid
- *             name:
- *               type: string
- *             slug:
- *               type: string
- *             discountPercent:
- *               type: integer
- *               nullable: true
  *         createdAt:
  *           type: string
  *           format: date-time
@@ -148,7 +136,7 @@ export const CreateProductSchema = z.object({
   slug: z.string().min(1),
   description: z.string().optional(),
   price: z.number().positive(),
-  discountPercent: z.number().int().min(0).max(100).optional(),
+  discountPercent: z.number().int().min(1).max(100).optional(),
   tags: z.array(z.string()).optional(),
 }).strict();
 
@@ -157,7 +145,7 @@ export const UpdateProductSchema = z.object({
   slug: z.string().min(1),
   description: z.string().nullable(),
   price: z.number().positive(),
-  discountPercent: z.number().int().min(0).max(100).nullable(),
+  discountPercent: z.number().int().min(1).max(100).nullable(),
   isActive: z.boolean(),
   tags: z.array(z.string()),
 }).strict();

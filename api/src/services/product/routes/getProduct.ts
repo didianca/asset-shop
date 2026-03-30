@@ -25,6 +25,12 @@ import { formatProduct } from "../utils.js";
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/ProductResponse'
+ *       400:
+ *         description: Invalid product ID
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ValidationErrorResponse'
  *       401:
  *         description: Authentication required
  *         content:
@@ -44,7 +50,7 @@ export async function getProductHandler(
 ): Promise<void> {
   const product = await prisma.product.findUnique({
     where: { id: req.params.id },
-    include: { tags: { include: { tag: true } }, bundle: true },
+    include: { tags: { include: { tag: true } } },
   });
 
   if (!product || !product.isActive) {

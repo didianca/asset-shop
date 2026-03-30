@@ -464,7 +464,7 @@ describe("POST /payments/webhook", () => {
       data: { object: { id: "pi_webhook_test" } },
     });
 
-    vi.spyOn(prisma.order, "findUnique").mockResolvedValueOnce(null);
+    const findUniqueSpy = vi.spyOn(prisma.order, "findUnique").mockResolvedValueOnce(null);
 
     const res = await request(app)
       .post("/api/payments/webhook")
@@ -475,6 +475,7 @@ describe("POST /payments/webhook", () => {
     expect(res.status).toBe(200);
     expect(res.body.message).toBe("Payment captured");
     expect(mockSendOrderConfirmationEmail).not.toHaveBeenCalled();
+    findUniqueSpy.mockRestore();
   });
 
   it("re-throws and returns 500 when the payment-failed DB update fails", async () => {

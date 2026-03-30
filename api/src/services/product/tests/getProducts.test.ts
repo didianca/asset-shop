@@ -118,4 +118,17 @@ describe("GET /products", () => {
     expect(slugs[0]).toBe(`${SLUG_PREFIX}second`);
     expect(slugs[1]).toBe(`${SLUG_PREFIX}first`);
   });
+
+  it("includes inactive products when admin passes includeInactive=true", async () => {
+    await prisma.product.create({
+      data: makeProduct({ name: "GPS Inactive Included", slug: `${SLUG_PREFIX}inactive-inc`, isActive: false }),
+    });
+
+    const res = await request(app)
+      .get("/api/products?includeInactive=true")
+      .set("Authorization", `Bearer ${adminToken}`);
+
+    const slugs = res.body.map((p: { slug: string }) => p.slug);
+    expect(slugs).toContain(`${SLUG_PREFIX}inactive-inc`);
+  });
 });

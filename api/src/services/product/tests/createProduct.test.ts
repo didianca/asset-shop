@@ -18,7 +18,6 @@ const TAG_PREFIX = "cp-tag-";
 const ADMIN_EMAIL = "admin@createproduct.test";
 const CUSTOMER_EMAIL = "customer@createproduct.test";
 
-let adminId: string;
 let adminToken: string;
 let customerToken: string;
 
@@ -29,16 +28,29 @@ const validProduct = {
 };
 
 beforeAll(async () => {
-  await prisma.user.deleteMany({ where: { email: { in: [ADMIN_EMAIL, CUSTOMER_EMAIL] } } });
+  await prisma.user.deleteMany({where: {email: {in: [ADMIN_EMAIL, CUSTOMER_EMAIL]}}});
 
   const admin = await prisma.user.create({
-    data: { email: ADMIN_EMAIL, passwordHash: "x", firstName: "Admin", lastName: "Test", role: "admin", status: "active" },
+    data: {
+      email: ADMIN_EMAIL,
+      passwordHash: "x",
+      firstName: "Admin",
+      lastName: "Test",
+      role: "admin",
+      status: "active"
+    },
   });
   const customer = await prisma.user.create({
-    data: { email: CUSTOMER_EMAIL, passwordHash: "x", firstName: "Customer", lastName: "Test", role: "customer", status: "active" },
+    data: {
+      email: CUSTOMER_EMAIL,
+      passwordHash: "x",
+      firstName: "Customer",
+      lastName: "Test",
+      role: "customer",
+      status: "active"
+    },
   });
 
-  adminId = admin.id;
   adminToken = jwt.sign({ id: admin.id, role: "admin", status: "active" }, authConfig.jwtSecret, { expiresIn: "1h" });
   customerToken = jwt.sign({ id: customer.id, role: "customer", status: "active" }, authConfig.jwtSecret, { expiresIn: "1h" });
 });

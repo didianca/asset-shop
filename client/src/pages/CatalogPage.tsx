@@ -78,11 +78,9 @@ export default function CatalogPage() {
       if (min !== null && !isNaN(min) && effective < min) return false;
       if (max !== null && !isNaN(max) && effective > max) return false;
 
-      if (filters.onSale && !(p.discountPercent && p.discountPercent > 0)) {
-        return false;
-      }
+      return !(filters.onSale && !(p.discountPercent && p.discountPercent > 0));
 
-      return true;
+
     });
 
     const sorted = [...filtered];
